@@ -1,8 +1,15 @@
-"""Framework-agnostic health reporting for the future API layer."""
+"""Health endpoint and framework-independent status helper."""
 
 from dataclasses import asdict, dataclass
 
-from app.main import APP_NAME, APP_VERSION
+from fastapi import APIRouter
+
+from app import __version__
+
+APP_NAME = "careerOS"
+APP_VERSION = __version__
+
+router = APIRouter(tags=["health"])
 
 
 @dataclass(frozen=True, slots=True)
@@ -15,5 +22,16 @@ class HealthStatus:
 
 
 def get_health_status() -> dict[str, str]:
-    """Return a basic service health payload."""
+    """Return the framework-independent health payload."""
     return asdict(HealthStatus(name=APP_NAME, version=APP_VERSION, status="ok"))
+
+
+@router.get("/health")
+def health() -> dict[str, str]:
+    """Return API health metadata."""
+    status = get_health_status()
+    return {
+        "status": status["status"],
+        "service": status["name"],
+        "version": status["version"],
+    }
