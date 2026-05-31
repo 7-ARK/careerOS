@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import (
@@ -28,6 +28,9 @@ from app.models.enums import (
     RemotePreference,
     ResumeStyle,
 )
+
+if TYPE_CHECKING:
+    from app.models.job_analysis import JobDescription
 
 
 class CandidateProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -288,6 +291,9 @@ class ApplicationHistory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     resume_version_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("resume_versions.id", ondelete="SET NULL"), index=True
     )
+    job_description_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("job_descriptions.id", ondelete="SET NULL"), index=True
+    )
     company: Mapped[str] = mapped_column(String(250), nullable=False)
     job_title: Mapped[str] = mapped_column(String(250), nullable=False)
     job_url: Mapped[str | None] = mapped_column(String(500))
@@ -301,3 +307,4 @@ class ApplicationHistory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     profile: Mapped[CandidateProfile] = relationship(back_populates="applications")
     resume_version: Mapped[ResumeVersion | None] = relationship(back_populates="applications")
+    job_description: Mapped["JobDescription | None"] = relationship(back_populates="applications")

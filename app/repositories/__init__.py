@@ -1,5 +1,6 @@
 """Repository interfaces for persistence operations."""
 
+from app.repositories.job_analysis import JobAnalysisRepository, JobDescriptionRepository
 from app.repositories.knowledge_base import (
     ApplicationHistoryRepository,
     CandidateOwnedRepository,
@@ -22,6 +23,8 @@ __all__ = [
     "CareerGoalRepository",
     "CertificationRepository",
     "EducationRepository",
+    "JobAnalysisRepository",
+    "JobDescriptionRepository",
     "PreferenceRepository",
     "ProjectRepository",
     "Repository",

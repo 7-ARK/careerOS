@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any, Generic, TypeVar
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Select, String, cast, or_, select
@@ -24,11 +24,8 @@ from app.models import (
     WorkExperience,
 )
 
-ModelT = TypeVar("ModelT", bound=Base)
-CandidateOwnedT = TypeVar("CandidateOwnedT", bound=Base)
 
-
-class Repository(Generic[ModelT]):  # noqa: UP046 - Keep the local Python 3.11 test path usable.
+class Repository[ModelT: Base]:
     """Generic SQLAlchemy CRUD repository with filtering and search support."""
 
     def __init__(self, session: Session, model: type[ModelT]) -> None:
@@ -114,7 +111,7 @@ class Repository(Generic[ModelT]):  # noqa: UP046 - Keep the local Python 3.11 t
             raise ValueError(f"{self.model.__name__} has no field '{field}'")
 
 
-class CandidateOwnedRepository(Repository[CandidateOwnedT]):
+class CandidateOwnedRepository[CandidateOwnedT: Base](Repository[CandidateOwnedT]):
     """CRUD repository for records owned by a candidate profile."""
 
     def list_for_profile(

@@ -38,3 +38,27 @@ class ResumeStyle(StrEnum):
     CLASSIC = "classic"
     MINIMAL = "minimal"
     MODERN = "modern"
+
+
+class JobWorkplaceType(StrEnum):
+    """Supported workplace arrangements for job opportunities."""
+
+    REMOTE = "remote"
+    HYBRID = "hybrid"
+    ONSITE = "onsite"
+
+
+class SeniorityLevel(StrEnum):
+    """Normalized seniority levels extracted from job descriptions."""
+
+    INTERNSHIP = "internship"
+    ENTRY = "entry"
+    MID = "mid"
+    SENIOR = "senior"
+    LEAD = "lead"
+    STAFF = "staff"
+    PRINCIPAL = "principal"
+    MANAGER = "manager"
+    DIRECTOR = "director"
+    EXECUTIVE = "executive"
+    UNKNOWN = "unknown"

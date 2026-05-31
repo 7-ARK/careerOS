@@ -15,3 +15,15 @@ class DuplicateSkillError(KnowledgeBaseError):
 
 class InvalidResumeVersionError(KnowledgeBaseError):
     """Raised when an application references another profile's resume version."""
+
+
+class JobAnalysisError(Exception):
+    """Base exception for job analyzer service operations."""
+
+
+class JobDescriptionNotFoundError(JobAnalysisError):
+    """Raised when a job-description source record cannot be found."""
+
+
+class JobAnalysisNotFoundError(JobAnalysisError):
+    """Raised when a captured posting has not been analyzed."""

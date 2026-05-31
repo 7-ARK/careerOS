@@ -1,5 +1,17 @@
 """Validation and serialization schemas for application boundaries."""
 
+from app.schemas.job_analysis import (
+    AnalyzedJobRead,
+    JobAnalysisCreate,
+    JobAnalysisListFilters,
+    JobAnalysisPayload,
+    JobAnalysisRead,
+    JobAnalysisUpdate,
+    JobDescriptionAnalysisInput,
+    JobDescriptionCreate,
+    JobDescriptionRead,
+    JobDescriptionUpdate,
+)
 from app.schemas.knowledge_base import (
     ApplicationHistoryCreate,
     ApplicationHistoryRead,
@@ -34,6 +46,7 @@ from app.schemas.knowledge_base import (
 )
 
 __all__ = [
+    "AnalyzedJobRead",
     "ApplicationHistoryCreate",
     "ApplicationHistoryRead",
     "ApplicationHistoryUpdate",
@@ -49,6 +62,15 @@ __all__ = [
     "EducationCreate",
     "EducationRead",
     "EducationUpdate",
+    "JobAnalysisCreate",
+    "JobAnalysisListFilters",
+    "JobAnalysisPayload",
+    "JobAnalysisRead",
+    "JobAnalysisUpdate",
+    "JobDescriptionAnalysisInput",
+    "JobDescriptionCreate",
+    "JobDescriptionRead",
+    "JobDescriptionUpdate",
     "PreferenceCreate",
     "PreferenceRead",
     "PreferenceUpdate",

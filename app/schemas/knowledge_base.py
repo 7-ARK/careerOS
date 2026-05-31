@@ -362,6 +362,7 @@ class ApplicationHistoryCreate(SchemaBase):
     """Record a job application."""
 
     resume_version_id: UUID | None = None
+    job_description_id: UUID | None = None
     company: str = Field(min_length=1, max_length=250)
     job_title: str = Field(min_length=1, max_length=250)
     job_url: str | None = Field(default=None, max_length=500)
@@ -374,6 +375,7 @@ class ApplicationHistoryUpdate(SchemaBase):
     """Update a recorded job application."""
 
     resume_version_id: UUID | None = None
+    job_description_id: UUID | None = None
     company: str | None = Field(default=None, min_length=1, max_length=250)
     job_title: str | None = Field(default=None, min_length=1, max_length=250)
     job_url: str | None = Field(default=None, max_length=500)
@@ -387,6 +389,7 @@ class ApplicationHistoryRead(EntityRead):
 
     profile_id: UUID
     resume_version_id: UUID | None
+    job_description_id: UUID | None
     company: str
     job_title: str
     job_url: str | None
