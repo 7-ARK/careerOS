@@ -46,6 +46,7 @@ class SourcePlatform(StrEnum):
 
     LINKEDIN = "linkedin"
     INDEED = "indeed"
+    GLASSDOOR = "glassdoor"
     COMPANY_SITE = "company_site"
     REFERRAL = "referral"
     OTHER = "other"

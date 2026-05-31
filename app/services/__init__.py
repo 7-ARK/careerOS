@@ -21,6 +21,7 @@ from app.services.exceptions import (
     UnsupportedDocumentFormatError,
 )
 from app.services.job_analysis import JobAnalysisService, JobAnalyzerService
+from app.services.job_import import ManualJobImportService
 from app.services.knowledge_base import KnowledgeBaseService
 from app.services.resume_intelligence import ResumeIntelligenceService
 
@@ -40,6 +41,7 @@ __all__ = [
     "JobDescriptionNotFoundError",
     "KnowledgeBaseError",
     "KnowledgeBaseService",
+    "ManualJobImportService",
     "ProfileNotFoundError",
     "ResumeAnalysisNotFoundError",
     "ResumeDraftNotFoundError",
