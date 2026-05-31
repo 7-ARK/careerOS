@@ -1,1 +1,3 @@
-# Add pinned runtime dependencies here as the application stack is introduced.
+SQLAlchemy>=2.0,<3.0
+pydantic>=2.7,<3.0
+psycopg[binary]>=3.2,<4.0

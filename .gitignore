@@ -4,6 +4,7 @@
 *.pyc
 .vscode/
 .pytest_cache/
+.ruff_cache/
 .coverage
 dist/
 build/
