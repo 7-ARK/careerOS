@@ -40,20 +40,46 @@ class ResumeStyle(StrEnum):
     MODERN = "modern"
 
 
-class JobWorkplaceType(StrEnum):
-    """Supported workplace arrangements for job opportunities."""
+class SourcePlatform(StrEnum):
+    """Common job-posting sources while allowing custom stored values."""
+
+    LINKEDIN = "linkedin"
+    INDEED = "indeed"
+    COMPANY_SITE = "company_site"
+    REFERRAL = "referral"
+    OTHER = "other"
+    UNKNOWN = "unknown"
+
+
+class EmploymentType(StrEnum):
+    """Common employment arrangements while allowing custom stored values."""
+
+    FULL_TIME = "full_time"
+    PART_TIME = "part_time"
+    CONTRACT = "contract"
+    TEMPORARY = "temporary"
+    INTERNSHIP = "internship"
+    FREELANCE = "freelance"
+    OTHER = "other"
+    UNKNOWN = "unknown"
+
+
+class WorkplaceType(StrEnum):
+    """Common workplace arrangements while allowing custom stored values."""
 
     REMOTE = "remote"
     HYBRID = "hybrid"
     ONSITE = "onsite"
+    OTHER = "other"
+    UNKNOWN = "unknown"
 
 
 class SeniorityLevel(StrEnum):
     """Normalized seniority levels extracted from job descriptions."""
 
-    INTERNSHIP = "internship"
-    ENTRY = "entry"
-    MID = "mid"
+    INTERN = "intern"
+    JUNIOR = "junior"
+    MID_LEVEL = "mid_level"
     SENIOR = "senior"
     LEAD = "lead"
     STAFF = "staff"
@@ -62,3 +88,33 @@ class SeniorityLevel(StrEnum):
     DIRECTOR = "director"
     EXECUTIVE = "executive"
     UNKNOWN = "unknown"
+
+
+class ResumeDraftStatus(StrEnum):
+    """Lifecycle states for a structured resume draft."""
+
+    DRAFT = "draft"
+    REVIEWED = "reviewed"
+    APPROVED = "approved"
+    ARCHIVED = "archived"
+
+
+class ResumeSectionType(StrEnum):
+    """Supported structured resume sections."""
+
+    SUMMARY = "summary"
+    SKILLS = "skills"
+    EXPERIENCE = "experience"
+    PROJECTS = "projects"
+    EDUCATION = "education"
+    CERTIFICATIONS = "certifications"
+
+
+class MatchQuality(StrEnum):
+    """Explainable candidate-job match quality bands."""
+
+    EXCELLENT = "excellent"
+    STRONG = "strong"
+    MODERATE = "moderate"
+    WEAK = "weak"
+    LIMITED = "limited"

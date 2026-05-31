@@ -25,7 +25,7 @@ class JobDescriptionRepository(Repository[JobDescription]):
         query: str,
         *,
         fields: Sequence[str] = (
-            "raw_job_title",
+            "raw_title",
             "company_name",
             "location",
             "source_platform",
@@ -36,6 +36,23 @@ class JobDescriptionRepository(Repository[JobDescription]):
     ) -> list[JobDescription]:
         """Search raw postings by common source fields."""
         return self.search(query, fields=fields, offset=offset, limit=limit)
+
+    def create_job_description(self, **values: Any) -> JobDescription:
+        """Create and stage a captured job posting."""
+        return self.create(**values)
+
+    def get_job_description(self, job_description_id: UUID) -> JobDescription | None:
+        """Return a captured job posting by ID."""
+        return self.get(job_description_id)
+
+    def list_job_descriptions(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> list[JobDescription]:
+        """List captured job postings."""
+        return self.list(offset=offset, limit=limit)
 
 
 class JobAnalysisRepository(Repository[JobAnalysis]):
@@ -52,6 +69,10 @@ class JobAnalysisRepository(Repository[JobAnalysis]):
         )
         return self.session.scalar(statement) or 1
 
+    def create_job_analysis(self, **values: Any) -> JobAnalysis:
+        """Create and stage a structured analysis revision."""
+        return self.create(**values)
+
     def get_latest_for_job_description(self, job_description_id: UUID) -> JobAnalysis | None:
         """Return the newest analysis revision for a captured posting."""
         statement = (
@@ -62,6 +83,10 @@ class JobAnalysisRepository(Repository[JobAnalysis]):
         )
         return self.session.scalar(statement)
 
+    def get_analysis_by_job_description_id(self, job_description_id: UUID) -> JobAnalysis | None:
+        """Return the latest analysis revision for a captured posting."""
+        return self.get_latest_for_job_description(job_description_id)
+
     def list_latest(
         self,
         *,
@@ -71,6 +96,15 @@ class JobAnalysisRepository(Repository[JobAnalysis]):
         """List source postings paired with their latest analysis revision."""
         statement = self._latest_statement().offset(offset).limit(limit)
         return list(self.session.execute(statement).tuples())
+
+    def list_analyzed_jobs(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> list[tuple[JobDescription, JobAnalysis]]:
+        """List captured postings paired with their latest analyses."""
+        return self.list_latest(offset=offset, limit=limit)
 
     def search_latest(
         self,
@@ -89,12 +123,12 @@ class JobAnalysisRepository(Repository[JobAnalysis]):
             pattern = f"%{keyword}%"
             statement = statement.where(
                 or_(
-                    JobDescription.raw_job_title.ilike(pattern),
+                    JobDescription.raw_title.ilike(pattern),
                     JobDescription.company_name.ilike(pattern),
                     JobDescription.location.ilike(pattern),
                     JobDescription.source_platform.ilike(pattern),
                     JobDescription.description_text.ilike(pattern),
-                    JobAnalysis.normalized_job_title.ilike(pattern),
+                    JobAnalysis.normalized_title.ilike(pattern),
                     cast(JobAnalysis.ats_keywords, String).ilike(pattern),
                     cast(JobAnalysis.domain_keywords, String).ilike(pattern),
                 )
@@ -103,8 +137,8 @@ class JobAnalysisRepository(Repository[JobAnalysis]):
             pattern = f"%{title}%"
             statement = statement.where(
                 or_(
-                    JobDescription.raw_job_title.ilike(pattern),
-                    JobAnalysis.normalized_job_title.ilike(pattern),
+                    JobDescription.raw_title.ilike(pattern),
+                    JobAnalysis.normalized_title.ilike(pattern),
                 )
             )
         if company:
@@ -115,6 +149,28 @@ class JobAnalysisRepository(Repository[JobAnalysis]):
             statement = statement.where(JobDescription.location.ilike(f"%{location}%"))
         statement = statement.offset(offset).limit(limit)
         return list(self.session.execute(statement).tuples())
+
+    def search_analyzed_jobs(
+        self,
+        *,
+        keyword: str | None = None,
+        title: str | None = None,
+        company: str | None = None,
+        platform: str | None = None,
+        location: str | None = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> list[tuple[JobDescription, JobAnalysis]]:
+        """Search analyzed jobs by source metadata and extracted keywords."""
+        return self.search_latest(
+            keyword=keyword,
+            title=title,
+            company=company,
+            platform=platform,
+            location=location,
+            offset=offset,
+            limit=limit,
+        )
 
     @staticmethod
     def _latest_statement() -> Any:

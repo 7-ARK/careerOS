@@ -15,6 +15,7 @@ from app.repositories.knowledge_base import (
     SkillRepository,
     WorkExperienceRepository,
 )
+from app.repositories.resume_intelligence import ResumeAnalysisRepository, ResumeDraftRepository
 
 __all__ = [
     "ApplicationHistoryRepository",
@@ -29,6 +30,8 @@ __all__ = [
     "ProjectRepository",
     "Repository",
     "ResumeVersionRepository",
+    "ResumeAnalysisRepository",
+    "ResumeDraftRepository",
     "SkillRepository",
     "WorkExperienceRepository",
 ]

@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 from app.features.job_analysis.analyzers.base import BaseJobAnalyzer
-from app.schemas import JobAnalysisPayload, JobDescriptionAnalysisInput
+from app.schemas import JobAnalysisResult, JobDescriptionInput
 
 
 class FutureOpenAIJobAnalyzer(BaseJobAnalyzer, ABC):
@@ -20,5 +20,5 @@ class FutureOpenAIJobAnalyzer(BaseJobAnalyzer, ABC):
         """Return the future prompt and structured-output contract version."""
 
     @abstractmethod
-    def analyze(self, job: JobDescriptionAnalysisInput) -> JobAnalysisPayload:
-        """Analyze a posting with a future OpenAI structured-output workflow."""
+    def analyze(self, job_description: JobDescriptionInput) -> JobAnalysisResult:
+        """Analyze a posting with future OpenAI structured outputs."""

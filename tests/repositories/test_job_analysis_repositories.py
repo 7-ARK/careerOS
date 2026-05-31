@@ -2,7 +2,7 @@
 
 import unittest
 
-from app.models import JobAnalysis, JobDescription, SeniorityLevel
+from app.models import JobAnalysis, SeniorityLevel
 from app.repositories import JobAnalysisRepository, JobDescriptionRepository
 from tests.support import create_test_engine, create_test_session
 
@@ -15,14 +15,12 @@ class JobAnalysisRepositoryTests(unittest.TestCase):
         self.session = create_test_session(self.engine)
         self.jobs = JobDescriptionRepository(self.session)
         self.analyses = JobAnalysisRepository(self.session)
-        self.job = self.jobs.add(
-            JobDescription(
-                raw_job_title="AI Engineer",
-                company_name="Example Labs",
-                location="Remote",
-                source_platform="LinkedIn",
-                description_text="Build AI services with Python and FastAPI.",
-            )
+        self.job = self.jobs.create_job_description(
+            raw_title="AI Engineer",
+            company_name="Example Labs",
+            location="Remote",
+            source_platform="linkedin",
+            description_text="Build AI services with Python and FastAPI.",
         )
         self.session.commit()
 
@@ -65,6 +63,21 @@ class JobAnalysisRepositoryTests(unittest.TestCase):
         self.assertEqual(len(matching), 1)
         self.assertEqual(matching[0][1].revision, 2)
 
+    def test_explicit_repository_contract_supports_source_crud_and_analysis_search(self) -> None:
+        self._create_analysis(revision=1, summary="AI engineering role")
+        self.session.commit()
+
+        self.assertEqual(self.jobs.get_job_description(self.job.id).id, self.job.id)
+        self.assertEqual(self.jobs.list_job_descriptions()[0].id, self.job.id)
+        self.assertEqual(
+            self.analyses.get_analysis_by_job_description_id(self.job.id).job_description_id,
+            self.job.id,
+        )
+        self.assertEqual(self.analyses.list_analyzed_jobs()[0][0].id, self.job.id)
+        self.assertEqual(
+            self.analyses.search_analyzed_jobs(title="AI Engineer")[0][0].id, self.job.id
+        )
+
     def _create_analysis(
         self,
         *,
@@ -73,15 +86,13 @@ class JobAnalysisRepositoryTests(unittest.TestCase):
         ats_keywords: list[str] | None = None,
     ) -> JobAnalysis:
         """Persist a compact analysis fixture."""
-        return self.analyses.add(
-            JobAnalysis(
-                job_description_id=self.job.id,
-                revision=revision,
-                analyzer_name="rule_based",
-                analyzer_version="test",
-                normalized_job_title="AI Engineer",
-                seniority_level=SeniorityLevel.MID,
-                ats_keywords=ats_keywords or [],
-                job_summary=summary,
-            )
+        return self.analyses.create_job_analysis(
+            job_description_id=self.job.id,
+            revision=revision,
+            analyzer_name="rule_based",
+            analyzer_version="test",
+            normalized_title="AI Engineer",
+            seniority_level=SeniorityLevel.MID_LEVEL,
+            ats_keywords=ats_keywords or [],
+            job_summary=summary,
         )

@@ -13,15 +13,15 @@ from app.schemas import (
     JobAnalysisCreate,
     JobAnalysisListFilters,
     JobAnalysisRead,
-    JobDescriptionAnalysisInput,
     JobDescriptionCreate,
+    JobDescriptionInput,
     JobDescriptionRead,
     JobDescriptionUpdate,
 )
 from app.services.exceptions import JobAnalysisNotFoundError, JobDescriptionNotFoundError
 
 
-class JobAnalyzerService:
+class JobAnalysisService:
     """Coordinate source capture, provider analysis, persistence, and discovery."""
 
     def __init__(
@@ -37,7 +37,7 @@ class JobAnalyzerService:
 
     def create_job_description(self, data: JobDescriptionCreate) -> JobDescriptionRead:
         """Capture a raw job posting for later analysis."""
-        job = self.job_descriptions.create(**self._values(data))
+        job = self.job_descriptions.create_job_description(**self._values(data))
         self._commit()
         return JobDescriptionRead.model_validate(job)
 
@@ -50,7 +50,7 @@ class JobAnalyzerService:
         job = self._require_job_description(job_description_id)
         incoming = self._values(data, partial=True)
         merged = {
-            "raw_job_title": job.raw_job_title,
+            "raw_title": job.raw_title,
             "company_name": job.company_name,
             "location": job.location,
             "source_platform": job.source_platform,
@@ -58,9 +58,10 @@ class JobAnalyzerService:
             "description_text": job.description_text,
             "salary_min": job.salary_min,
             "salary_max": job.salary_max,
-            "salary_currency": job.salary_currency,
+            "currency": job.currency,
             "employment_type": job.employment_type,
             "workplace_type": job.workplace_type,
+            "posted_at": job.posted_at,
             **incoming,
         }
         JobDescriptionCreate.model_validate(merged)
@@ -71,8 +72,8 @@ class JobAnalyzerService:
     def analyze_job_description(self, job_description_id: UUID) -> JobAnalysisRead:
         """Analyze a captured posting and persist a new intelligence revision."""
         job = self._require_job_description(job_description_id)
-        payload = self.analyzer.analyze(JobDescriptionAnalysisInput.model_validate(job))
-        analysis = self.job_analyses.create(
+        payload = self.analyzer.analyze(JobDescriptionInput.model_validate(job))
+        analysis = self.job_analyses.create_job_analysis(
             **self._values(
                 JobAnalysisCreate(
                     job_description_id=job.id,
@@ -96,6 +97,15 @@ class JobAnalyzerService:
             )
         return JobAnalysisRead.model_validate(analysis)
 
+    def analyze_and_store(self, data: JobDescriptionCreate) -> JobAnalysisRead:
+        """Capture, analyze, and persist a raw job posting in one workflow."""
+        job = self.create_job_description(data)
+        return self.analyze_job_description(job.id)
+
+    def get_analysis(self, job_description_id: UUID) -> JobAnalysisRead:
+        """Return the latest analysis revision for a captured posting."""
+        return self.get_analysis_by_job_description_id(job_description_id)
+
     def list_analyzed_jobs(
         self,
         *,
@@ -105,11 +115,24 @@ class JobAnalyzerService:
         """List captured postings paired with their latest analysis revision."""
         return self._analyzed_job_views(self.job_analyses.list_latest(offset=offset, limit=limit))
 
+    def list_jobs(
+        self,
+        *,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> list[AnalyzedJobRead]:
+        """List analyzed job postings."""
+        return self.list_analyzed_jobs(offset=offset, limit=limit)
+
     def search_analyzed_jobs(self, filters: JobAnalysisListFilters) -> list[AnalyzedJobRead]:
         """Search analyzed jobs by source metadata and extracted keywords."""
         return self._analyzed_job_views(
             self.job_analyses.search_latest(**filters.model_dump(exclude_none=True))
         )
+
+    def search_jobs(self, filters: JobAnalysisListFilters) -> list[AnalyzedJobRead]:
+        """Search analyzed job postings."""
+        return self.search_analyzed_jobs(filters)
 
     def _require_job_description(self, job_description_id: UUID) -> JobDescription:
         """Return a source posting or raise a service-level exception."""
@@ -143,3 +166,7 @@ class JobAnalyzerService:
         except Exception:
             self.session.rollback()
             raise
+
+
+# Backward-compatible name for the earlier Job Analyzer v1 draft.
+JobAnalyzerService = JobAnalysisService

@@ -6,7 +6,7 @@ from uuid import uuid4
 from app.schemas import JobAnalysisListFilters, JobDescriptionCreate
 from app.services import (
     JobAnalysisNotFoundError,
-    JobAnalyzerService,
+    JobAnalysisService,
     JobDescriptionNotFoundError,
 )
 from tests.support import create_test_engine, create_test_session
@@ -19,10 +19,10 @@ class JobAnalyzerServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.engine = create_test_engine()
         self.session = create_test_session(self.engine)
-        self.service = JobAnalyzerService(self.session)
+        self.service = JobAnalysisService(self.session)
         self.job = self.service.create_job_description(
             JobDescriptionCreate(
-                raw_job_title="Sr. AI Backend Engineer",
+                raw_title="Sr. AI Backend Engineer",
                 company_name="Example Labs",
                 location="Karachi",
                 source_platform="LinkedIn",
@@ -37,7 +37,7 @@ class JobAnalyzerServiceTests(unittest.TestCase):
     def test_analyze_stores_and_retrieves_latest_revision(self) -> None:
         first = self.service.analyze_job_description(self.job.id)
         second = self.service.analyze_job_description(self.job.id)
-        retrieved = self.service.get_analysis_by_job_description_id(self.job.id)
+        retrieved = self.service.get_analysis(self.job.id)
 
         self.assertEqual(first.revision, 1)
         self.assertEqual(second.revision, 2)
@@ -47,8 +47,8 @@ class JobAnalyzerServiceTests(unittest.TestCase):
     def test_list_and_search_analyzed_jobs(self) -> None:
         self.service.analyze_job_description(self.job.id)
 
-        listed = self.service.list_analyzed_jobs()
-        searched = self.service.search_analyzed_jobs(
+        listed = self.service.list_jobs()
+        searched = self.service.search_jobs(
             JobAnalysisListFilters(keyword="LangGraph", platform="LinkedIn", location="Karachi")
         )
 
@@ -63,3 +63,15 @@ class JobAnalyzerServiceTests(unittest.TestCase):
     def test_analyze_requires_existing_job_description(self) -> None:
         with self.assertRaises(JobDescriptionNotFoundError):
             self.service.analyze_job_description(uuid4())
+
+    def test_analyze_and_store_captures_source_and_analysis(self) -> None:
+        analysis = self.service.analyze_and_store(
+            JobDescriptionCreate(
+                raw_title="Automation Engineer",
+                company_name="Workflow Corp",
+                description_text="Build automation workflows with Python and webhooks.",
+            )
+        )
+
+        self.assertEqual(analysis.normalized_title, "Automation Engineer")
+        self.assertIn("Automation", analysis.required_skills)

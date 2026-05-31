@@ -20,11 +20,22 @@ The engine follows the same layering used by the Candidate Knowledge Base:
 * Pydantic schemas validate create, update, read, provider, and search contracts.
 * Repositories own CRUD operations, latest-revision queries, filtering, and
   search across source metadata and extracted signals.
-* `JobAnalyzerService` owns transaction boundaries and API-ready workflows.
+* `JobAnalysisService` owns transaction boundaries and API-ready workflows.
 * `BaseJobAnalyzer` defines a provider-independent extraction interface.
 * `RuleBasedJobAnalyzer` implements deterministic local extraction.
 * `FutureOpenAIJobAnalyzer` reserves the interface for structured AI output
   without importing or calling an OpenAI client.
+
+## Data Flow
+
+1. `JobDescriptionCreate` validates captured posting metadata and source text.
+2. `JobAnalysisService.create_job_description` stores the original posting.
+3. `JobAnalysisService.analyze_job_description` passes a `JobDescriptionInput`
+   snapshot to the configured analyzer.
+4. The analyzer emits a provider-independent `JobAnalysisResult`.
+5. The service stores a versioned `JobAnalysis` revision.
+6. Search and matching consumers read the latest revision while earlier
+   revisions remain available for audit and re-analysis history.
 
 ## Extraction Strategy
 
@@ -34,7 +45,7 @@ Rule-based v1:
 * Infers seniority from title markers and explicit years of experience.
 * Reads responsibility, qualification, and preference sections when present.
 * Extracts common programming languages, frameworks, cloud tools, AI concepts,
-  domain terms, and soft skills.
+  automation platforms, scraping tools, domain terms, and soft skills.
 * Separates required from preferred skills and technologies using local context.
 * Identifies missing information in weak or incomplete postings.
 * Flags explicit phrases that deserve candidate review.
@@ -45,7 +56,9 @@ The service does not calculate a candidate-job score in v1.
 ## Database Design
 
 `JobDescription` stores source-platform metadata, the complete posting text,
-salary fields, employment type, and workplace arrangement.
+salary fields, employment type, workplace arrangement, and optional posting
+timestamp. Canonical metadata enums are available to callers, but source fields
+remain string-backed so custom integration values can be stored safely.
 
 `JobAnalysis` stores one derived intelligence snapshot per revision. Each record
 includes provider name and version, allowing deterministic and future AI
@@ -61,9 +74,13 @@ catalogs should expand based on measured product usage.
 
 ## Future OpenAI Analyzer
 
+OpenAI is intentionally not called in v1. Local deterministic extraction keeps
+development and tests reproducible, avoids an API-key requirement, and gives us
+a stable structured contract to evaluate before introducing model variability.
+
 A future OpenAI implementation should subclass `FutureOpenAIJobAnalyzer`, use
-structured output matching `JobAnalysisPayload`, and retain provider and prompt
-version metadata. It should remain injectable through `JobAnalyzerService` so
+structured output matching `JobAnalysisResult`, and retain provider and prompt
+version metadata. It should remain injectable through `JobAnalysisService` so
 tests and local workflows can continue using deterministic extraction.
 
 ## Resume Intelligence Connection

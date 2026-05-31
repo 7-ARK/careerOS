@@ -27,3 +27,15 @@ class JobDescriptionNotFoundError(JobAnalysisError):
 
 class JobAnalysisNotFoundError(JobAnalysisError):
     """Raised when a captured posting has not been analyzed."""
+
+
+class ResumeIntelligenceError(Exception):
+    """Base exception for resume-intelligence operations."""
+
+
+class ResumeAnalysisNotFoundError(ResumeIntelligenceError):
+    """Raised when a persisted resume analysis cannot be found."""
+
+
+class ResumeDraftNotFoundError(ResumeIntelligenceError):
+    """Raised when a structured resume draft cannot be found."""

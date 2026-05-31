@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from app.schemas import JobAnalysisPayload, JobDescriptionAnalysisInput
+from app.schemas import JobAnalysisResult, JobDescriptionInput
 
 
 class BaseJobAnalyzer(ABC):
@@ -19,5 +19,5 @@ class BaseJobAnalyzer(ABC):
         """Return the provider implementation version."""
 
     @abstractmethod
-    def analyze(self, job: JobDescriptionAnalysisInput) -> JobAnalysisPayload:
+    def analyze(self, job_description: JobDescriptionInput) -> JobAnalysisResult:
         """Analyze a source posting without persisting it."""

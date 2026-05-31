@@ -6,8 +6,8 @@ import re
 from collections.abc import Iterable, Mapping
 
 from app.features.job_analysis.analyzers.base import BaseJobAnalyzer
-from app.models.enums import JobWorkplaceType, SeniorityLevel
-from app.schemas import JobAnalysisPayload, JobDescriptionAnalysisInput
+from app.models.enums import SeniorityLevel, WorkplaceType
+from app.schemas import JobAnalysisResult, JobDescriptionInput
 
 PREFERRED_MARKERS = (
     "bonus",
@@ -52,12 +52,23 @@ TECHNOLOGIES: dict[str, tuple[str, ...]] = {
     "LangChain": ("langchain",),
     "LangGraph": ("langgraph",),
     "OpenAI": ("openai",),
-    "REST APIs": ("rest api", "restful api"),
+    "APIs": ("api", "rest api", "restful api"),
+    "Webhooks": ("webhook",),
     "GraphQL": ("graphql",),
     "Kafka": ("kafka",),
     "Spark": ("apache spark", "spark"),
     "Airflow": ("airflow",),
     "Snowflake": ("snowflake",),
+    "Embeddings": ("embedding",),
+    "Selenium": ("selenium",),
+    "Playwright": ("playwright",),
+    "BeautifulSoup": ("beautifulsoup", "beautiful soup"),
+    "GitHub": ("github",),
+    "n8n": ("n8n",),
+    "Zapier": ("zapier",),
+    "Make": ("make.com",),
+    "Slack": ("slack",),
+    "Amazon Seller Central": ("amazon seller central",),
 }
 
 SKILLS: dict[str, tuple[str, ...]] = {
@@ -81,6 +92,10 @@ SKILLS: dict[str, tuple[str, ...]] = {
     "System Design": ("system design",),
     "Data Structures": ("data structure",),
     "Algorithms": ("algorithm",),
+    "Automation": ("automation", "automated workflow"),
+    "Web Scraping": ("web scraping", "scraping"),
+    "AI Agents": ("ai agent", "agent workflow", "agents"),
+    "Workflow Design": ("workflow",),
 }
 
 SOFT_SKILLS: dict[str, tuple[str, ...]] = {
@@ -109,6 +124,13 @@ RED_FLAG_RULES: dict[str, str] = {
     "unpaid": "Mentions unpaid work",
     "wear many hats": "Suggests an unusually broad role scope",
     "always on": "May imply an always-on availability expectation",
+    "24/7": "May imply a 24/7 availability expectation",
+    "equity only": "Mentions equity-only compensation",
+    "competitive compensation": "Uses vague compensation wording",
+    "competitive salary": "Uses vague compensation wording",
+    "unpaid test": "Mentions an unpaid test task",
+    "unpaid assignment": "Mentions an unpaid test task",
+    "too good to be true": "Uses suspicious wording",
 }
 
 SECTION_HEADINGS = {
@@ -159,14 +181,15 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
         """Return the extraction ruleset version."""
         return "1.0.0"
 
-    def analyze(self, job: JobDescriptionAnalysisInput) -> JobAnalysisPayload:
+    def analyze(self, job_description: JobDescriptionInput) -> JobAnalysisResult:
         """Convert raw job text into deterministic structured intelligence."""
+        job = job_description
         text = job.description_text.strip()
         contexts = self._contexts(text)
         sections = self._sections(text)
-        normalized_title = self._normalize_title(job.raw_job_title)
-        experience = self._estimated_experience(text)
-        seniority = self._seniority(normalized_title, text, experience)
+        normalized_title = self._normalize_title(job.raw_title)
+        experience_min, experience_max = self._estimated_experience(text)
+        seniority = self._seniority(normalized_title, text, experience_min)
         required_skills, preferred_skills = self._classified_keywords(contexts, SKILLS)
         required_technologies, preferred_technologies = self._classified_keywords(
             contexts, TECHNOLOGIES
@@ -176,7 +199,7 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
         responsibilities = self._responsibilities(sections, contexts)
         qualifications = self._qualifications(sections)
         inferred_workplace = job.workplace_type or self._workplace_type(text)
-        red_flags = self._red_flags(text)
+        red_flags = self._red_flags(text, normalized_title)
         missing_information = self._missing_information(
             job=job,
             text=text,
@@ -184,7 +207,7 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
             qualifications=qualifications,
             required_skills=required_skills,
             required_technologies=required_technologies,
-            experience=experience,
+            experience_min=experience_min,
             inferred_workplace=inferred_workplace,
         )
         ats_keywords = self._deduplicate(
@@ -199,27 +222,30 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
             ]
         )
         signals = {
-            "normalized_job_title": normalized_title,
+            "normalized_title": normalized_title,
             "seniority_level": seniority.value,
-            "estimated_experience_level": experience,
+            "estimated_years_min": experience_min,
+            "estimated_years_max": experience_max,
             "required_skills": required_skills,
             "preferred_skills": preferred_skills,
             "required_technologies": required_technologies,
             "preferred_technologies": preferred_technologies,
             "domain_keywords": domain_keywords,
             "location": job.location,
-            "workplace_type": inferred_workplace.value if inferred_workplace else None,
+            "workplace_type": str(inferred_workplace) if inferred_workplace else None,
             "employment_type": job.employment_type,
             "salary": {
                 "minimum": str(job.salary_min) if job.salary_min is not None else None,
                 "maximum": str(job.salary_max) if job.salary_max is not None else None,
-                "currency": job.salary_currency,
+                "currency": job.currency,
             },
             "scoring_ready": True,
         }
-        return JobAnalysisPayload(
-            normalized_job_title=normalized_title,
-            seniority_level=seniority,
+        return JobAnalysisResult(
+            normalized_title=normalized_title,
+            seniority_level=seniority.value,
+            estimated_years_min=experience_min,
+            estimated_years_max=experience_max,
             required_skills=required_skills,
             preferred_skills=preferred_skills,
             required_technologies=required_technologies,
@@ -231,7 +257,6 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
             ats_keywords=ats_keywords,
             red_flags=red_flags,
             missing_information=missing_information,
-            estimated_experience_level=experience,
             job_summary=self._summary(
                 job,
                 normalized_title,
@@ -334,7 +359,7 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
     @staticmethod
     def _clean_line(line: str) -> str:
         """Remove common list prefixes and surrounding whitespace."""
-        return re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", line).strip()
+        return re.sub(r"^\s*(?:[-*]|\u2022|\d+[.)])\s*", "", line).strip()
 
     @classmethod
     def _responsibilities(
@@ -358,34 +383,34 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
         return cls._deduplicate([*sections["qualifications"], *sections["preferred"]])
 
     @staticmethod
-    def _estimated_experience(text: str) -> str | None:
-        """Extract the first explicit years-of-experience requirement."""
+    def _estimated_experience(text: str) -> tuple[int | None, int | None]:
+        """Extract numeric years-of-experience bounds from the first requirement."""
         match = re.search(
             r"\b(\d{1,2})\s*(?:-\s*(\d{1,2})|\+)?\s*(?:years?|yrs?)(?:\s+of)?\s+experience\b",
             text,
             flags=re.I,
         )
         if not match:
-            return None
+            return None, None
         lower, upper = match.groups()
         if upper:
-            return f"{lower}-{upper} years"
+            return int(lower), int(upper)
         if "+" in match.group(0):
-            return f"{lower}+ years"
-        return f"{lower} years"
+            return int(lower), None
+        return int(lower), int(lower)
 
     @staticmethod
     def _seniority(
         normalized_title: str,
         text: str,
-        experience: str | None,
+        experience_min: int | None,
     ) -> SeniorityLevel:
         """Infer normalized seniority from title, text, and experience."""
         title = normalized_title.lower()
         ordered_title_rules = (
-            ("intern", SeniorityLevel.INTERNSHIP),
-            ("junior", SeniorityLevel.ENTRY),
-            ("entry", SeniorityLevel.ENTRY),
+            ("intern", SeniorityLevel.INTERN),
+            ("junior", SeniorityLevel.JUNIOR),
+            ("entry", SeniorityLevel.JUNIOR),
             ("principal", SeniorityLevel.PRINCIPAL),
             ("staff", SeniorityLevel.STAFF),
             ("lead", SeniorityLevel.LEAD),
@@ -398,51 +423,59 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
         for marker, seniority in ordered_title_rules:
             if marker in title:
                 return seniority
-        if experience:
-            years = int(re.match(r"\d+", experience).group())
-            if years >= 8:
+        if experience_min is not None:
+            if experience_min >= 8:
                 return SeniorityLevel.SENIOR
-            if years >= 3:
-                return SeniorityLevel.MID
-            return SeniorityLevel.ENTRY
+            if experience_min >= 3:
+                return SeniorityLevel.MID_LEVEL
+            return SeniorityLevel.JUNIOR
         if re.search(r"\bmid[- ]level\b", text, flags=re.I):
-            return SeniorityLevel.MID
+            return SeniorityLevel.MID_LEVEL
         return SeniorityLevel.UNKNOWN
 
     @staticmethod
-    def _workplace_type(text: str) -> JobWorkplaceType | None:
+    def _workplace_type(text: str) -> WorkplaceType | None:
         """Infer workplace arrangement if the source did not supply one."""
         lowered = text.lower()
         if "hybrid" in lowered:
-            return JobWorkplaceType.HYBRID
+            return WorkplaceType.HYBRID
         if "remote" in lowered:
-            return JobWorkplaceType.REMOTE
+            return WorkplaceType.REMOTE
         if "on-site" in lowered or "onsite" in lowered or "in office" in lowered:
-            return JobWorkplaceType.ONSITE
+            return WorkplaceType.ONSITE
         return None
 
     @staticmethod
-    def _red_flags(text: str) -> list[str]:
+    def _red_flags(text: str, normalized_title: str) -> list[str]:
         """Flag explicit phrases that deserve candidate review."""
         lowered = text.lower()
-        return [message for phrase, message in RED_FLAG_RULES.items() if phrase in lowered]
+        red_flags = [message for phrase, message in RED_FLAG_RULES.items() if phrase in lowered]
+        experience_min, _ = RuleBasedJobAnalyzer._estimated_experience(text)
+        junior_title = re.search(r"\b(?:intern|junior|entry[- ]level)\b", normalized_title, re.I)
+        if junior_title and experience_min is not None and experience_min >= 5:
+            red_flags.append("Contains unrealistic requirements for the advertised seniority")
+        return RuleBasedJobAnalyzer._deduplicate(red_flags)
 
     @staticmethod
     def _missing_information(
         *,
-        job: JobDescriptionAnalysisInput,
+        job: JobDescriptionInput,
         text: str,
         responsibilities: list[str],
         qualifications: list[str],
         required_skills: list[str],
         required_technologies: list[str],
-        experience: str | None,
-        inferred_workplace: JobWorkplaceType | None,
+        experience_min: int | None,
+        inferred_workplace: WorkplaceType | str | None,
     ) -> list[str]:
         """Identify absent fields and weak extraction signals."""
         missing = []
         if len(text) < 80:
             missing.append("detailed job description")
+        if not job.company_name:
+            missing.append("company name")
+        if not job.location:
+            missing.append("location")
         if job.salary_min is None and job.salary_max is None:
             missing.append("salary range")
         if not job.employment_type:
@@ -455,13 +488,13 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
             missing.append("qualifications")
         if not required_skills and not required_technologies:
             missing.append("required skills or technologies")
-        if experience is None:
+        if experience_min is None:
             missing.append("experience requirement")
         return missing
 
     @staticmethod
     def _summary(
-        job: JobDescriptionAnalysisInput,
+        job: JobDescriptionInput,
         normalized_title: str,
         seniority: SeniorityLevel,
         required_skills: list[str],
@@ -469,7 +502,7 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
     ) -> str:
         """Build a compact deterministic summary for downstream consumers."""
         keywords = [*required_skills, *required_technologies][:6]
-        summary = f"{normalized_title} role at {job.company_name}"
+        summary = f"{normalized_title} role at {job.company_name or 'an unspecified company'}"
         if seniority is not SeniorityLevel.UNKNOWN:
             summary += f" with {seniority.value}-level scope"
         if keywords:

@@ -8,18 +8,27 @@ from app.services.exceptions import (
     JobDescriptionNotFoundError,
     KnowledgeBaseError,
     ProfileNotFoundError,
+    ResumeAnalysisNotFoundError,
+    ResumeDraftNotFoundError,
+    ResumeIntelligenceError,
 )
-from app.services.job_analysis import JobAnalyzerService
+from app.services.job_analysis import JobAnalysisService, JobAnalyzerService
 from app.services.knowledge_base import KnowledgeBaseService
+from app.services.resume_intelligence import ResumeIntelligenceService
 
 __all__ = [
     "DuplicateSkillError",
     "InvalidResumeVersionError",
     "JobAnalysisError",
     "JobAnalysisNotFoundError",
+    "JobAnalysisService",
     "JobAnalyzerService",
     "JobDescriptionNotFoundError",
     "KnowledgeBaseError",
     "KnowledgeBaseService",
     "ProfileNotFoundError",
+    "ResumeAnalysisNotFoundError",
+    "ResumeDraftNotFoundError",
+    "ResumeIntelligenceError",
+    "ResumeIntelligenceService",
 ]
