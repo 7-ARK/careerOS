@@ -6,6 +6,7 @@ from enum import StrEnum
 class ApplicationStatus(StrEnum):
     """Lifecycle states for a job application."""
 
+    NOT_APPLIED = "not_applied"
     SAVED = "saved"
     APPLIED = "applied"
     INTERVIEWING = "interviewing"
@@ -118,3 +119,26 @@ class MatchQuality(StrEnum):
     MODERATE = "moderate"
     WEAK = "weak"
     LIMITED = "limited"
+
+
+class DocumentFormat(StrEnum):
+    """Supported locally generated resume document formats."""
+
+    MARKDOWN = "markdown"
+    DOCX = "docx"
+    PDF = "pdf"
+
+
+class DocumentGenerationStatus(StrEnum):
+    """Lifecycle states for generated resume files."""
+
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class ResumeTemplateName(StrEnum):
+    """Code-based ATS-safe resume templates."""
+
+    CLEAN_ATS = "clean_ats"
+    MODERN_PROFESSIONAL = "modern_professional"

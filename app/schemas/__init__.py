@@ -1,5 +1,16 @@
 """Validation and serialization schemas for application boundaries."""
 
+from app.schemas.application_tracking import (
+    ApplicationRecordCreate,
+    ApplicationRecordRead,
+    ApplicationRecordUpdate,
+)
+from app.schemas.document_generation import (
+    DocumentGenerationRequest,
+    DocumentGenerationResult,
+    GeneratedDocumentCreate,
+    GeneratedDocumentRead,
+)
 from app.schemas.job_analysis import (
     AnalyzedJobRead,
     JobAnalysisCreate,
@@ -65,6 +76,9 @@ __all__ = [
     "ApplicationHistoryCreate",
     "ApplicationHistoryRead",
     "ApplicationHistoryUpdate",
+    "ApplicationRecordCreate",
+    "ApplicationRecordRead",
+    "ApplicationRecordUpdate",
     "CandidateProfileCreate",
     "CandidateProfileRead",
     "CandidateProfileUpdate",
@@ -78,6 +92,10 @@ __all__ = [
     "EducationRead",
     "EducationUpdate",
     "EvidenceReference",
+    "DocumentGenerationRequest",
+    "DocumentGenerationResult",
+    "GeneratedDocumentCreate",
+    "GeneratedDocumentRead",
     "JobAnalysisCreate",
     "JobAnalysisListFilters",
     "JobAnalysisPayload",

@@ -1,7 +1,13 @@
 """Cross-feature application services and orchestration logic."""
 
+from app.services.application_tracker import ApplicationTrackerService
 from app.services.exceptions import (
+    ApplicationRecordNotFoundError,
+    ApplicationTrackerError,
+    DocumentGenerationError,
     DuplicateSkillError,
+    GeneratedDocumentNotFoundError,
+    InvalidApplicationReferenceError,
     InvalidResumeVersionError,
     JobAnalysisError,
     JobAnalysisNotFoundError,
@@ -9,8 +15,10 @@ from app.services.exceptions import (
     KnowledgeBaseError,
     ProfileNotFoundError,
     ResumeAnalysisNotFoundError,
+    ResumeDraftNotApprovedError,
     ResumeDraftNotFoundError,
     ResumeIntelligenceError,
+    UnsupportedDocumentFormatError,
 )
 from app.services.job_analysis import JobAnalysisService, JobAnalyzerService
 from app.services.knowledge_base import KnowledgeBaseService
@@ -18,7 +26,13 @@ from app.services.resume_intelligence import ResumeIntelligenceService
 
 __all__ = [
     "DuplicateSkillError",
+    "ApplicationRecordNotFoundError",
+    "ApplicationTrackerError",
+    "ApplicationTrackerService",
+    "DocumentGenerationError",
+    "GeneratedDocumentNotFoundError",
     "InvalidResumeVersionError",
+    "InvalidApplicationReferenceError",
     "JobAnalysisError",
     "JobAnalysisNotFoundError",
     "JobAnalysisService",
@@ -29,6 +43,8 @@ __all__ = [
     "ProfileNotFoundError",
     "ResumeAnalysisNotFoundError",
     "ResumeDraftNotFoundError",
+    "ResumeDraftNotApprovedError",
     "ResumeIntelligenceError",
     "ResumeIntelligenceService",
+    "UnsupportedDocumentFormatError",
 ]

@@ -30,6 +30,8 @@ from app.models.enums import (
 )
 
 if TYPE_CHECKING:
+    from app.models.application_tracking import ApplicationRecord
+    from app.models.document_generation import GeneratedDocument
     from app.models.job_analysis import JobDescription
     from app.models.resume_intelligence import ResumeAnalysis, ResumeDraft
 
@@ -79,6 +81,12 @@ class CandidateProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="candidate_profile", cascade="all, delete-orphan"
     )
     resume_drafts: Mapped[list["ResumeDraft"]] = relationship(
+        back_populates="candidate_profile", cascade="all, delete-orphan"
+    )
+    generated_documents: Mapped[list["GeneratedDocument"]] = relationship(
+        back_populates="candidate_profile", cascade="all, delete-orphan"
+    )
+    application_records: Mapped[list["ApplicationRecord"]] = relationship(
         back_populates="candidate_profile", cascade="all, delete-orphan"
     )
 

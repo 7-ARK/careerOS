@@ -11,6 +11,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.models.enums import ResumeDraftStatus
 
 if TYPE_CHECKING:
+    from app.models.document_generation import GeneratedDocument
     from app.models.job_analysis import JobAnalysis
     from app.models.knowledge_base import CandidateProfile
 
@@ -146,3 +147,6 @@ class ResumeDraft(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     resume_analysis: Mapped[ResumeAnalysis] = relationship(back_populates="drafts")
     candidate_profile: Mapped["CandidateProfile"] = relationship(back_populates="resume_drafts")
     job_analysis: Mapped["JobAnalysis"] = relationship(back_populates="resume_drafts")
+    generated_documents: Mapped[list["GeneratedDocument"]] = relationship(
+        back_populates="resume_draft", cascade="all, delete-orphan"
+    )

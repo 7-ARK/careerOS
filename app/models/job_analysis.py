@@ -21,6 +21,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.application_tracking import ApplicationRecord
+    from app.models.document_generation import GeneratedDocument
     from app.models.knowledge_base import ApplicationHistory
     from app.models.resume_intelligence import ResumeAnalysis, ResumeDraft
 
@@ -58,6 +60,9 @@ class JobDescription(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         order_by="JobAnalysis.revision",
     )
     applications: Mapped[list["ApplicationHistory"]] = relationship(
+        back_populates="job_description"
+    )
+    application_records: Mapped[list["ApplicationRecord"]] = relationship(
         back_populates="job_description"
     )
 
@@ -123,4 +128,10 @@ class JobAnalysis(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     resume_drafts: Mapped[list["ResumeDraft"]] = relationship(
         back_populates="job_analysis", cascade="all, delete-orphan"
+    )
+    generated_documents: Mapped[list["GeneratedDocument"]] = relationship(
+        back_populates="job_analysis", cascade="all, delete-orphan"
+    )
+    application_records: Mapped[list["ApplicationRecord"]] = relationship(
+        back_populates="job_analysis"
     )

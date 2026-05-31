@@ -39,3 +39,31 @@ class ResumeAnalysisNotFoundError(ResumeIntelligenceError):
 
 class ResumeDraftNotFoundError(ResumeIntelligenceError):
     """Raised when a structured resume draft cannot be found."""
+
+
+class DocumentGenerationError(Exception):
+    """Base exception for local resume-document generation."""
+
+
+class GeneratedDocumentNotFoundError(DocumentGenerationError):
+    """Raised when generated-document metadata cannot be found."""
+
+
+class ResumeDraftNotApprovedError(DocumentGenerationError):
+    """Raised when document generation targets an unapproved structured draft."""
+
+
+class UnsupportedDocumentFormatError(DocumentGenerationError):
+    """Raised when no exporter is configured for a requested document format."""
+
+
+class ApplicationTrackerError(Exception):
+    """Base exception for lightweight application-tracker operations."""
+
+
+class ApplicationRecordNotFoundError(ApplicationTrackerError):
+    """Raised when a lightweight application record cannot be found."""
+
+
+class InvalidApplicationReferenceError(ApplicationTrackerError):
+    """Raised when linked tracker records do not belong together."""
