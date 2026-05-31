@@ -13,6 +13,8 @@ from app.services.exceptions import (
     JobAnalysisNotFoundError,
     JobDescriptionNotFoundError,
     KnowledgeBaseError,
+    PipelineError,
+    PipelineExecutionError,
     ProfileNotFoundError,
     ResumeAnalysisNotFoundError,
     ResumeDraftNotApprovedError,
@@ -23,6 +25,7 @@ from app.services.exceptions import (
 from app.services.job_analysis import JobAnalysisService, JobAnalyzerService
 from app.services.job_import import ManualJobImportService
 from app.services.knowledge_base import KnowledgeBaseService
+from app.services.pipeline import ApplicationPipelineService
 from app.services.resume_intelligence import ResumeIntelligenceService
 
 __all__ = [
@@ -30,6 +33,7 @@ __all__ = [
     "ApplicationRecordNotFoundError",
     "ApplicationTrackerError",
     "ApplicationTrackerService",
+    "ApplicationPipelineService",
     "DocumentGenerationError",
     "GeneratedDocumentNotFoundError",
     "InvalidResumeVersionError",
@@ -43,6 +47,8 @@ __all__ = [
     "KnowledgeBaseService",
     "ManualJobImportService",
     "ProfileNotFoundError",
+    "PipelineError",
+    "PipelineExecutionError",
     "ResumeAnalysisNotFoundError",
     "ResumeDraftNotFoundError",
     "ResumeDraftNotApprovedError",

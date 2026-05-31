@@ -143,3 +143,20 @@ class ResumeTemplateName(StrEnum):
 
     CLEAN_ATS = "clean_ats"
     MODERN_PROFESSIONAL = "modern_professional"
+
+
+class PipelineStage(StrEnum):
+    """Named stages in the manual end-to-end application pipeline."""
+
+    JOB_IMPORT = "job_import"
+    RESUME_ANALYSIS = "resume_analysis"
+    RESUME_DRAFT = "resume_draft"
+    RESUME_DRAFT_APPROVAL = "resume_draft_approval"
+    DOCUMENT_GENERATION = "document_generation"
+    APPLICATION_RECORD_UPDATE = "application_record_update"
+
+
+class PipelineStatus(StrEnum):
+    """Completion states returned by a successful pipeline run."""
+
+    COMPLETED = "completed"

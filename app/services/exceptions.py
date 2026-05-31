@@ -67,3 +67,16 @@ class ApplicationRecordNotFoundError(ApplicationTrackerError):
 
 class InvalidApplicationReferenceError(ApplicationTrackerError):
     """Raised when linked tracker records do not belong together."""
+
+
+class PipelineError(Exception):
+    """Base exception for end-to-end application-pipeline operations."""
+
+
+class PipelineExecutionError(PipelineError):
+    """Raised with the exact stage that failed during pipeline execution."""
+
+    def __init__(self, stage: object, message: str) -> None:
+        """Preserve the failed stage and expose a concise error message."""
+        self.stage = stage
+        super().__init__(f"pipeline failed during {stage}: {message}")

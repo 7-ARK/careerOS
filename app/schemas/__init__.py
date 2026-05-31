@@ -58,6 +58,7 @@ from app.schemas.knowledge_base import (
     WorkExperienceRead,
     WorkExperienceUpdate,
 )
+from app.schemas.pipeline import ManualJobPipelineRequest, ManualJobPipelineResult
 from app.schemas.resume_intelligence import (
     EvidenceReference,
     KeywordCoverage,
@@ -112,6 +113,8 @@ __all__ = [
     "MatchBreakdown",
     "ManualJobImportRequest",
     "ManualJobImportResult",
+    "ManualJobPipelineRequest",
+    "ManualJobPipelineResult",
     "PreferenceCreate",
     "PreferenceRead",
     "PreferenceUpdate",

@@ -107,7 +107,7 @@ class DocumentGenerationService:
         except Exception as exc:
             self._record_failure(document, output_path, exc)
             raise DocumentGenerationError(
-                f"failed to generate {request.output_format} resume"
+                f"failed to generate {request.output_format} resume: {exc}"
             ) from exc
         return DocumentGenerationResult(document=GeneratedDocumentRead.model_validate(document))
 
