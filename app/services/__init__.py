@@ -24,6 +24,7 @@ from app.services.exceptions import (
 )
 from app.services.job_analysis import JobAnalysisService, JobAnalyzerService
 from app.services.job_import import ManualJobImportService
+from app.services.job_url_extraction import JobUrlPipelineService
 from app.services.knowledge_base import KnowledgeBaseService
 from app.services.pipeline import ApplicationPipelineService
 from app.services.resume_intelligence import ResumeIntelligenceService
@@ -43,6 +44,7 @@ __all__ = [
     "JobAnalysisService",
     "JobAnalyzerService",
     "JobDescriptionNotFoundError",
+    "JobUrlPipelineService",
     "KnowledgeBaseError",
     "KnowledgeBaseService",
     "ManualJobImportService",

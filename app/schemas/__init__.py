@@ -26,6 +26,12 @@ from app.schemas.job_analysis import (
     JobDescriptionUpdate,
 )
 from app.schemas.job_import import ManualJobImportRequest, ManualJobImportResult
+from app.schemas.job_url_extraction import (
+    JobUrlExtractionRequest,
+    JobUrlExtractionResult,
+    JobUrlPipelineRequest,
+    JobUrlPipelineResult,
+)
 from app.schemas.knowledge_base import (
     ApplicationHistoryCreate,
     ApplicationHistoryRead,
@@ -109,6 +115,10 @@ __all__ = [
     "JobDescriptionInput",
     "JobDescriptionRead",
     "JobDescriptionUpdate",
+    "JobUrlExtractionRequest",
+    "JobUrlExtractionResult",
+    "JobUrlPipelineRequest",
+    "JobUrlPipelineResult",
     "KeywordCoverage",
     "MatchBreakdown",
     "ManualJobImportRequest",
