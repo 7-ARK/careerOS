@@ -1,1 +1,0 @@
-"""Future Indeed integration package."""

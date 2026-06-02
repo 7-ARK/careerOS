@@ -6,10 +6,10 @@ returns structured responses suitable for a future frontend.
 
 ## Run Locally
 
-Set a PostgreSQL-compatible database URL:
+Add a PostgreSQL-compatible database URL to the ignored local `backend/.env` file:
 
-```powershell
-$env:DATABASE_URL="postgresql+psycopg://user:password@localhost/careeros"
+```dotenv
+DATABASE_URL=postgresql+psycopg://user:password@localhost/careeros
 ```
 
 Start the development server:

@@ -116,6 +116,18 @@ class FastApiEndpointTests(unittest.TestCase):
             {"status": "ok", "service": "careerOS", "version": "0.1.0"},
         )
 
+    def test_cors_preflight_allows_local_frontend(self) -> None:
+        response = self.client.options(
+            "/api/v1/pipeline/url",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["access-control-allow-origin"], "http://localhost:3000")
+
     def test_manual_pipeline_endpoint(self) -> None:
         result = _pipeline_result()
         app.dependency_overrides[get_application_pipeline_service] = lambda: (

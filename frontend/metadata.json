@@ -1,0 +1,6 @@
+{
+  "name": "Career OS",
+  "description": "The custom career workflow tool to scan job descriptions, match profiles, and generate tailored resumes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

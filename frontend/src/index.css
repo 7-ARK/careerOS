@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..900;1,8..60,300..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Geist', 'Geist Fallback', sans-serif;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
+
+  /* Premium Arc dark color variables mapping to Tailwind classes */
+  --color-background: #0D1110;
+  --color-foreground: #F2F1EC;
+  
+  --color-card: #121816;
+  --color-card-foreground: #F2F1EC;
+  
+  --color-popover: #121816;
+  --color-popover-foreground: #F2F1EC;
+  
+  --color-primary: #93A86B;
+  --color-primary-foreground: #101210;
+  
+  --color-secondary: #171F1C;
+  --color-secondary-foreground: #A9AAA3;
+  
+  --color-muted: #171F1C;
+  --color-muted-foreground: #A9AAA3;
+  
+  --color-accent: #728257;
+  --color-accent-foreground: #F2F1EC;
+  
+  --color-destructive: #C85A5A;
+  --color-destructive-foreground: #F2F1EC;
+  
+  --color-border: #2A322E;
+  --color-input: #121816;
+  --color-ring: #93A86B;
+
+  /* Premium luxury palette modifiers */
+  --color-brand-amber: #C9A86A;
+  --color-brand-clay: #A87962;
+  --color-brand-border: #2A322E;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* Scroll smooth styling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar designs */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0D1110;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A322E;
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #37413C;
+}
