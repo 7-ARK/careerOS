@@ -15,7 +15,7 @@ class MarkdownRenderer:
         for section in resume.sections:
             lines.extend(("", f"## {section.title}", ""))
             if section.inline_items:
-                lines.append(", ".join(section.inline_items))
+                lines.extend(section.inline_items)
             for entry in section.entries:
                 lines.extend(self._entry_lines(entry))
         return "\n".join(lines).rstrip() + "\n"

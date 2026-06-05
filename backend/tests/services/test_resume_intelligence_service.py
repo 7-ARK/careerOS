@@ -172,7 +172,13 @@ class ResumeIntelligenceServiceTests(unittest.TestCase):
         self.assertTrue(draft.projects_section)
         self.assertTrue(draft.experience_section)
         self.assertIn("Kubernetes", draft.omitted_keywords)
-        self.assertNotIn("Kubernetes", [skill["name"] for skill in draft.skills_section])
+        skill_names = [
+            skill
+            for group in draft.skills_section
+            for skill in group.get("skills", [group.get("name")])
+            if skill
+        ]
+        self.assertNotIn("Kubernetes", skill_names)
         self.assertTrue(any("Do not claim Kubernetes" in note for note in draft.truthfulness_notes))
         updated = self.service.update_resume_draft_status(draft.id, ResumeDraftStatus.REVIEWED)
         self.assertEqual(updated.status, ResumeDraftStatus.REVIEWED)

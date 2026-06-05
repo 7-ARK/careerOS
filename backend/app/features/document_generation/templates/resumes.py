@@ -32,6 +32,10 @@ class StructuredResumeTemplate(ResumeTemplate):
         available = {
             "skills": self._skills(draft.skills_section),
             "experience": self._experience(draft.experience_section),
+            "additional_experience": self._experience(
+                draft.experience_section,
+                additional=True,
+            ),
             "projects": self._projects(draft.projects_section),
             "education": self._education(draft.education_section),
             "certifications": self._certifications(draft.certifications_section),
@@ -64,15 +68,22 @@ class StructuredResumeTemplate(ResumeTemplate):
     @staticmethod
     def _skills(items: list[dict[str, Any]] | None) -> ResumeSection | None:
         """Render skills without introducing inferred terms."""
-        skills = [
-            f"{item['name']} ({item['category']})" if item.get("category") else item["name"]
-            for item in items or []
-            if item.get("name")
-        ]
+        skills = []
+        for item in items or []:
+            if item.get("skills") and item.get("category"):
+                skills.append(f"{item['category']}: {_join_values(item.get('skills'))}")
+            elif item.get("name"):
+                skills.append(
+                    f"{item['name']} ({item['category']})" if item.get("category") else item["name"]
+                )
         return ResumeSection(title="Skills", inline_items=skills) if skills else None
 
     @staticmethod
-    def _experience(items: list[dict[str, Any]] | None) -> ResumeSection | None:
+    def _experience(
+        items: list[dict[str, Any]] | None,
+        *,
+        additional: bool = False,
+    ) -> ResumeSection | None:
         """Render selected candidate-owned work experience."""
         entries = [
             ResumeEntry(
@@ -83,9 +94,10 @@ class StructuredResumeTemplate(ResumeTemplate):
                 bullets=_string_list(item.get("achievements")),
             )
             for item in items or []
-            if item.get("job_title")
+            if item.get("job_title") and bool(item.get("is_additional")) is additional
         ]
-        return ResumeSection(title="Experience", entries=entries) if entries else None
+        title = "Additional Experience" if additional else "Experience"
+        return ResumeSection(title=title, entries=entries) if entries else None
 
     @staticmethod
     def _projects(items: list[dict[str, Any]] | None) -> ResumeSection | None:
@@ -146,7 +158,14 @@ class CleanAtsTemplate(StructuredResumeTemplate):
         section_divider=False,
         uppercase_sections=True,
     )
-    section_order = ("skills", "experience", "projects", "education", "certifications")
+    section_order = (
+        "skills",
+        "projects",
+        "experience",
+        "education",
+        "certifications",
+        "additional_experience",
+    )
 
 
 class ModernProfessionalTemplate(StructuredResumeTemplate):
@@ -160,7 +179,14 @@ class ModernProfessionalTemplate(StructuredResumeTemplate):
         section_divider=True,
         uppercase_sections=False,
     )
-    section_order = ("experience", "skills", "projects", "education", "certifications")
+    section_order = (
+        "skills",
+        "projects",
+        "experience",
+        "education",
+        "certifications",
+        "additional_experience",
+    )
 
 
 TEMPLATES: dict[ResumeTemplateName, ResumeTemplate] = {

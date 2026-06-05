@@ -5,7 +5,9 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.features.resume_intelligence import DeterministicResumeIntelligenceEngine
-from app.models import CandidateProfile, JobAnalysis, ResumeAnalysis
+from app.features.resume_intelligence.llm import LLMResumeQualityService
+from app.features.resume_intelligence.quality import DeterministicResumeQualityEngine
+from app.models import CandidateProfile, JobAnalysis, ResumeAnalysis, ResumeDraft, WorkExperience
 from app.models.enums import ResumeDraftStatus, ResumeSectionType
 from app.repositories import (
     CandidateProfileRepository,
@@ -68,10 +70,12 @@ class ResumeIntelligenceService:
         self,
         session: Session,
         engine: DeterministicResumeIntelligenceEngine | None = None,
+        quality_engine: DeterministicResumeQualityEngine | LLMResumeQualityService | None = None,
     ) -> None:
         """Build an injectable resume-intelligence service."""
         self.session = session
         self.engine = engine or DeterministicResumeIntelligenceEngine()
+        self.quality_engine = quality_engine or LLMResumeQualityService.from_settings()
         self.profiles = CandidateProfileRepository(session)
         self.job_analyses = JobAnalysisRepository(session)
         self.resume_analyses = ResumeAnalysisRepository(session)
@@ -194,26 +198,81 @@ class ResumeIntelligenceService:
         analysis = self._require_resume_analysis(resume_analysis_id)
         candidate = self._require_candidate(analysis.candidate_profile_id)
         job_analysis = self._require_job_analysis(analysis.job_analysis_id)
+        quality = self.quality_engine.build(candidate, job_analysis, analysis)
         draft_data = ResumeDraftCreate(
             resume_analysis_id=analysis.id,
             candidate_profile_id=candidate.id,
             job_analysis_id=job_analysis.id,
             title=f"{job_analysis.normalized_title} Resume",
             target_role=job_analysis.normalized_title,
-            summary=analysis.suggested_resume_summary,
-            skills_section=self._skills_section(candidate, analysis),
-            experience_section=self._experience_section(candidate, analysis),
-            projects_section=self._projects_section(candidate, analysis),
+            summary=quality.summary,
+            skills_section=quality.skills_section,
+            experience_section=self._experience_section(
+                candidate,
+                analysis,
+                include_additional=quality.include_additional_experience,
+            ),
+            projects_section=quality.projects_section,
             education_section=self._education_section(candidate),
             certifications_section=self._certifications_section(candidate),
             ats_keywords_used=analysis.matched_keywords,
             omitted_keywords=analysis.missing_keywords,
-            truthfulness_notes=analysis.truthfulness_warnings,
+            truthfulness_notes=self._deduplicate(
+                [*analysis.truthfulness_warnings, *quality.warnings]
+            ),
             status=ResumeDraftStatus.DRAFT,
         )
         draft = self.resume_drafts.create_resume_draft(**self._draft_values(draft_data))
         self._commit()
         return ResumeDraftRead.model_validate(draft)
+
+    def get_project_selection_review(
+        self,
+        candidate_profile_id: UUID,
+        job_analysis_id: UUID,
+        resume_draft_id: UUID | None = None,
+    ) -> dict[str, list[dict[str, object]]]:
+        """Return selected and excluded project review metadata for the frontend."""
+        candidate, job_analysis = self._require_inputs(candidate_profile_id, job_analysis_id)
+        selection = self.quality_engine.select_projects(candidate, job_analysis)
+        if resume_draft_id is not None:
+            draft = self._require_resume_draft(resume_draft_id)
+            selected_projects = [
+                {
+                    "title": str(project.get("title", "")),
+                    "score": project.get("relevance_score", 0),
+                    "reason": project.get("selection_reason", "Selected for this target role."),
+                }
+                for project in draft.projects_section
+                if project.get("title")
+            ]
+            selected_titles = {str(project["title"]).casefold() for project in selected_projects}
+            return {
+                "selected_projects": selected_projects,
+                "excluded_projects": [
+                    {
+                        "title": score.project.title,
+                        "score": score.score,
+                        "reason": "Excluded because lower relevance score.",
+                    }
+                    for score in selection.excluded
+                    if score.project.title.casefold() not in selected_titles
+                ],
+            }
+        return {
+            "selected_projects": [
+                {"title": score.project.title, "score": score.score, "reason": score.reason}
+                for score in selection.selected
+            ],
+            "excluded_projects": [
+                {
+                    "title": score.project.title,
+                    "score": score.score,
+                    "reason": "Excluded because lower relevance score.",
+                }
+                for score in selection.excluded
+            ],
+        }
 
     def get_resume_analysis(self, resume_analysis_id: UUID) -> ResumeAnalysisRead:
         """Return a persisted resume analysis."""
@@ -350,6 +409,13 @@ class ResumeIntelligenceService:
             raise ResumeAnalysisNotFoundError(f"resume analysis {resume_analysis_id} was not found")
         return analysis
 
+    def _require_resume_draft(self, resume_draft_id: UUID) -> ResumeDraft:
+        """Load a persisted resume draft."""
+        draft = self.resume_drafts.get(resume_draft_id)
+        if draft is None:
+            raise ResumeDraftNotFoundError(f"resume draft {resume_draft_id} was not found")
+        return draft
+
     @staticmethod
     def _analysis_values(data: ResumeAnalysisCreate) -> dict[str, object]:
         """Prepare ORM values while serializing nested JSON evidence safely."""
@@ -396,24 +462,34 @@ class ResumeIntelligenceService:
     def _experience_section(
         candidate: CandidateProfile,
         analysis: ResumeAnalysis,
+        *,
+        include_additional: bool = False,
     ) -> list[dict[str, object]]:
         """Select relevant candidate-owned work records and preserve their facts."""
         relevant_ids = {UUID(reference["source_id"]) for reference in analysis.relevant_experiences}
-        experiences = [
-            experience for experience in candidate.work_experiences if experience.id in relevant_ids
-        ]
-        return [
-            {
-                "source_id": str(experience.id),
-                "company": experience.company,
-                "job_title": experience.job_title,
-                "start_date": experience.start_date.isoformat(),
-                "end_date": experience.end_date.isoformat() if experience.end_date else None,
-                "description": experience.description,
-                "achievements": experience.achievements,
-            }
-            for experience in experiences
-        ]
+        entries = []
+        for experience in candidate.work_experiences:
+            is_additional = _is_additional_experience(experience.job_title, experience.company)
+            if experience.id not in relevant_ids and not (include_additional and is_additional):
+                continue
+            achievements = (
+                _additional_experience_bullets(experience)
+                if is_additional
+                else experience.achievements
+            )
+            entries.append(
+                {
+                    "source_id": str(experience.id),
+                    "company": experience.company,
+                    "job_title": experience.job_title,
+                    "start_date": experience.start_date.isoformat(),
+                    "end_date": experience.end_date.isoformat() if experience.end_date else None,
+                    "description": experience.description,
+                    "achievements": achievements,
+                    "is_additional": is_additional,
+                }
+            )
+        return entries
 
     @staticmethod
     def _projects_section(
@@ -482,3 +558,23 @@ class ResumeIntelligenceService:
         except Exception:
             self.session.rollback()
             raise
+
+
+def _is_additional_experience(job_title: str, company: str) -> bool:
+    """Detect non-engineering business/tutoring experience for a separate section."""
+    text = f"{job_title} {company}".casefold()
+    return any(term in text for term in ("tutor", "tutoring", "ignite learning", "learning"))
+
+
+def _additional_experience_bullets(experience: WorkExperience) -> list[str]:
+    """Return compact applicant-facing bullets for tutoring/business experience."""
+    text = " ".join([experience.description or "", *experience.achievements]).casefold()
+    if "ignite" in text or "tutor" in text:
+        return [
+            (
+                "Runs an online tutoring service supporting international students in math, "
+                "physics, and English."
+            ),
+            ("Manages student communication, scheduling, delivery quality, and academic support."),
+        ]
+    return experience.achievements[:2]

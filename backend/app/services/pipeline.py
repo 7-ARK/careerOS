@@ -98,6 +98,11 @@ class ApplicationPipelineService:
                     generated.document.id,
                 ),
             )
+        project_review = self.resume_intelligence.get_project_selection_review(
+            request.candidate_profile_id,
+            imported.analysis.id,
+            draft.id,
+        )
         return ManualJobPipelineResult(
             job_description_id=imported.job_description.id,
             job_analysis_id=imported.analysis.id,
@@ -112,7 +117,13 @@ class ApplicationPipelineService:
             document_format=request.document_format,
             template_name=request.resume_template_name,
             status=PipelineStatus.COMPLETED,
-            warnings=resume_analysis.analysis.truthfulness_warnings,
+            matched_skills=resume_analysis.analysis.matched_skills,
+            missing_skills=resume_analysis.analysis.missing_skills,
+            matched_technologies=resume_analysis.analysis.matched_technologies,
+            missing_technologies=resume_analysis.analysis.missing_technologies,
+            selected_projects=project_review["selected_projects"],
+            excluded_projects=project_review["excluded_projects"],
+            warnings=draft.truthfulness_notes,
             next_actions=self._next_actions(application_record is not None),
         )
 

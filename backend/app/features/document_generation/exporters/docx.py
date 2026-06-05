@@ -56,7 +56,8 @@ class DocxExporter(DocumentExporter):
         """Append one ATS-readable DOCX section."""
         document.add_heading(title, level=1)
         if inline_items:
-            document.add_paragraph(", ".join(inline_items))
+            for item in inline_items:
+                document.add_paragraph(item)
         for entry in entries:
             paragraph = document.add_paragraph()
             paragraph.add_run(entry.heading).bold = True

@@ -15,6 +15,20 @@ export interface JobUrlPipelineRequest {
   timeout_seconds?: number;
 }
 
+export interface ManualJobPipelineRequest {
+  candidate_profile_id: string;
+  raw_title: string;
+  company_name: string;
+  location?: string;
+  source_platform?: SourcePlatform;
+  job_url?: string;
+  description_text: string;
+  company_email?: string;
+  document_format?: DocumentFormat;
+  resume_template_name?: ResumeTemplateName;
+  create_application_record?: boolean;
+}
+
 export interface JobUrlExtractionResult {
   job_url: string;
   detected_platform: SourcePlatform;
@@ -36,8 +50,20 @@ export interface ManualJobPipelineResult {
   document_format: DocumentFormat;
   template_name: ResumeTemplateName;
   status: string;
-  warnings: string[];
+  matched_skills?: string[];
+  missing_skills?: string[];
+  matched_technologies?: string[];
+  missing_technologies?: string[];
+  selected_projects?: ProjectSelectionReview[];
+  excluded_projects?: ProjectSelectionReview[];
+  warnings?: string[];
   next_actions: string[];
+}
+
+export interface ProjectSelectionReview {
+  title: string;
+  score: number;
+  reason: string;
 }
 
 export interface JobUrlPipelineResult {
@@ -76,6 +102,14 @@ export async function runUrlPipeline(request: JobUrlPipelineRequest): Promise<Jo
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(request),
+  });
+}
+
+export async function runManualPipeline(request: ManualJobPipelineRequest): Promise<ManualJobPipelineResult> {
+  return requestJson<ManualJobPipelineResult>('/api/v1/pipeline/manual', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(removeEmptyValues(request)),
   });
 }
 
@@ -128,4 +162,10 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
 function getDownloadFilename(contentDisposition: string | null): string {
   const match = contentDisposition?.match(/filename="?([^";]+)"?/i);
   return match?.[1] || 'careerOS-resume.pdf';
+}
+
+function removeEmptyValues<T extends object>(request: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(request).filter(([, value]) => value !== '' && value !== undefined),
+  ) as Partial<T>;
 }

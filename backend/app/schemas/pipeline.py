@@ -3,6 +3,8 @@
 from decimal import Decimal
 from uuid import UUID
 
+from pydantic import Field
+
 from app.models.enums import (
     DocumentFormat,
     PipelineStatus,
@@ -35,5 +37,11 @@ class ManualJobPipelineResult(ReadSchema):
     document_format: DocumentFormat
     template_name: ResumeTemplateName
     status: PipelineStatus
+    matched_skills: list[str] = Field(default_factory=list)
+    missing_skills: list[str] = Field(default_factory=list)
+    matched_technologies: list[str] = Field(default_factory=list)
+    missing_technologies: list[str] = Field(default_factory=list)
+    selected_projects: list[dict[str, object]] = Field(default_factory=list)
+    excluded_projects: list[dict[str, object]] = Field(default_factory=list)
     warnings: list[str]
     next_actions: list[str]

@@ -42,8 +42,8 @@ class PdfExporter(DocumentExporter):
                 [Spacer(1, 6), Paragraph(_escape(section.title), styles["SectionHeading"])]
             )
             if section.inline_items:
-                story.append(
-                    Paragraph(_escape(", ".join(section.inline_items)), styles["BodyText"])
+                story.extend(
+                    Paragraph(_escape(item), styles["BodyText"]) for item in section.inline_items
                 )
             for entry in section.entries:
                 story.extend(self._entry_story(entry, styles))

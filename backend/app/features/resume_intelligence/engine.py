@@ -326,15 +326,25 @@ class DeterministicResumeIntelligenceEngine:
         preferred_missing = self._missing_terms(
             [*preferred_skills, *preferred_technologies], evidence
         )
-        warnings = [
-            f"Do not claim {term}; no supporting Candidate Knowledge Base evidence was found."
-            for term in required_missing
-        ]
-        warnings.extend(
-            f"Preferred requirement {term} is unverified; omit it unless the candidate "
-            "adds evidence."
-            for term in preferred_missing
-        )
+        warnings = []
+        for term in required_missing:
+            cloud_note = self._cloud_certification_note(term, evidence)
+            warnings.append(
+                cloud_note
+                or (
+                    f"Do not claim {term}; no supporting Candidate Knowledge Base evidence "
+                    "was found."
+                )
+            )
+        for term in preferred_missing:
+            cloud_note = self._cloud_certification_note(term, evidence)
+            warnings.append(
+                cloud_note
+                or (
+                    f"Preferred requirement {term} is unverified; omit it unless the candidate "
+                    "adds evidence."
+                )
+            )
         return warnings
 
     def _collect_evidence(self, candidate: CandidateProfile) -> list[EvidenceItem]:
@@ -612,6 +622,32 @@ class DeterministicResumeIntelligenceEngine:
     def _missing_terms(self, terms: list[str], evidence: list[EvidenceItem]) -> list[str]:
         """Return terms that have no candidate evidence."""
         return self._coverage(terms, evidence).missing
+
+    @classmethod
+    def _cloud_certification_note(cls, term: str, evidence: list[EvidenceItem]) -> str | None:
+        """Return nuanced cloud-certification wording for coursework evidence."""
+        normalized_term = cls._normalize(term)
+        cloud_terms = {
+            "gcp",
+            "google cloud",
+            "vertex ai",
+            "bigquery ml",
+            "cloud infrastructure",
+            "cloud ai",
+        }
+        if not any(value in normalized_term for value in cloud_terms):
+            return None
+        evidence_text = " ".join(
+            f"{item.reference.label} {item.reference.excerpt or ''}" for item in evidence
+        ).casefold()
+        if not any(
+            value in evidence_text for value in ("google cloud", "vertex ai", "bigquery ml")
+        ):
+            return None
+        return (
+            "Can mention Google Cloud ML certifications and coursework, but avoid claiming "
+            "production GCP deployment experience unless supported."
+        )
 
     @classmethod
     def _matches(cls, term: str, item: EvidenceItem) -> bool:
