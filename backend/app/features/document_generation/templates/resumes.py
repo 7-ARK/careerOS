@@ -139,7 +139,6 @@ class StructuredResumeTemplate(ResumeTemplate):
                 heading=item["name"],
                 subheading=item.get("issuing_organization"),
                 meta=item.get("credential_id"),
-                links=[item["credential_url"]] if item.get("credential_url") else [],
             )
             for item in items or []
             if item.get("name")

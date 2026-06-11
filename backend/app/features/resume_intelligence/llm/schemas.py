@@ -24,6 +24,7 @@ class LLMProjectDecision(BaseModel):
     project_name: str = Field(min_length=1, max_length=250)
     reason: str = Field(min_length=1, max_length=350)
     support_level: SupportLevel = "supported"
+    relevance_score: int | None = Field(default=None, ge=0, le=100)
 
 
 class LLMResumeStrategyNote(BaseModel):

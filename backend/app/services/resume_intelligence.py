@@ -247,6 +247,14 @@ class ResumeIntelligenceService:
                 if project.get("title")
             ]
             selected_titles = {str(project["title"]).casefold() for project in selected_projects}
+            excluded_scores = [
+                self.quality_engine.score_project(project, job_analysis)
+                if hasattr(self.quality_engine, "score_project")
+                else self.quality_engine.deterministic_engine.score_project(project, job_analysis)
+                for project in candidate.projects
+                if project.title.casefold() not in selected_titles
+            ]
+            excluded_scores.sort(key=lambda item: (-item.score, item.project.title.casefold()))
             return {
                 "selected_projects": selected_projects,
                 "excluded_projects": [
@@ -255,8 +263,7 @@ class ResumeIntelligenceService:
                         "score": score.score,
                         "reason": "Excluded because lower relevance score.",
                     }
-                    for score in selection.excluded
-                    if score.project.title.casefold() not in selected_titles
+                    for score in excluded_scores
                 ],
             }
         return {
@@ -484,7 +491,7 @@ class ResumeIntelligenceService:
                     "job_title": experience.job_title,
                     "start_date": experience.start_date.isoformat(),
                     "end_date": experience.end_date.isoformat() if experience.end_date else None,
-                    "description": experience.description,
+                    "description": None if is_additional else experience.description,
                     "achievements": achievements,
                     "is_additional": is_additional,
                 }
@@ -527,13 +534,13 @@ class ResumeIntelligenceService:
 
     @staticmethod
     def _certifications_section(candidate: CandidateProfile) -> list[dict[str, object]]:
-        """Serialize candidate-owned certification facts."""
+        """Serialize compact candidate-owned certification facts."""
         return [
             {
                 "source_id": str(certification.id),
                 "name": certification.name,
-                "issuing_organization": certification.issuing_organization,
-                "credential_id": certification.credential_id,
+                "issuing_organization": _compact_issuer(certification.issuing_organization),
+                "credential_id": None,
                 "credential_url": certification.credential_url,
             }
             for certification in candidate.certifications
@@ -578,3 +585,8 @@ def _additional_experience_bullets(experience: WorkExperience) -> list[str]:
             ("Manages student communication, scheduling, delivery quality, and academic support."),
         ]
     return experience.achievements[:2]
+
+
+def _compact_issuer(value: str) -> str:
+    """Normalize certification issuer text for one-line resume entries."""
+    return value.replace(" / ", "/")

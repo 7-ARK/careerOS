@@ -12,16 +12,27 @@ Rules:
 - Classify every strategy recommendation as supported, weakly_supported, or unsupported.
 - Unsupported content must be returned only as a warning, never as resume content.
 - Return strict JSON matching the requested schema.
+- Score known candidate projects from 0 to 100 for relevance to this specific job.
 
 JSON shape:
 {
   "professional_summary": "string",
   "skill_groups": [{"name": "Languages", "skills": ["Python"]}],
   "selected_projects": [
-    {"project_name": "careerOS", "reason": "string", "support_level": "supported"}
+    {
+      "project_name": "careerOS",
+      "reason": "string",
+      "support_level": "supported",
+      "relevance_score": 90
+    }
   ],
   "excluded_projects": [
-    {"project_name": "Legal OCR", "reason": "string", "support_level": "supported"}
+    {
+      "project_name": "Legal OCR",
+      "reason": "string",
+      "support_level": "supported",
+      "relevance_score": 30
+    }
   ],
   "resume_strategy_notes": [
     {"note": "Lead with careerOS.", "support_level": "supported"}

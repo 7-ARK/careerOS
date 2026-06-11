@@ -13,8 +13,11 @@ from app.features.resume_intelligence.llm.schemas import (
 )
 from app.features.resume_intelligence.quality import (
     DeterministicResumeQualityEngine,
+    ProjectScore,
     ProjectSelection,
     ResumeQualityResult,
+    _careeros_domain_requested,
+    _is_legal_ocr_project,
 )
 from app.models import CandidateProfile, JobAnalysis, ResumeAnalysis
 
@@ -105,7 +108,14 @@ class LLMResumeQualityService:
             output = self._call_llm(candidate, job_analysis, analysis, deterministic)
         except Exception as exc:
             return deterministic.with_warnings([f"{self.fallback_warning} Reason: {exc}"])
-        return self._merge_output(candidate, deterministic, output)
+        return self._merge_output(
+            candidate,
+            job_analysis,
+            analysis,
+            deterministic,
+            output,
+            project_limit=project_limit,
+        )
 
     def _call_llm(
         self,
@@ -126,15 +136,36 @@ class LLMResumeQualityService:
     def _merge_output(
         self,
         candidate: CandidateProfile,
+        job_analysis: JobAnalysis,
+        analysis: ResumeAnalysis,
         deterministic: ResumeQualityResult,
         output: LLMResumeQualityOutput,
+        *,
+        project_limit: int,
     ) -> ResumeQualityResult:
         """Use only validated candidate-supported LLM content."""
         candidate_skills = {skill.name.casefold(): skill.name for skill in candidate.skills}
         known_project_names = {
             project.title.casefold(): project.title for project in candidate.projects
         }
-        skill_groups = []
+        llm_project_scores = self._project_scores(
+            [*output.selected_projects, *output.excluded_projects],
+            known_project_names,
+        )
+        reranked_selection = self._rerank_projects(
+            candidate,
+            job_analysis,
+            analysis,
+            llm_project_scores,
+            limit=project_limit,
+        )
+        deterministic = self.deterministic_engine.build_from_selection(
+            candidate,
+            job_analysis,
+            analysis,
+            reranked_selection,
+        )
+        grouped_skill_values: dict[str, list[str]] = {}
         for group in output.skill_groups:
             supported_skills = [
                 candidate_skills[skill.casefold()]
@@ -142,9 +173,19 @@ class LLMResumeQualityService:
                 if skill.casefold() in candidate_skills
             ]
             if supported_skills:
-                skill_groups.append(
-                    {"category": group.name, "skills": _deduplicate(supported_skills)}
-                )
+                group_name = _preferred_group_name(group.name)
+                grouped_skill_values.setdefault(group_name, []).extend(supported_skills)
+        skill_groups = [
+            {"category": category, "skills": _deduplicate(grouped_skill_values[category])}
+            for category in (
+                "Languages",
+                "Backend",
+                "AI / Machine Learning",
+                "Automation",
+                "Developer Tools",
+            )
+            if category in grouped_skill_values
+        ]
         selected_reason_by_title = self._project_reasons(
             output.selected_projects,
             known_project_names,
@@ -212,7 +253,8 @@ class LLMResumeQualityService:
     @staticmethod
     def _safe_summary(candidate_summary: str, fallback_summary: str) -> tuple[str, str | None]:
         """Reject common unsupported production overclaims from LLM summaries."""
-        lowered = candidate_summary.casefold()
+        cleaned = _two_sentence_summary(candidate_summary)
+        lowered = cleaned.casefold()
         unsafe_patterns = (
             "production gcp deployment",
             "production vertex ai",
@@ -225,7 +267,7 @@ class LLMResumeQualityService:
                 fallback_summary,
                 "LLM summary included an unsupported production claim and was not used.",
             )
-        return candidate_summary, None
+        return cleaned, None
 
     @staticmethod
     def _payload(
@@ -316,6 +358,71 @@ class LLMResumeQualityService:
                 reasons[key] = decision.reason
         return reasons
 
+    @staticmethod
+    def _project_scores(
+        decisions: list[LLMProjectDecision],
+        known_project_names: dict[str, str],
+    ) -> dict[str, int]:
+        """Return validated semantic relevance scores for known projects only."""
+        scores = {}
+        for decision in decisions:
+            key = decision.project_name.casefold()
+            if (
+                key in known_project_names
+                and decision.support_level != "unsupported"
+                and decision.relevance_score is not None
+            ):
+                scores[key] = decision.relevance_score
+        return scores
+
+    def _rerank_projects(
+        self,
+        candidate: CandidateProfile,
+        job_analysis: JobAnalysis,
+        analysis: ResumeAnalysis,
+        llm_project_scores: dict[str, int],
+        *,
+        limit: int,
+    ) -> ProjectSelection:
+        """Combine deterministic relevance and validated LLM semantic relevance."""
+        base_scores = [
+            self.deterministic_engine.score_project(
+                project,
+                job_analysis,
+                analysis=analysis,
+            )
+            for project in candidate.projects
+        ]
+        combined = []
+        role = self.deterministic_engine.role_for_job(job_analysis)
+        job_context = self.deterministic_engine._job_context(job_analysis)
+        for score in base_scores:
+            llm_bonus = round(llm_project_scores.get(score.project.title.casefold(), 0) * 0.8)
+            protection = 0
+            if role == "legal_ai" and _is_legal_ocr_project(score):
+                protection += 120
+            if (
+                role == "legal_ai"
+                and score.project.title.casefold() == "careeros"
+                and not _careeros_domain_requested(job_context)
+            ):
+                protection -= 80
+            if role == "ai_automation" and _is_legal_ocr_project(score):
+                protection -= 80
+            combined.append(
+                ProjectScore(
+                    project=score.project,
+                    score=score.score + llm_bonus + protection,
+                    matched_terms=score.matched_terms,
+                )
+            )
+        combined.sort(key=lambda item: (-item.score, item.project.title.casefold()))
+        bounded_limit = min(max(1, limit), 3)
+        return ProjectSelection(
+            selected=combined[:bounded_limit],
+            excluded=combined[bounded_limit:],
+        )
+
 
 def _deduplicate(values: list[str]) -> list[str]:
     """Deduplicate strings case-insensitively while preserving order."""
@@ -327,3 +434,25 @@ def _deduplicate(values: list[str]) -> list[str]:
             seen.add(key)
             result.append(value)
     return result
+
+
+def _preferred_group_name(value: str) -> str:
+    """Map LLM category names back into ATS-preferred skill groups."""
+    normalized = value.casefold()
+    if "language" in normalized or normalized == "programming":
+        return "Languages"
+    if any(term in normalized for term in ("backend", "database", "api")):
+        return "Backend"
+    if any(term in normalized for term in ("ai", "machine", "ml", "cloud", "data")):
+        return "AI / Machine Learning"
+    if any(term in normalized for term in ("automation", "browser", "workflow")):
+        return "Automation"
+    return "Developer Tools"
+
+
+def _two_sentence_summary(value: str) -> str:
+    """Keep LLM summary concise for ATS-first resumes."""
+    parts = [part.strip() for part in value.split(".") if part.strip()]
+    if not parts:
+        return value.strip()
+    return ". ".join(parts[:2]) + "."
