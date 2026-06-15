@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from app.models import CandidateProfile
 from app.models.enums import ApplicationStatus
 from app.repositories import ApplicationRecordRepository
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 
 class ApplicationRecordRepositoryTests(unittest.TestCase):
@@ -16,7 +16,8 @@ class ApplicationRecordRepositoryTests(unittest.TestCase):
         self.engine = create_test_engine()
         self.session = create_test_session(self.engine)
         self.repository = ApplicationRecordRepository(self.session)
-        self.profile = CandidateProfile(full_name="Ada Lovelace")
+        user = create_test_user(self.session)
+        self.profile = CandidateProfile(user_id=user.id, full_name="Ada Lovelace")
         self.session.add(self.profile)
         self.session.commit()
 

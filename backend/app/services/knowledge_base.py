@@ -24,7 +24,10 @@ from app.schemas import (
     ApplicationHistoryCreate,
     ApplicationHistoryRead,
     CandidateProfileCreate,
+    CandidateProfileDetailsCreate,
+    CandidateProfileDetailsUpdate,
     CandidateProfileRead,
+    CandidateProfileSummaryRead,
     CandidateProfileUpdate,
     CareerGoalCreate,
     CareerGoalRead,
@@ -72,29 +75,92 @@ class KnowledgeBaseService:
         self.resume_versions = ResumeVersionRepository(session)
         self.applications = ApplicationHistoryRepository(session)
 
-    def create_candidate_profile(self, data: CandidateProfileCreate) -> CandidateProfileRead:
+    def create_candidate_profile(
+        self,
+        data: CandidateProfileCreate,
+        *,
+        user_id: UUID,
+    ) -> CandidateProfileRead:
         """Create a candidate profile aggregate root."""
-        profile = self.profiles.create(**self._values(data))
+        profile = self.profiles.create(user_id=user_id, **self._values(data))
         self._commit()
-        return self.get_profile(profile.id)
+        return self.get_profile(profile.id, user_id=user_id)
 
-    def get_profile(self, profile_id: UUID) -> CandidateProfileRead:
+    def create_profile_with_details(
+        self,
+        data: CandidateProfileDetailsCreate,
+        *,
+        user_id: UUID,
+    ) -> CandidateProfileRead:
+        """Create a complete editable candidate profile in one transaction."""
+        profile = self.profiles.create(user_id=user_id, **self._profile_values(data))
+        self._create_profile_sections(profile.id, data)
+        self._commit()
+        return self.get_profile(profile.id, user_id=user_id)
+
+    def get_profile(
+        self,
+        profile_id: UUID,
+        *,
+        user_id: UUID | None = None,
+    ) -> CandidateProfileRead:
         """Return the complete candidate knowledge-base aggregate."""
-        profile = self.profiles.get_complete(profile_id)
+        profile = (
+            self.profiles.get_complete_for_user(profile_id, user_id)
+            if user_id is not None
+            else self.profiles.get_complete(profile_id)
+        )
         if profile is None:
             raise ProfileNotFoundError(f"candidate profile {profile_id} was not found")
         return CandidateProfileRead.model_validate(profile)
+
+    def list_profiles(self, user_id: UUID) -> list[CandidateProfileSummaryRead]:
+        """Return candidate identities owned by one user."""
+        profiles = sorted(
+            self.profiles.list_for_user(user_id),
+            key=lambda profile: profile.full_name.casefold(),
+        )
+        return [CandidateProfileSummaryRead.model_validate(profile) for profile in profiles]
 
     def update_profile(
         self,
         profile_id: UUID,
         data: CandidateProfileUpdate,
+        *,
+        user_id: UUID | None = None,
     ) -> CandidateProfileRead:
         """Update durable candidate identity fields."""
-        profile = self._require_profile(profile_id)
+        profile = self._require_profile(profile_id, user_id=user_id)
         self.profiles.update(profile, self._values(data, partial=True))
         self._commit()
-        return self.get_profile(profile_id)
+        return self.get_profile(profile_id, user_id=user_id)
+
+    def update_profile_with_details(
+        self,
+        profile_id: UUID,
+        data: CandidateProfileDetailsUpdate,
+        *,
+        user_id: UUID,
+    ) -> CandidateProfileRead:
+        """Update basic profile fields and replace each supplied child section."""
+        profile = self._require_profile(profile_id, user_id=user_id)
+        profile_values = self._profile_values(data, partial=True)
+        if profile_values:
+            self.profiles.update(profile, profile_values)
+
+        self._replace_section(self.education, profile_id, data.education)
+        self._replace_section(self.experiences, profile_id, data.work_experiences)
+        self._replace_section(self.projects, profile_id, data.projects)
+        self._replace_section(self.skills, profile_id, data.skills)
+        self._replace_section(self.certifications, profile_id, data.certifications)
+        self._commit()
+        return self.get_profile(profile_id, user_id=user_id)
+
+    def delete_profile(self, profile_id: UUID, *, user_id: UUID) -> None:
+        """Delete a candidate aggregate and all cascade-owned records."""
+        profile = self._require_profile(profile_id, user_id=user_id)
+        self.profiles.delete(profile)
+        self._commit()
 
     def add_education(self, profile_id: UUID, data: EducationCreate) -> EducationRead:
         """Add an education record to a candidate profile."""
@@ -206,10 +272,15 @@ class KnowledgeBaseService:
         self._commit()
         return ApplicationHistoryRead.model_validate(application)
 
-    def _require_profile(self, profile_id: UUID) -> CandidateProfile:
+    def _require_profile(
+        self,
+        profile_id: UUID,
+        *,
+        user_id: UUID | None = None,
+    ) -> CandidateProfile:
         """Return a candidate profile or raise a domain-specific exception."""
         profile = self.profiles.get(profile_id)
-        if profile is None:
+        if profile is None or (user_id is not None and profile.user_id != user_id):
             raise ProfileNotFoundError(f"candidate profile {profile_id} was not found")
         return profile
 
@@ -224,6 +295,49 @@ class KnowledgeBaseService:
         entity = repository.create(profile_id=profile_id, **self._values(data))
         self._commit()
         return entity
+
+    def _create_profile_sections(
+        self,
+        profile_id: UUID,
+        data: CandidateProfileDetailsCreate,
+    ) -> None:
+        """Stage all nested profile sections without committing between records."""
+        sections = (
+            (self.education, data.education),
+            (self.experiences, data.work_experiences),
+            (self.projects, data.projects),
+            (self.skills, data.skills),
+            (self.certifications, data.certifications),
+        )
+        for repository, records in sections:
+            for record in records:
+                repository.create(profile_id=profile_id, **self._values(record))
+
+    def _replace_section(
+        self,
+        repository: CandidateOwnedRepository[ModelT],
+        profile_id: UUID,
+        records: list[SchemaT] | None,
+    ) -> None:
+        """Replace one supplied child collection while leaving omitted sections untouched."""
+        if records is None:
+            return
+        for existing in repository.list_for_profile(profile_id):
+            repository.delete(existing)
+        for record in records:
+            repository.create(profile_id=profile_id, **self._values(record))
+
+    @staticmethod
+    def _profile_values(data: BaseModel, *, partial: bool = False) -> dict[str, object]:
+        """Extract only fields stored directly on the candidate profile table."""
+        nested_fields = {
+            "education",
+            "work_experiences",
+            "projects",
+            "skills",
+            "certifications",
+        }
+        return data.model_dump(exclude=nested_fields, exclude_unset=partial)
 
     @staticmethod
     def _values(data: BaseModel, *, partial: bool = False) -> dict[str, object]:

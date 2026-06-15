@@ -6,7 +6,7 @@ from app.models import ApplicationRecord, CandidateProfile, JobAnalysis, JobDesc
 from app.models.enums import ApplicationStatus, SourcePlatform
 from app.schemas import ManualJobImportRequest
 from app.services import ManualJobImportService
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 DESCRIPTION = """
 Responsibilities:
@@ -23,7 +23,8 @@ class ManualJobImportServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.engine = create_test_engine()
         self.session = create_test_session(self.engine)
-        self.profile = CandidateProfile(full_name="Grace Hopper")
+        user = create_test_user(self.session)
+        self.profile = CandidateProfile(user_id=user.id, full_name="Grace Hopper")
         self.session.add(self.profile)
         self.session.commit()
         self.service = ManualJobImportService(self.session)

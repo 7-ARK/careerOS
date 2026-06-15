@@ -1,13 +1,16 @@
 """Cross-feature application services and orchestration logic."""
 
 from app.services.application_tracker import ApplicationTrackerService
+from app.services.auth import AuthService
 from app.services.exceptions import (
     ApplicationRecordNotFoundError,
     ApplicationTrackerError,
     DocumentGenerationError,
     DuplicateSkillError,
+    DuplicateUserError,
     GeneratedDocumentNotFoundError,
     InvalidApplicationReferenceError,
+    InvalidCredentialsError,
     InvalidResumeVersionError,
     JobAnalysisError,
     JobAnalysisNotFoundError,
@@ -30,7 +33,9 @@ from app.services.pipeline import ApplicationPipelineService
 from app.services.resume_intelligence import ResumeIntelligenceService
 
 __all__ = [
+    "AuthService",
     "DuplicateSkillError",
+    "DuplicateUserError",
     "ApplicationRecordNotFoundError",
     "ApplicationTrackerError",
     "ApplicationTrackerService",
@@ -39,6 +44,7 @@ __all__ = [
     "GeneratedDocumentNotFoundError",
     "InvalidResumeVersionError",
     "InvalidApplicationReferenceError",
+    "InvalidCredentialsError",
     "JobAnalysisError",
     "JobAnalysisNotFoundError",
     "JobAnalysisService",

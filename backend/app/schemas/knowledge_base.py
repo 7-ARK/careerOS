@@ -3,9 +3,10 @@
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Self
+from urllib.parse import urlparse
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.models.enums import (
     ApplicationStatus,
@@ -53,26 +54,49 @@ class CandidateProfileCreate(SchemaBase):
     """Create a candidate's durable professional profile."""
 
     full_name: str = Field(min_length=1, max_length=200)
-    email: str | None = Field(default=None, max_length=320)
+    email: EmailStr | None = None
     phone: str | None = Field(default=None, max_length=50)
     headline: str | None = Field(default=None, max_length=250)
     summary: str | None = None
     location: str | None = Field(default=None, max_length=200)
     linkedin_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
     portfolio_url: str | None = Field(default=None, max_length=500)
+
+    @field_validator("linkedin_url", "github_url", "portfolio_url")
+    @classmethod
+    def validate_profile_urls(cls, value: str | None) -> str | None:
+        """Accept only complete HTTP(S) profile links."""
+        return _validate_optional_url(value)
 
 
 class CandidateProfileUpdate(SchemaBase):
     """Update mutable profile fields."""
 
     full_name: str | None = Field(default=None, min_length=1, max_length=200)
-    email: str | None = Field(default=None, max_length=320)
+    email: EmailStr | None = None
     phone: str | None = Field(default=None, max_length=50)
     headline: str | None = Field(default=None, max_length=250)
     summary: str | None = None
     location: str | None = Field(default=None, max_length=200)
     linkedin_url: str | None = Field(default=None, max_length=500)
+    github_url: str | None = Field(default=None, max_length=500)
     portfolio_url: str | None = Field(default=None, max_length=500)
+
+    @field_validator("linkedin_url", "github_url", "portfolio_url")
+    @classmethod
+    def validate_profile_urls(cls, value: str | None) -> str | None:
+        """Accept only complete HTTP(S) profile links."""
+        return _validate_optional_url(value)
+
+
+class CandidateProfileSummaryRead(ReadSchema):
+    """Read the candidate identity fields needed for selection controls."""
+
+    id: UUID
+    full_name: str
+    email: str | None
+    headline: str | None
 
 
 class EducationBase(OptionalDateRange):
@@ -186,6 +210,12 @@ class SkillCreate(SchemaBase):
     category: str = Field(min_length=1, max_length=100)
     self_rating: int = Field(ge=1, le=5)
     years_of_experience: Decimal = Field(ge=0, max_digits=5, decimal_places=2)
+
+    @field_validator("name", "category")
+    @classmethod
+    def strip_skill_text(cls, value: str) -> str:
+        """Normalize surrounding whitespace before duplicate checks and persistence."""
+        return value.strip()
 
 
 class SkillUpdate(SchemaBase):
@@ -398,9 +428,48 @@ class ApplicationHistoryRead(EntityRead):
     notes: str | None
 
 
+class CandidateProfileDetailsCreate(CandidateProfileCreate):
+    """Create a candidate profile and its resume-building records together."""
+
+    education: list[EducationCreate] = Field(default_factory=list)
+    work_experiences: list[WorkExperienceCreate] = Field(default_factory=list)
+    projects: list[ProjectCreate] = Field(default_factory=list)
+    skills: list[SkillCreate] = Field(default_factory=list)
+    certifications: list[CertificationCreate] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_unique_skills(self) -> Self:
+        """Reject duplicate skill names before the database unique constraint does."""
+        names = [skill.name.casefold() for skill in self.skills]
+        if len(names) != len(set(names)):
+            raise ValueError("skill names must be unique within a candidate profile")
+        return self
+
+
+class CandidateProfileDetailsUpdate(CandidateProfileUpdate):
+    """Update basic fields and optionally replace supplied profile sections."""
+
+    education: list[EducationCreate] | None = None
+    work_experiences: list[WorkExperienceCreate] | None = None
+    projects: list[ProjectCreate] | None = None
+    skills: list[SkillCreate] | None = None
+    certifications: list[CertificationCreate] | None = None
+
+    @model_validator(mode="after")
+    def validate_unique_skills(self) -> Self:
+        """Reject duplicate skill names when the skills section is replaced."""
+        if self.skills is None:
+            return self
+        names = [skill.name.casefold() for skill in self.skills]
+        if len(names) != len(set(names)):
+            raise ValueError("skill names must be unique within a candidate profile")
+        return self
+
+
 class CandidateProfileRead(EntityRead):
     """Read the complete candidate knowledge-base aggregate."""
 
+    user_id: UUID
     full_name: str
     email: str | None
     phone: str | None
@@ -408,6 +477,7 @@ class CandidateProfileRead(EntityRead):
     summary: str | None
     location: str | None
     linkedin_url: str | None
+    github_url: str | None
     portfolio_url: str | None
     education: list[EducationRead] = Field(default_factory=list)
     work_experiences: list[WorkExperienceRead] = Field(default_factory=list)
@@ -418,3 +488,15 @@ class CandidateProfileRead(EntityRead):
     preferences: PreferenceRead | None = None
     resume_versions: list[ResumeVersionRead] = Field(default_factory=list)
     applications: list[ApplicationHistoryRead] = Field(default_factory=list)
+
+
+def _validate_optional_url(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.strip()
+    if not normalized:
+        return None
+    parsed = urlparse(normalized)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("URL must be a complete http:// or https:// address")
+    return normalized

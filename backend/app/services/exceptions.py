@@ -5,6 +5,14 @@ class KnowledgeBaseError(Exception):
     """Base exception for candidate knowledge-base operations."""
 
 
+class DuplicateUserError(Exception):
+    """Raised when registration uses an existing email address."""
+
+
+class InvalidCredentialsError(Exception):
+    """Raised when an account cannot be authenticated."""
+
+
 class ProfileNotFoundError(KnowledgeBaseError):
     """Raised when an operation targets a missing candidate profile."""
 

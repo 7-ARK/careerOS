@@ -9,10 +9,13 @@ from fastapi.responses import JSONResponse
 
 from app.services import (
     ApplicationRecordNotFoundError,
+    DuplicateUserError,
     GeneratedDocumentNotFoundError,
+    InvalidCredentialsError,
     JobAnalysisNotFoundError,
     JobDescriptionNotFoundError,
     PipelineExecutionError,
+    ProfileNotFoundError,
     ResumeAnalysisNotFoundError,
     ResumeDraftNotFoundError,
 )
@@ -22,6 +25,7 @@ NOT_FOUND_EXCEPTIONS = (
     GeneratedDocumentNotFoundError,
     JobAnalysisNotFoundError,
     JobDescriptionNotFoundError,
+    ProfileNotFoundError,
     ResumeAnalysisNotFoundError,
     ResumeDraftNotFoundError,
 )
@@ -34,6 +38,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(PipelineExecutionError, pipeline_error_handler)
     for exception_type in NOT_FOUND_EXCEPTIONS:
         app.add_exception_handler(exception_type, not_found_error_handler)
+    app.add_exception_handler(DuplicateUserError, duplicate_user_error_handler)
+    app.add_exception_handler(InvalidCredentialsError, invalid_credentials_error_handler)
 
 
 async def validation_error_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
@@ -71,6 +77,16 @@ async def pipeline_error_handler(_: Request, exc: PipelineExecutionError) -> JSO
 async def not_found_error_handler(_: Request, exc: Exception) -> JSONResponse:
     """Return service-level missing-record failures."""
     return _error_response(404, code="not_found", message=str(exc))
+
+
+async def duplicate_user_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Return a client-safe duplicate registration response."""
+    return _error_response(400, code="duplicate_user", message=str(exc))
+
+
+async def invalid_credentials_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Return a generic authentication failure without account enumeration."""
+    return _error_response(401, code="invalid_credentials", message=str(exc))
 
 
 def _error_response(

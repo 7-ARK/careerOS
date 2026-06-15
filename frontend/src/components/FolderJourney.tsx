@@ -29,8 +29,8 @@ const steps = [
   },
   {
     id: 5,
-    title: 'Export and saved',
-    description: 'Sleek, compliant PDF finalized and filed in your dashboard',
+    title: 'Export resume',
+    description: 'Download the finalized ATS-friendly resume document',
     icon: <FileDown className="size-4" />,
   },
 ];

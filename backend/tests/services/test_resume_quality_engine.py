@@ -16,7 +16,7 @@ from app.schemas import (
     WorkExperienceCreate,
 )
 from app.services import JobAnalysisService, KnowledgeBaseService, ResumeIntelligenceService
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 AI_JOB_DESCRIPTION = """
 AI Engineer contract role building API-driven AI solutions, automation workflows,
@@ -122,11 +122,13 @@ class ResumeQualityEngineTests(unittest.TestCase):
         self.engine = create_test_engine()
         self.session = create_test_session(self.engine)
         knowledge_base = KnowledgeBaseService(self.session)
+        user = create_test_user(self.session)
         profile = knowledge_base.create_candidate_profile(
             CandidateProfileCreate(
                 full_name="Ahmed Raza",
                 headline="Early-Career AI Engineer and AI Automation Developer",
-            )
+            ),
+            user_id=user.id,
         )
         for name, category in (
             ("Python", "Programming Languages"),

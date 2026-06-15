@@ -16,6 +16,9 @@ class Settings:
     database_url: str | None
     use_llm_resume_intelligence: bool
     openai_model: str
+    jwt_secret_key: str
+    jwt_algorithm: str
+    jwt_access_token_expire_minutes: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -25,6 +28,14 @@ class Settings:
             database_url=environ.get("DATABASE_URL"),
             use_llm_resume_intelligence=_env_bool("USE_LLM_RESUME_INTELLIGENCE"),
             openai_model=environ.get("OPENAI_MODEL", "gpt-4.1-mini"),
+            jwt_secret_key=environ.get(
+                "JWT_SECRET_KEY",
+                "careeros-local-development-secret-change-me",
+            ),
+            jwt_algorithm=environ.get("JWT_ALGORITHM", "HS256"),
+            jwt_access_token_expire_minutes=int(
+                environ.get("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "1440")
+            ),
         )
 
 

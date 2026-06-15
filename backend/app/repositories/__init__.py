@@ -1,6 +1,7 @@
 """Repository interfaces for persistence operations."""
 
 from app.repositories.application_tracking import ApplicationRecordRepository
+from app.repositories.auth import UserRepository
 from app.repositories.document_generation import GeneratedDocumentRepository
 from app.repositories.job_analysis import JobAnalysisRepository, JobDescriptionRepository
 from app.repositories.knowledge_base import (
@@ -38,4 +39,5 @@ __all__ = [
     "ResumeDraftRepository",
     "SkillRepository",
     "WorkExperienceRepository",
+    "UserRepository",
 ]

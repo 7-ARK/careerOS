@@ -113,6 +113,20 @@ class JobUrlPipelineServiceTests(unittest.TestCase):
         self.assertIsNone(result.pipeline)
         self.assertEqual(pipeline.requests, [])
 
+    def test_extract_url_returns_fields_without_running_pipeline(self) -> None:
+        pipeline = StubPipeline()
+        extraction = self._extraction(pipeline_ready=True)
+        service = JobUrlPipelineService(
+            self.session,
+            extractor=StubExtractor(extraction),
+            pipeline=pipeline,
+        )
+
+        result = service.extract_url(JobUrlExtractionRequest(**self._request().model_dump()))
+
+        self.assertEqual(result, extraction)
+        self.assertEqual(pipeline.requests, [])
+
     @staticmethod
     def _request() -> JobUrlPipelineRequest:
         """Build a URL pipeline request."""

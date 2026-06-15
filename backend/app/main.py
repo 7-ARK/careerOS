@@ -5,7 +5,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api.errors import register_exception_handlers
-from app.api.routes import applications, documents, health, job_url_extraction, pipeline
+from app.api.routes import (
+    applications,
+    auth,
+    candidates,
+    documents,
+    health,
+    job_url_extraction,
+    pipeline,
+)
 
 APP_NAME = "careerOS"
 APP_VERSION = __version__
@@ -33,9 +41,11 @@ def create_app() -> FastAPI:
     )
     register_exception_handlers(application)
     application.include_router(health.router)
+    application.include_router(auth.router)
     application.include_router(pipeline.router)
     application.include_router(job_url_extraction.router)
     application.include_router(documents.router)
+    application.include_router(candidates.router)
     application.include_router(applications.router)
     return application
 

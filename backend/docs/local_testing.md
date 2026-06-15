@@ -1,98 +1,127 @@
-# Local Pipeline Testing
+# Local MVP Testing
 
-## Purpose
+## Prerequisites
 
-The development seed creates one fictional early-career AI automation and
-backend candidate. Use its `candidate_profile_id` to exercise the complete
-local workflow:
-
-```text
-Job URL
--> Playwright extraction
--> Job analysis
--> Resume analysis
--> Resume draft
--> PDF generation
--> Application record
-```
-
-The script uses the Candidate Knowledge Base service, so the seeded profile is
-validated and persisted through the same application layer as future onboarding.
-
-## Start PostgreSQL
-
-Create an empty PostgreSQL database and add its SQLAlchemy URL to `backend/.env`:
+Create `backend/.env` with a local PostgreSQL connection and a private JWT secret:
 
 ```dotenv
 DATABASE_URL=postgresql+psycopg://user:password@localhost/careeros
+JWT_SECRET_KEY=replace-with-a-long-random-local-secret
+USE_LLM_RESUME_INTELLIGENCE=false
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4.1-mini
 ```
 
-The backend loads this ignored local file automatically. The seed script creates
-missing tables for local development.
+The OpenAI quality layer is optional. When it is disabled, missing a key, or unavailable,
+careerOS uses the deterministic resume-quality implementation.
 
-## Seed The Candidate
-
-From the `backend` directory:
+For a database created before local authentication was added, run from `backend`:
 
 ```powershell
+.\.venv\Scripts\Activate.ps1
+python -m scripts.add_user_auth
+```
+
+## Optional Demo Account
+
+Seed a complete local candidate profile:
+
+```powershell
+cd C:\Users\Ahmed\careerOS\backend
 .\.venv\Scripts\Activate.ps1
 python -m scripts.seed_candidate
 ```
 
-The command prints a value such as:
+The seed creates or reuses this local-only account:
 
 ```text
-careerOS development candidate created
-candidate_profile_id=8ae7b653-77a7-4dc4-a196-ced44c471087
-candidate_name=Amina Rahman
-skills=17 projects=4
+Email: demo@careeros.local
+Password: password123
 ```
 
-Copy the UUID after `candidate_profile_id=`. Each run creates a fresh candidate
-so that experiments remain isolated.
+Do not use these credentials outside local development.
 
-## Run The Backend
-
-From the `backend` directory:
+## Start The Backend
 
 ```powershell
+cd C:\Users\Ahmed\careerOS\backend
 .\.venv\Scripts\Activate.ps1
 python -m uvicorn app.main:app --reload
 ```
 
-The API is available at `http://127.0.0.1:8000`. Swagger is available at
-`http://127.0.0.1:8000/docs`.
+Backend: `http://127.0.0.1:8000`
 
-## Run The Frontend
+Swagger: `http://127.0.0.1:8000/docs`
+
+## Start The Frontend
 
 In another terminal:
 
 ```powershell
-cd frontend
+cd C:\Users\Ahmed\careerOS\frontend
 npm install
 npm run dev
 ```
 
-The frontend is available at `http://localhost:3000`.
+Frontend: `http://localhost:3000`
 
-## Test A Public Job URL
+## Register Or Login
 
-1. Open `http://localhost:3000`.
-2. Select `Start building`.
-3. Paste the seeded `candidate_profile_id`.
-4. Paste a public job-posting URL.
-5. Select `Analyze job`.
-6. Review the match score, generated document ID, and application record ID.
-7. Select `Download resume`.
+1. Open the frontend.
+2. Register with a name, email, and password of at least eight characters, or log in with
+   the demo account.
+3. Refresh the page once to confirm the session is restored.
+4. Select **Logout** and confirm the login screen returns.
 
-## Expected Limitations
+## Create And Select A Profile
 
-- LinkedIn, Indeed, Glassdoor, and company sites may block automated browsing,
-  require authentication, render content differently, or expose too little
-  visible detail.
-- Extraction warnings are expected for incomplete pages. Use the visible
-  manual-import link when URL extraction cannot produce a pipeline-ready job.
-- The deterministic analyzer does not call OpenAI and intentionally avoids
-  inventing candidate evidence.
-- The seed contains fictional development data only. Do not use it as a real
-  candidate profile.
+1. Select **Create profile**.
+2. Enter a full name and any relevant contact details, summary, skills, certifications,
+   projects, experience, and education.
+3. Select **Save profile** and confirm the success message appears.
+4. Confirm the new profile is selected in the candidate dropdown.
+5. Edit one field and save again to verify updates.
+
+Candidate profiles are private. A different account must not see the profile in its dropdown
+or access its profile ID through the API.
+
+## Test Job URL Extraction
+
+1. Select a candidate profile.
+2. Choose **Use URL**.
+3. Paste one public LinkedIn, Indeed, Glassdoor, Greenhouse, or Lever job URL.
+4. Select **Extract Job**.
+5. Confirm job title, company, location, and description populate the editable job form.
+6. Review or edit the fields before selecting **Analyze Job**.
+
+Some sites may display login walls, CAPTCHAs, or changed page layouts. careerOS should show a
+clear extraction warning and keep manual entry available instead of crashing.
+
+## Test Manual Fallback
+
+1. Select **Paste job manually**.
+2. Enter job title, company, and the complete job description.
+3. Optionally enter location, source platform, job URL, and company email.
+4. Select the desired PDF, DOCX, or Markdown output.
+5. Select **Analyze Job**.
+
+The job description must not be empty, and a candidate profile must be selected.
+
+## Generate And Download A Resume
+
+1. Wait for the completed match and resume review result.
+2. Confirm the selected projects and skill matches belong to the selected candidate.
+3. Select **Download resume**.
+4. Open the downloaded file and verify it uses the selected candidate and current job.
+5. For PDF output, confirm the file opens normally and internal truthfulness warnings are not
+   printed inside the resume.
+
+Repeat once for PDF, DOCX, and Markdown when validating all exporters.
+
+## Expected MVP Limitations
+
+- Access tokens expire after 24 hours and there are no refresh tokens.
+- There is no password reset, email verification, OAuth, roles, or payments.
+- Job-site login walls, CAPTCHAs, and layout changes can prevent URL extraction.
+- Extraction is synchronous and intended for one user-provided URL at a time.
+- The optional OpenAI quality layer falls back to deterministic processing when unavailable.

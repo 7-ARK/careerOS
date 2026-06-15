@@ -13,7 +13,7 @@ from app.repositories import (
     CandidateProfileRepository,
     SkillRepository,
 )
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 
 class KnowledgeBaseRepositoryTests(unittest.TestCase):
@@ -25,7 +25,9 @@ class KnowledgeBaseRepositoryTests(unittest.TestCase):
         self.profiles = CandidateProfileRepository(self.session)
         self.skills = SkillRepository(self.session)
         self.applications = ApplicationHistoryRepository(self.session)
+        user = create_test_user(self.session)
         self.profile = self.profiles.create(
+            user_id=user.id,
             full_name="Ada Lovelace",
             email="ada@example.com",
             headline="Platform Engineer",

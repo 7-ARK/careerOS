@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import {LogOut} from 'lucide-react';
+import {User} from '../lib/api';
 
 const navLinks = [
   { label: 'Analyze a job', href: '#analyze-job' },
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Features', href: '#features' },
 ];
 
-export function Header() {
+export function Header({user, onLogout}: {user: User; onLogout: () => void}) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -46,21 +46,16 @@ export function Header() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <motion.a
-            href="#"
-            whileHover={{ scale: 1.02 }}
-            className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
-          >
-            Sign in
-          </motion.a>
-          <motion.a
-            href="#analyze-job"
+          <span className="max-w-44 truncate text-sm text-muted-foreground">{user.full_name || user.email}</span>
+          <motion.button
+            type="button"
+            onClick={onLogout}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-all duration-200 hover:brightness-110"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-foreground transition hover:border-primary"
           >
-            Get started
-          </motion.a>
+            <LogOut className="size-4" />Logout
+          </motion.button>
         </div>
 
         {/* Mobile menu button */}
@@ -110,19 +105,8 @@ export function Header() {
                 </a>
               ))}
               <hr className="my-2 border-border" />
-              <a
-                href="#"
-                className="rounded-lg px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              >
-                Sign in
-              </a>
-              <a
-                href="#analyze-job"
-                onClick={() => setIsOpen(false)}
-                className="mt-2 rounded-full bg-primary px-5 py-3 text-center text-sm font-medium text-primary-foreground block"
-              >
-                Get started
-              </a>
+              <span className="truncate px-4 py-3 text-sm text-muted-foreground">{user.full_name || user.email}</span>
+              <button type="button" onClick={() => { setIsOpen(false); onLogout(); }} className="mt-2 inline-flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-medium text-foreground"><LogOut className="size-4" />Logout</button>
             </div>
           </motion.div>
         )}

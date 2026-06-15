@@ -6,22 +6,28 @@ import {
   FileText,
   Link2,
   LoaderCircle,
-  SlidersHorizontal,
 } from 'lucide-react';
 import {motion} from 'motion/react';
 import {
   ApiError,
   DocumentFormat,
   downloadGeneratedDocument,
+  extractJobUrl,
   ManualJobPipelineResult,
   ResumeTemplateName,
   runManualPipeline,
-  runUrlPipeline,
   SourcePlatform,
 } from '../lib/api';
+import {CandidateProfiles} from './CandidateProfiles';
 
 type ImportMode = 'url' | 'manual';
-type WorkflowState = 'idle' | 'loading' | 'success' | 'extraction_failed' | 'pipeline_failed';
+type WorkflowState =
+  | 'idle'
+  | 'loading'
+  | 'extracted'
+  | 'success'
+  | 'extraction_failed'
+  | 'pipeline_failed';
 type ManualPlatform =
   | 'linkedin'
   | 'indeed'
@@ -57,6 +63,23 @@ const MANUAL_PLATFORM_TO_SOURCE: Record<ManualPlatform, SourcePlatform> = {
   unknown: 'unknown',
 };
 
+function platformFromExtraction(
+  platform: SourcePlatform,
+  jobUrl: string,
+): ManualPlatform {
+  if (platform !== 'company_site') {
+    return platform;
+  }
+  const hostname = new URL(jobUrl).hostname.toLowerCase();
+  if (hostname === 'greenhouse.io' || hostname.endsWith('.greenhouse.io')) {
+    return 'greenhouse';
+  }
+  if (hostname === 'lever.co' || hostname.endsWith('.lever.co')) {
+    return 'lever';
+  }
+  return 'company';
+}
+
 export function AnalyzeJob() {
   const [mode, setMode] = useState<ImportMode>('url');
   const [candidateProfileId, setCandidateProfileId] = useState('');
@@ -69,7 +92,6 @@ export function AnalyzeJob() {
   const [companyEmail, setCompanyEmail] = useState('');
   const [documentFormat, setDocumentFormat] = useState<DocumentFormat>('pdf');
   const [templateName, setTemplateName] = useState<ResumeTemplateName>('clean_ats');
-  const [createApplicationRecord, setCreateApplicationRecord] = useState(true);
   const [workflowState, setWorkflowState] = useState<WorkflowState>('idle');
   const [pipelineResult, setPipelineResult] = useState<ManualJobPipelineResult | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -78,37 +100,69 @@ export function AnalyzeJob() {
 
   async function handleUrlSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!candidateProfileId) {
+      setErrorMessage('Select a candidate before extracting a job.');
+      setWorkflowState('pipeline_failed');
+      return;
+    }
     setWorkflowState('loading');
     setPipelineResult(null);
     setWarnings([]);
     setErrorMessage('');
+    setRawTitle('');
+    setCompanyName('');
+    setLocation('');
+    setDescriptionText('');
+    setCompanyEmail('');
+    setSourcePlatform('unknown');
 
     try {
-      const response = await runUrlPipeline({
+      const response = await extractJobUrl({
         candidate_profile_id: candidateProfileId.trim(),
         job_url: jobUrl.trim(),
-        source_platform: MANUAL_PLATFORM_TO_SOURCE[sourcePlatform],
-        create_application_record: true,
+        create_application_record: false,
         resume_template_name: 'clean_ats',
         document_format: 'pdf',
         headless: true,
         timeout_seconds: 30,
       });
-      setWarnings(response.extraction.extraction_warnings ?? []);
-      if (response.pipeline) {
-        setPipelineResult(response.pipeline);
-        setWorkflowState('success');
-      } else {
+      setWarnings(response.extraction_warnings ?? []);
+      setRawTitle(response.raw_title ?? '');
+      setCompanyName(response.company_name ?? '');
+      setLocation(response.location ?? '');
+      setDescriptionText(response.description_text);
+      setSourcePlatform(platformFromExtraction(response.detected_platform, response.job_url));
+      if (!response.pipeline_ready) {
+        setMode('manual');
+        setErrorMessage(
+          response.detected_platform === 'unknown'
+            ? 'Unsupported job platform. Please paste the job description manually.'
+            : 'Could not extract this job posting automatically. Please paste the job description manually.',
+        );
         setWorkflowState('extraction_failed');
+        return;
       }
+
+      setMode('manual');
+      setWorkflowState('extracted');
     } catch (error) {
-      setErrorMessage(error instanceof ApiError ? error.message : 'The pipeline could not be completed.');
-      setWorkflowState('pipeline_failed');
+      setMode('manual');
+      setErrorMessage(
+        error instanceof ApiError
+          ? error.message
+          : 'Could not extract this job posting automatically. Please paste the job description manually.',
+      );
+      setWorkflowState('extraction_failed');
     }
   }
 
   async function handleManualSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!candidateProfileId) {
+      setErrorMessage('Select a candidate before running the pipeline.');
+      setWorkflowState('pipeline_failed');
+      return;
+    }
     setWorkflowState('loading');
     setPipelineResult(null);
     setWarnings([]);
@@ -126,7 +180,7 @@ export function AnalyzeJob() {
         company_email: companyEmail.trim(),
         document_format: documentFormat,
         resume_template_name: templateName,
-        create_application_record: createApplicationRecord,
+        create_application_record: false,
       });
       setPipelineResult(response);
       setWarnings(response.warnings ?? []);
@@ -162,7 +216,7 @@ export function AnalyzeJob() {
   }
 
   return (
-    <section className="border-y border-border/50 bg-card/40 px-6 py-20 md:py-24" id="analyze-job">
+    <section className="min-h-screen border-y border-border/50 bg-card/40 px-6 pb-20 pt-32 md:pb-24 md:pt-36" id="analyze-job">
       <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(300px,0.75fr)] lg:gap-14">
         <div>
           <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-widest text-brand-amber">
@@ -175,6 +229,11 @@ export function AnalyzeJob() {
             Use a public job URL first. If extraction is blocked, paste the job description manually and run the same pipeline.
           </p>
 
+          <CandidateProfiles
+            selectedCandidateId={candidateProfileId}
+            onSelectionChange={setCandidateProfileId}
+          />
+
           <div className="mt-7 inline-flex rounded-full border border-border bg-background p-1">
             <ModeButton active={mode === 'url'} icon={<Link2 className="size-4" />} label="Use URL" onClick={() => switchMode('url')} />
             <ModeButton active={mode === 'manual'} icon={<FileText className="size-4" />} label="Paste job manually" onClick={() => switchMode('manual')} />
@@ -182,18 +241,13 @@ export function AnalyzeJob() {
 
           {mode === 'url' ? (
             <UrlImportForm
-              candidateProfileId={candidateProfileId}
               jobUrl={jobUrl}
-              sourcePlatform={sourcePlatform}
               isLoading={workflowState === 'loading'}
-              onCandidateProfileIdChange={setCandidateProfileId}
               onJobUrlChange={setJobUrl}
-              onSourcePlatformChange={setSourcePlatform}
               onSubmit={handleUrlSubmit}
             />
           ) : (
             <ManualImportForm
-              candidateProfileId={candidateProfileId}
               rawTitle={rawTitle}
               companyName={companyName}
               location={location}
@@ -203,9 +257,7 @@ export function AnalyzeJob() {
               companyEmail={companyEmail}
               documentFormat={documentFormat}
               templateName={templateName}
-              createApplicationRecord={createApplicationRecord}
               isLoading={workflowState === 'loading'}
-              onCandidateProfileIdChange={setCandidateProfileId}
               onRawTitleChange={setRawTitle}
               onCompanyNameChange={setCompanyName}
               onLocationChange={setLocation}
@@ -215,7 +267,6 @@ export function AnalyzeJob() {
               onCompanyEmailChange={setCompanyEmail}
               onDocumentFormatChange={setDocumentFormat}
               onTemplateNameChange={setTemplateName}
-              onCreateApplicationRecordChange={setCreateApplicationRecord}
               onSubmit={handleManualSubmit}
             />
           )}
@@ -259,29 +310,26 @@ function ModeButton({active, icon, label, onClick}: ModeButtonProps) {
 }
 
 interface UrlImportFormProps {
-  candidateProfileId: string;
   jobUrl: string;
-  sourcePlatform: ManualPlatform;
   isLoading: boolean;
-  onCandidateProfileIdChange: (value: string) => void;
   onJobUrlChange: (value: string) => void;
-  onSourcePlatformChange: (value: ManualPlatform) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
 function UrlImportForm({
-  candidateProfileId,
   jobUrl,
-  sourcePlatform,
   isLoading,
-  onCandidateProfileIdChange,
   onJobUrlChange,
-  onSourcePlatformChange,
   onSubmit,
 }: UrlImportFormProps) {
   return (
     <form className="mt-8 space-y-5" onSubmit={onSubmit}>
-      <CandidateProfileField value={candidateProfileId} onChange={onCandidateProfileIdChange} />
+      <div>
+        <h3 className="font-serif text-xl text-foreground">Import Job From URL</h3>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+          LinkedIn, Indeed, Glassdoor, Greenhouse, or Lever
+        </p>
+      </div>
 
       <label className="block">
         <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -300,15 +348,12 @@ function UrlImportForm({
         </div>
       </label>
 
-      <PlatformField value={sourcePlatform} onChange={onSourcePlatformChange} includeAutoDetect />
-
-      <PrimaryButton isLoading={isLoading} idleIcon={<Link2 className="size-4" />} idleLabel="Analyze job" loadingLabel="Analyzing job" />
+      <PrimaryButton isLoading={isLoading} idleIcon={<Link2 className="size-4" />} idleLabel="Extract Job" loadingLabel="Extracting Job" />
     </form>
   );
 }
 
 interface ManualImportFormProps {
-  candidateProfileId: string;
   rawTitle: string;
   companyName: string;
   location: string;
@@ -318,9 +363,7 @@ interface ManualImportFormProps {
   companyEmail: string;
   documentFormat: DocumentFormat;
   templateName: ResumeTemplateName;
-  createApplicationRecord: boolean;
   isLoading: boolean;
-  onCandidateProfileIdChange: (value: string) => void;
   onRawTitleChange: (value: string) => void;
   onCompanyNameChange: (value: string) => void;
   onLocationChange: (value: string) => void;
@@ -330,12 +373,10 @@ interface ManualImportFormProps {
   onCompanyEmailChange: (value: string) => void;
   onDocumentFormatChange: (value: DocumentFormat) => void;
   onTemplateNameChange: (value: ResumeTemplateName) => void;
-  onCreateApplicationRecordChange: (value: boolean) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
 function ManualImportForm({
-  candidateProfileId,
   rawTitle,
   companyName,
   location,
@@ -345,9 +386,7 @@ function ManualImportForm({
   companyEmail,
   documentFormat,
   templateName,
-  createApplicationRecord,
   isLoading,
-  onCandidateProfileIdChange,
   onRawTitleChange,
   onCompanyNameChange,
   onLocationChange,
@@ -357,13 +396,10 @@ function ManualImportForm({
   onCompanyEmailChange,
   onDocumentFormatChange,
   onTemplateNameChange,
-  onCreateApplicationRecordChange,
   onSubmit,
 }: ManualImportFormProps) {
   return (
     <form className="mt-8 space-y-5" onSubmit={onSubmit}>
-      <CandidateProfileField value={candidateProfileId} onChange={onCandidateProfileIdChange} />
-
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label="Job title" value={rawTitle} onChange={onRawTitleChange} placeholder="AI Automation Developer" required />
         <TextField label="Company" value={companyName} onChange={onCompanyNameChange} placeholder="Example Labs" required />
@@ -415,39 +451,8 @@ function ManualImportForm({
         />
       </div>
 
-      <label className="flex items-start gap-3 rounded-lg border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
-        <input
-          checked={createApplicationRecord}
-          onChange={(event) => onCreateApplicationRecordChange(event.target.checked)}
-          type="checkbox"
-          className="mt-1 size-4 accent-primary"
-        />
-        <span>Create a not-applied application record for this job.</span>
-      </label>
-
-      <PrimaryButton isLoading={isLoading} idleIcon={<FileText className="size-4" />} idleLabel="Run manual import" loadingLabel="Generating resume" />
+      <PrimaryButton isLoading={isLoading} idleIcon={<FileText className="size-4" />} idleLabel="Analyze Job" loadingLabel="Generating resume" />
     </form>
-  );
-}
-
-function CandidateProfileField({value, onChange}: {value: string; onChange: (value: string) => void}) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Candidate profile ID
-      </span>
-      <input
-        required
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="Paste your candidate_profile_id"
-        className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-      />
-      <span className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-        <SlidersHorizontal className="size-3.5 text-brand-amber" />
-        Temporary advanced field until candidate accounts are available.
-      </span>
-    </label>
   );
 }
 
@@ -587,8 +592,21 @@ function WorkflowResult({
       <ResultPanel>
         <LoaderCircle className="size-7 animate-spin text-primary" />
         <p className="mt-5 text-sm leading-relaxed text-foreground">
-          {mode === 'url' ? 'Reading job page and preparing your resume...' : 'Preparing your resume from the pasted job description...'}
+          {mode === 'url' ? 'Reading the job page...' : 'Preparing your resume from the reviewed job description...'}
         </p>
+      </ResultPanel>
+    );
+  }
+
+  if (state === 'extracted') {
+    return (
+      <ResultPanel>
+        <CheckCircle2 className="size-7 text-primary" />
+        <h3 className="mt-5 font-serif text-xl text-foreground">Job details extracted.</h3>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Review and edit the populated fields, then select Analyze Job.
+        </p>
+        <Warnings warnings={warnings} />
       </ResultPanel>
     );
   }
@@ -599,9 +617,9 @@ function WorkflowResult({
         <AlertCircle className="size-7 text-brand-amber" />
         <h3 className="mt-5 font-serif text-xl text-foreground">We need the job text.</h3>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          URL extraction did not return enough detail. Paste the job description manually instead.
+          {errorMessage || 'Could not extract this job posting automatically. Please paste the job description manually.'}
         </p>
-        <Warnings warnings={warnings} />
+        <Warnings warnings={warnings.filter((warning) => warning !== errorMessage)} />
         <button
           type="button"
           onClick={onUseManualImport}
@@ -635,7 +653,6 @@ function WorkflowResult({
           <ResultMetric label="Status" value={result.status} />
         </div>
         <ResultId label="Document ID" value={result.generated_document_id} />
-        {result.application_record_id && <ResultId label="Application ID" value={result.application_record_id} />}
         <SectionHeading label="Resume Review" />
         <ReviewList label="Matched Skills" values={result.matched_skills ?? []} />
         <ReviewList label="Missing Skills" values={result.missing_skills ?? []} emptyLabel="No required skill gaps found." />

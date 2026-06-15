@@ -35,7 +35,7 @@ from app.services import (
     KnowledgeBaseService,
     PipelineExecutionError,
 )
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 DESCRIPTION = """
 Responsibilities:
@@ -66,12 +66,14 @@ class ApplicationPipelineServiceTests(unittest.TestCase):
         self.session = create_test_session(self.engine)
         self.temporary_directory = tempfile.TemporaryDirectory()
         knowledge_base = KnowledgeBaseService(self.session)
+        user = create_test_user(self.session)
         profile = knowledge_base.create_candidate_profile(
             CandidateProfileCreate(
                 full_name="Grace Hopper",
                 email="grace@example.com",
                 headline="Backend Engineer",
-            )
+            ),
+            user_id=user.id,
         )
         knowledge_base.add_skill(
             profile.id,

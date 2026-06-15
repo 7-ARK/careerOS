@@ -77,13 +77,42 @@ PLATFORM_SELECTORS: dict[SourcePlatform, dict[str, tuple[str, ...]]] = {
     },
 }
 
+DOMAIN_SELECTORS: dict[str, dict[str, tuple[str, ...]]] = {
+    "greenhouse.io": {
+        "raw_title": ("h1.app-title", ".job__title h1", "h1"),
+        "company_name": (".company-name", ".job__company"),
+        "location": (".location", ".job__location"),
+        "description_text": ("#content", ".job__description", ".content"),
+    },
+    "lever.co": {
+        "raw_title": (".posting-headline h2", "h2"),
+        "company_name": (".posting-headline .company", ".company-name"),
+        "location": (".posting-categories .location", ".location"),
+        "description_text": (
+            ".posting-page .content",
+            ".posting-description",
+            ".section-wrapper.page-full-width",
+        ),
+    },
+}
+
+UNSUPPORTED_PLATFORM_WARNING = (
+    "Unsupported job platform. Please paste the job description manually."
+)
+
 
 class PlaywrightJobExtractor(BaseJobUrlExtractor):
     """Extract visible job fields from one URL using a read-only Chromium page."""
 
     def extract(self, request: JobUrlExtractionRequest) -> JobUrlExtractionResult:
         """Open one page, read visible content, and return practical v1 extraction."""
-        platform = request.source_platform or self.detect_platform(request.job_url)
+        platform = self.detect_platform(request.job_url)
+        if platform == SourcePlatform.UNKNOWN:
+            return self.failure_result(
+                request.job_url,
+                platform,
+                UNSUPPORTED_PLATFORM_WARNING,
+            )
         timeout_ms = request.timeout_seconds * 1000
         try:
             with sync_playwright() as playwright:
@@ -123,7 +152,7 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
         """Extract visible content from an already-open Playwright page."""
         detected_platform = platform or self.detect_platform(job_url)
         visible_text = page.locator("body").inner_text()
-        fields = self._selector_fields(page, detected_platform)
+        fields = self._selector_fields(page, detected_platform, job_url)
         return self.extract_from_visible_text(
             job_url=job_url,
             visible_text=visible_text,
@@ -191,6 +220,10 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
             return SourcePlatform.INDEED
         if domain == "glassdoor.com" or domain.endswith(".glassdoor.com"):
             return SourcePlatform.GLASSDOOR
+        if domain == "greenhouse.io" or domain.endswith(".greenhouse.io"):
+            return SourcePlatform.COMPANY_SITE
+        if domain == "lever.co" or domain.endswith(".lever.co"):
+            return SourcePlatform.COMPANY_SITE
         return SourcePlatform.UNKNOWN
 
     @staticmethod
@@ -304,10 +337,20 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
         )
 
     @staticmethod
-    def _selector_fields(page: Page, platform: SourcePlatform) -> dict[str, str | None]:
+    def _selector_fields(
+        page: Page,
+        platform: SourcePlatform,
+        job_url: str,
+    ) -> dict[str, str | None]:
         """Read the first visible text value from platform-specific selectors."""
+        domain = (urlparse(job_url).hostname or "").casefold()
+        selector_map = PLATFORM_SELECTORS.get(platform, {})
+        for domain_suffix, domain_selectors in DOMAIN_SELECTORS.items():
+            if domain == domain_suffix or domain.endswith(f".{domain_suffix}"):
+                selector_map = domain_selectors
+                break
         fields: dict[str, str | None] = {}
-        for field, selectors in PLATFORM_SELECTORS.get(platform, {}).items():
+        for field, selectors in selector_map.items():
             fields[field] = _first_visible_selector_text(page, selectors)
         return fields
 

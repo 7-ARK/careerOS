@@ -29,7 +29,7 @@ class JobUrlPipelineService:
 
     def run_url_pipeline(self, request: JobUrlPipelineRequest) -> JobUrlPipelineResult:
         """Extract visible page data and run the existing pipeline only when ready."""
-        extraction = self.extractor.extract(JobUrlExtractionRequest(**request.model_dump()))
+        extraction = self.extract_url(JobUrlExtractionRequest(**request.model_dump()))
         if not extraction.pipeline_ready:
             return JobUrlPipelineResult(extraction=extraction)
         pipeline_result = self.pipeline.run_manual_job_pipeline(
@@ -39,6 +39,10 @@ class JobUrlPipelineService:
             extraction=extraction,
             pipeline=pipeline_result,
         )
+
+    def extract_url(self, request: JobUrlExtractionRequest) -> JobUrlExtractionResult:
+        """Extract job fields without starting the downstream resume pipeline."""
+        return self.extractor.extract(request)
 
     @staticmethod
     def to_manual_pipeline_request(

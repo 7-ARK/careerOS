@@ -31,6 +31,7 @@ from app.models.enums import (
 
 if TYPE_CHECKING:
     from app.models.application_tracking import ApplicationRecord
+    from app.models.auth import User
     from app.models.document_generation import GeneratedDocument
     from app.models.job_analysis import JobDescription
     from app.models.resume_intelligence import ResumeAnalysis, ResumeDraft
@@ -41,6 +42,9 @@ class CandidateProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "candidate_profiles"
 
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     full_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     email: Mapped[str | None] = mapped_column(String(320), index=True)
     phone: Mapped[str | None] = mapped_column(String(50))
@@ -48,7 +52,10 @@ class CandidateProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     summary: Mapped[str | None] = mapped_column(Text)
     location: Mapped[str | None] = mapped_column(String(200), index=True)
     linkedin_url: Mapped[str | None] = mapped_column(String(500))
+    github_url: Mapped[str | None] = mapped_column(String(500))
     portfolio_url: Mapped[str | None] = mapped_column(String(500))
+
+    user: Mapped["User"] = relationship(back_populates="candidate_profiles")
 
     education: Mapped[list["Education"]] = relationship(
         back_populates="profile", cascade="all, delete-orphan"

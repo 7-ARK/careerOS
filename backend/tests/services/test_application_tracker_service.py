@@ -26,7 +26,7 @@ from app.services import (
     ApplicationTrackerService,
     InvalidApplicationReferenceError,
 )
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 
 class ApplicationTrackerServiceTests(unittest.TestCase):
@@ -35,7 +35,8 @@ class ApplicationTrackerServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.engine = create_test_engine()
         self.session = create_test_session(self.engine)
-        self.profile = CandidateProfile(full_name="Grace Hopper")
+        self.user = create_test_user(self.session)
+        self.profile = CandidateProfile(user_id=self.user.id, full_name="Grace Hopper")
         self.description = JobDescription(
             raw_title="Backend Engineer",
             company_name="Platform Labs",
@@ -123,7 +124,7 @@ class ApplicationTrackerServiceTests(unittest.TestCase):
             self.service.mark_as_applied(uuid4())
 
         record = self._create_record()
-        other_profile = CandidateProfile(full_name="Other Candidate")
+        other_profile = CandidateProfile(user_id=self.user.id, full_name="Other Candidate")
         self.session.add(other_profile)
         self.session.flush()
         self.document.candidate_profile = other_profile

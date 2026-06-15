@@ -26,7 +26,7 @@ from app.services import (
     ResumeDraftNotFoundError,
     UnsupportedDocumentFormatError,
 )
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 
 class FailingMarkdownExporter(DocumentExporter):
@@ -49,7 +49,9 @@ class DocumentGenerationServiceTests(unittest.TestCase):
         self.session = create_test_session(self.engine)
         self.temporary_directory = tempfile.TemporaryDirectory()
         self.output_directory = Path(self.temporary_directory.name)
+        user = create_test_user(self.session)
         self.profile = CandidateProfile(
+            user_id=user.id,
             full_name="Grace Hopper",
             email="grace@example.com",
             location="New York",

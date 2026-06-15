@@ -1,8 +1,142 @@
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8000';
+const TOKEN_STORAGE_KEY = 'careeros_access_token';
+export const AUTH_EXPIRED_EVENT = 'careeros:auth-expired';
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: 'bearer';
+  user: User;
+}
 
 export type SourcePlatform = 'linkedin' | 'indeed' | 'glassdoor' | 'company_site' | 'other' | 'unknown';
 export type DocumentFormat = 'markdown' | 'docx' | 'pdf';
 export type ResumeTemplateName = 'clean_ats' | 'modern_professional';
+
+export interface CandidateSummary {
+  id: string;
+  full_name: string;
+  email: string | null;
+  headline: string | null;
+}
+
+export interface CandidateEducation {
+  id: string;
+  institution: string;
+  degree: string;
+  field_of_study: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  description: string | null;
+}
+
+export interface CandidateSkill {
+  id: string;
+  name: string;
+  category: string;
+  self_rating: number;
+  years_of_experience: string;
+}
+
+export interface CandidateProject {
+  id: string;
+  title: string;
+  description: string;
+  technologies: string[];
+  outcomes: string[];
+}
+
+export interface CandidateCertification {
+  id: string;
+  name: string;
+  issuing_organization: string;
+  issue_date: string | null;
+  expiration_date: string | null;
+}
+
+export interface CandidateExperience {
+  id: string;
+  company: string;
+  job_title: string;
+  employment_type: string | null;
+  location: string | null;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  description: string | null;
+  achievements: string[];
+}
+
+export interface CandidateProfile extends CandidateSummary {
+  user_id: string;
+  phone: string | null;
+  summary: string | null;
+  location: string | null;
+  linkedin_url: string | null;
+  github_url: string | null;
+  portfolio_url: string | null;
+  education: CandidateEducation[];
+  skills: CandidateSkill[];
+  projects: CandidateProject[];
+  certifications: CandidateCertification[];
+  work_experiences: CandidateExperience[];
+}
+
+export interface CandidateProfileInput {
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  linkedin_url: string | null;
+  github_url: string | null;
+  portfolio_url: string | null;
+  headline: string | null;
+  summary: string | null;
+  education: CandidateEducationInput[];
+  skills: CandidateSkillInput[];
+  projects: CandidateProjectInput[];
+  certifications: CandidateCertificationInput[];
+  work_experiences: CandidateExperienceInput[];
+}
+
+export interface CandidateEducationInput {
+  institution: string;
+  degree: string;
+  end_date?: string;
+}
+
+export interface CandidateSkillInput {
+  name: string;
+  category: string;
+  self_rating: number;
+  years_of_experience: number;
+}
+
+export interface CandidateProjectInput {
+  title: string;
+  description: string;
+  technologies: string[];
+}
+
+export interface CandidateCertificationInput {
+  name: string;
+  issuing_organization: string;
+  issue_date?: string;
+}
+
+export interface CandidateExperienceInput {
+  job_title: string;
+  company: string;
+  start_date: string;
+  end_date?: string;
+  is_current: boolean;
+  description?: string | null;
+}
 
 export interface JobUrlPipelineRequest {
   candidate_profile_id: string;
@@ -93,6 +227,45 @@ export class ApiError extends Error {
   }
 }
 
+export function getAccessToken(): string | null {
+  return localStorage.getItem(TOKEN_STORAGE_KEY);
+}
+
+export function clearAccessToken(): void {
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+export async function registerUser(request: {
+  email: string;
+  password: string;
+  full_name?: string;
+}): Promise<AuthResponse> {
+  const response = await requestJson<AuthResponse>('/api/v1/auth/register', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(request),
+  });
+  localStorage.setItem(TOKEN_STORAGE_KEY, response.access_token);
+  return response;
+}
+
+export async function loginUser(request: {
+  email: string;
+  password: string;
+}): Promise<AuthResponse> {
+  const response = await requestJson<AuthResponse>('/api/v1/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(request),
+  });
+  localStorage.setItem(TOKEN_STORAGE_KEY, response.access_token);
+  return response;
+}
+
+export async function getCurrentUser(): Promise<User> {
+  return requestJson<User>('/api/v1/auth/me');
+}
+
 export function getApiBaseUrl(): string {
   return (import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, '');
 }
@@ -103,6 +276,49 @@ export async function runUrlPipeline(request: JobUrlPipelineRequest): Promise<Jo
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(request),
   });
+}
+
+export async function extractJobUrl(
+  request: JobUrlPipelineRequest,
+): Promise<JobUrlExtractionResult> {
+  return requestJson<JobUrlExtractionResult>('/api/v1/pipeline/extract', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(request),
+  });
+}
+
+export async function listCandidates(): Promise<CandidateSummary[]> {
+  return requestJson<CandidateSummary[]>('/api/v1/candidates');
+}
+
+export async function getCandidateProfile(candidateId: string): Promise<CandidateProfile> {
+  return requestJson<CandidateProfile>(`/api/v1/candidates/${encodeURIComponent(candidateId)}`);
+}
+
+export async function createCandidateProfile(
+  profile: CandidateProfileInput,
+): Promise<CandidateProfile> {
+  return requestJson<CandidateProfile>('/api/v1/candidates', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(profile),
+  });
+}
+
+export async function updateCandidateProfile(
+  candidateId: string,
+  profile: CandidateProfileInput,
+): Promise<CandidateProfile> {
+  return requestJson<CandidateProfile>(`/api/v1/candidates/${encodeURIComponent(candidateId)}`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(profile),
+  });
+}
+
+export async function deleteCandidateProfile(candidateId: string): Promise<void> {
+  await apiFetch(`/api/v1/candidates/${encodeURIComponent(candidateId)}`, {method: 'DELETE'});
 }
 
 export async function runManualPipeline(request: ManualJobPipelineRequest): Promise<ManualJobPipelineResult> {
@@ -133,8 +349,11 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   let response: Response;
+  const headers = new Headers(init?.headers);
+  const token = getAccessToken();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
   try {
-    response = await fetch(`${getApiBaseUrl()}${path}`, init);
+    response = await fetch(`${getApiBaseUrl()}${path}`, {...init, headers});
   } catch {
     throw new ApiError('Unable to reach the careerOS API. Confirm that the backend is running.', {
       code: 'network_error',
@@ -143,6 +362,11 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
 
   if (response.ok) {
     return response;
+  }
+
+  if (response.status === 401 && token) {
+    clearAccessToken();
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
   }
 
   let payload: ApiErrorEnvelope = {};

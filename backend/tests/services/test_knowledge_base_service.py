@@ -8,15 +8,24 @@ from app.models import ApplicationStatus, RemotePreference
 from app.schemas import (
     ApplicationHistoryCreate,
     CandidateProfileCreate,
+    CandidateProfileDetailsCreate,
+    CandidateProfileDetailsUpdate,
     CandidateProfileUpdate,
     CareerGoalCreate,
+    CertificationCreate,
+    EducationCreate,
     ProjectCreate,
     ResumeVersionCreate,
     SkillCreate,
     WorkExperienceCreate,
 )
-from app.services import DuplicateSkillError, InvalidResumeVersionError, KnowledgeBaseService
-from tests.support import create_test_engine, create_test_session
+from app.services import (
+    DuplicateSkillError,
+    InvalidResumeVersionError,
+    KnowledgeBaseService,
+    ProfileNotFoundError,
+)
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 
 class KnowledgeBaseServiceTests(unittest.TestCase):
@@ -26,8 +35,10 @@ class KnowledgeBaseServiceTests(unittest.TestCase):
         self.engine = create_test_engine()
         self.session = create_test_session(self.engine)
         self.service = KnowledgeBaseService(self.session)
+        self.user = create_test_user(self.session)
         self.profile = self.service.create_candidate_profile(
-            CandidateProfileCreate(full_name="Grace Hopper", email="grace@example.com")
+            CandidateProfileCreate(full_name="Grace Hopper", email="grace@example.com"),
+            user_id=self.user.id,
         )
 
     def tearDown(self) -> None:
@@ -82,6 +93,87 @@ class KnowledgeBaseServiceTests(unittest.TestCase):
         self.assertEqual(profile.skills[0].name, "Compiler Design")
         self.assertEqual(profile.career_goals.target_roles, ["Principal Engineer"])
 
+    def test_list_profiles_returns_selector_fields_in_name_order(self) -> None:
+        self.service.create_candidate_profile(
+            CandidateProfileCreate(
+                full_name="Ada Lovelace",
+                email="ada@example.com",
+                headline="Computing Pioneer",
+            ),
+            user_id=self.user.id,
+        )
+
+        profiles = self.service.list_profiles(self.user.id)
+
+        self.assertEqual(
+            [profile.full_name for profile in profiles],
+            ["Ada Lovelace", "Grace Hopper"],
+        )
+        self.assertEqual(profiles[0].email, "ada@example.com")
+        self.assertEqual(profiles[0].headline, "Computing Pioneer")
+
+    def test_create_update_and_delete_complete_profile(self) -> None:
+        profile = self.service.create_profile_with_details(
+            CandidateProfileDetailsCreate(
+                full_name="Katherine Johnson",
+                email="katherine@example.com",
+                github_url="https://github.com/katherine",
+                education=[
+                    EducationCreate(
+                        institution="West Virginia State College",
+                        degree="Mathematics",
+                        end_date=date(1937, 12, 31),
+                    )
+                ],
+                skills=[
+                    SkillCreate(
+                        name="Orbital Mechanics",
+                        category="Engineering",
+                        self_rating=5,
+                        years_of_experience=Decimal("20"),
+                    )
+                ],
+                certifications=[
+                    CertificationCreate(
+                        name="Presidential Medal of Freedom",
+                        issuing_organization="United States",
+                        issue_date=date(2015, 1, 1),
+                    )
+                ],
+            ),
+            user_id=self.user.id,
+        )
+
+        self.assertEqual(profile.github_url, "https://github.com/katherine")
+        self.assertEqual(profile.education[0].degree, "Mathematics")
+        self.assertEqual(profile.skills[0].name, "Orbital Mechanics")
+
+        updated = self.service.update_profile_with_details(
+            profile.id,
+            CandidateProfileDetailsUpdate(
+                headline="NASA Mathematician",
+                skills=[
+                    SkillCreate(
+                        name="Analytical Geometry",
+                        category="Mathematics",
+                        self_rating=5,
+                        years_of_experience=Decimal("25"),
+                    )
+                ],
+                education=[],
+            ),
+            user_id=self.user.id,
+        )
+
+        self.assertEqual(updated.headline, "NASA Mathematician")
+        self.assertEqual([skill.name for skill in updated.skills], ["Analytical Geometry"])
+        self.assertEqual(updated.education, [])
+        self.assertEqual(len(updated.certifications), 1)
+
+        self.service.delete_profile(profile.id, user_id=self.user.id)
+        with self.assertRaises(ProfileNotFoundError):
+            self.service.get_profile(profile.id)
+
     def test_add_skill_rejects_duplicate_name(self) -> None:
         skill = SkillCreate(
             name="Python",
@@ -115,7 +207,8 @@ class KnowledgeBaseServiceTests(unittest.TestCase):
 
     def test_record_application_rejects_another_profiles_resume(self) -> None:
         other_profile = self.service.create_candidate_profile(
-            CandidateProfileCreate(full_name="Other Candidate")
+            CandidateProfileCreate(full_name="Other Candidate"),
+            user_id=self.user.id,
         )
         resume = self.service.create_resume_version(
             other_profile.id,

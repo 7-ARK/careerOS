@@ -177,6 +177,26 @@ class CandidateProfileRepository(Repository[CandidateProfile]):
         )
         return self.session.scalar(statement)
 
+    def get_complete_for_user(
+        self,
+        profile_id: UUID,
+        user_id: UUID,
+    ) -> CandidateProfile | None:
+        """Load a complete candidate aggregate only when owned by one user."""
+        statement = (
+            select(CandidateProfile)
+            .where(
+                CandidateProfile.id == profile_id,
+                CandidateProfile.user_id == user_id,
+            )
+            .options(*(selectinload(relationship) for relationship in self._relationships))
+        )
+        return self.session.scalar(statement)
+
+    def list_for_user(self, user_id: UUID) -> list[CandidateProfile]:
+        """List candidate profiles owned by one authenticated user."""
+        return self.list(filters={"user_id": user_id})
+
     def search_profiles(
         self,
         query: str,

@@ -3,26 +3,81 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {useEffect, useState} from 'react';
+import {LoaderCircle} from 'lucide-react';
 import { Header } from './components/Header';
-import { Hero } from './components/Hero';
 import { AnalyzeJob } from './components/AnalyzeJob';
-import { FolderJourney } from './components/FolderJourney';
-import { Features } from './components/Features';
-import { CTA } from './components/CTA';
-import { Footer } from './components/Footer';
+import {AuthScreen} from './components/AuthScreen';
+import {
+  AUTH_EXPIRED_EVENT,
+  ApiError,
+  User,
+  clearAccessToken,
+  getAccessToken,
+  getCurrentUser,
+} from './lib/api';
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [authMessage, setAuthMessage] = useState('');
+
+  useEffect(() => {
+    async function restoreSession() {
+      if (!getAccessToken()) {
+        setIsCheckingAuth(false);
+        return;
+      }
+      try {
+        setUser(await getCurrentUser());
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          clearAccessToken();
+          setAuthMessage('Your session expired. Please log in again.');
+        }
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    }
+    void restoreSession();
+  }, []);
+
+  useEffect(() => {
+    function handleExpiredSession() {
+      setUser(null);
+      setAuthMessage('Your session expired. Please log in again.');
+    }
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleExpiredSession);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, handleExpiredSession);
+  }, []);
+
+  if (isCheckingAuth) {
+    return <main className="flex min-h-screen items-center justify-center bg-background text-primary"><LoaderCircle className="size-6 animate-spin" /></main>;
+  }
+
+  if (!user) {
+    return (
+      <AuthScreen
+        message={authMessage}
+        onAuthenticated={(authenticatedUser) => {
+          setAuthMessage('');
+          setUser(authenticatedUser);
+        }}
+      />
+    );
+  }
+
+  function logout() {
+    clearAccessToken();
+    setUser(null);
+  }
+
   return (
     <div className="relative min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-foreground">
-      <Header />
+      <Header user={user} onLogout={logout} />
       <main className="relative" id="main-content-layout">
-        <Hero />
         <AnalyzeJob />
-        <FolderJourney />
-        <Features />
-        <CTA />
       </main>
-      <Footer />
     </div>
   );
 }

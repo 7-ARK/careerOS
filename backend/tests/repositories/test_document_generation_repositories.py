@@ -12,7 +12,7 @@ from app.models.enums import (
     SeniorityLevel,
 )
 from app.repositories import GeneratedDocumentRepository
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 
 class GeneratedDocumentRepositoryTests(unittest.TestCase):
@@ -22,7 +22,8 @@ class GeneratedDocumentRepositoryTests(unittest.TestCase):
         self.engine = create_test_engine()
         self.session = create_test_session(self.engine)
         self.documents = GeneratedDocumentRepository(self.session)
-        self.profile = CandidateProfile(full_name="Ada Lovelace")
+        user = create_test_user(self.session)
+        self.profile = CandidateProfile(user_id=user.id, full_name="Ada Lovelace")
         description = JobDescription(raw_title="Backend Engineer", description_text="Build APIs.")
         self.job_analysis = JobAnalysis(
             job_description=description,

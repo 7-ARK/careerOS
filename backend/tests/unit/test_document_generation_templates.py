@@ -17,6 +17,7 @@ class DocumentGenerationTemplateTests(unittest.TestCase):
 
     def setUp(self) -> None:
         self.candidate = CandidateProfile(
+            user_id=uuid4(),
             full_name="Ada Lovelace",
             email="ada@example.com",
             location="London",

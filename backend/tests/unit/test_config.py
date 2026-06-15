@@ -18,6 +18,9 @@ class SettingsTests(unittest.TestCase):
                 "DATABASE_URL": "postgresql://localhost/careeros",
                 "USE_LLM_RESUME_INTELLIGENCE": "true",
                 "OPENAI_MODEL": "gpt-4.1-mini",
+                "JWT_SECRET_KEY": "test-secret",
+                "JWT_ALGORITHM": "HS256",
+                "JWT_ACCESS_TOKEN_EXPIRE_MINUTES": "60",
             },
             clear=True,
         ):
@@ -27,6 +30,9 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(settings.database_url, "postgresql://localhost/careeros")
         self.assertTrue(settings.use_llm_resume_intelligence)
         self.assertEqual(settings.openai_model, "gpt-4.1-mini")
+        self.assertEqual(settings.jwt_secret_key, "test-secret")
+        self.assertEqual(settings.jwt_algorithm, "HS256")
+        self.assertEqual(settings.jwt_access_token_expire_minutes, 60)
 
     def test_from_env_defaults_llm_resume_intelligence_to_false(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
@@ -34,6 +40,8 @@ class SettingsTests(unittest.TestCase):
 
         self.assertFalse(settings.use_llm_resume_intelligence)
         self.assertEqual(settings.openai_model, "gpt-4.1-mini")
+        self.assertEqual(settings.jwt_algorithm, "HS256")
+        self.assertEqual(settings.jwt_access_token_expire_minutes, 1440)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 """Persistence models for careerOS domain entities."""
 
 from app.models.application_tracking import ApplicationRecord
+from app.models.auth import User
 from app.models.document_generation import GeneratedDocument
 from app.models.enums import (
     ApplicationStatus,
@@ -37,6 +38,7 @@ __all__ = [
     "ApplicationHistory",
     "ApplicationRecord",
     "ApplicationStatus",
+    "User",
     "CandidateProfile",
     "CareerGoal",
     "Certification",

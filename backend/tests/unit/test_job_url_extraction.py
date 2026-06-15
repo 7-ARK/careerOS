@@ -2,9 +2,13 @@
 
 import unittest
 from decimal import Decimal
+from uuid import uuid4
+
+from pydantic import ValidationError
 
 from app.features.job_url_extraction.extractors import PlaywrightJobExtractor
 from app.models.enums import SourcePlatform
+from app.schemas import JobUrlExtractionRequest
 
 
 class PlaywrightJobExtractorUnitTests(unittest.TestCase):
@@ -27,9 +31,61 @@ class PlaywrightJobExtractorUnitTests(unittest.TestCase):
             SourcePlatform.GLASSDOOR,
         )
         self.assertEqual(
+            self.extractor.detect_platform("https://boards.greenhouse.io/example/jobs/123"),
+            SourcePlatform.COMPANY_SITE,
+        )
+        self.assertEqual(
+            self.extractor.detect_platform("https://jobs.lever.co/example/123"),
+            SourcePlatform.COMPANY_SITE,
+        )
+        self.assertEqual(
             self.extractor.detect_platform("https://careers.example.com/jobs/123"),
             SourcePlatform.UNKNOWN,
         )
+
+    def test_supported_platforms_produce_editable_job_fields(self) -> None:
+        cases = (
+            ("https://www.linkedin.com/jobs/view/123", SourcePlatform.LINKEDIN),
+            ("https://www.indeed.com/viewjob?jk=123", SourcePlatform.INDEED),
+            ("https://www.glassdoor.com/job-listing/123", SourcePlatform.GLASSDOOR),
+            ("https://boards.greenhouse.io/example/jobs/123", SourcePlatform.COMPANY_SITE),
+            ("https://jobs.lever.co/example/123", SourcePlatform.COMPANY_SITE),
+        )
+        for job_url, expected_platform in cases:
+            with self.subTest(job_url=job_url):
+                result = self.extractor.extract_from_visible_text(
+                    job_url=job_url,
+                    page_title="Backend Engineer - Platform Labs",
+                    visible_text=(
+                        "Backend Engineer\nPlatform Labs\nRemote\n"
+                        "Build reliable Python APIs, integrations, automation workflows, "
+                        "and production services with a collaborative engineering team."
+                    ),
+                )
+
+                self.assertEqual(result.detected_platform, expected_platform)
+                self.assertEqual(result.raw_title, "Backend Engineer")
+                self.assertEqual(result.company_name, "Platform Labs")
+                self.assertTrue(result.pipeline_ready)
+
+    def test_unsupported_url_returns_manual_fallback_without_browser_launch(self) -> None:
+        result = self.extractor.extract(
+            JobUrlExtractionRequest(
+                candidate_profile_id=uuid4(),
+                job_url="https://careers.example.com/jobs/123",
+            )
+        )
+
+        self.assertFalse(result.pipeline_ready)
+        self.assertEqual(result.detected_platform, SourcePlatform.UNKNOWN)
+        self.assertEqual(
+            result.extraction_warnings,
+            ["Unsupported job platform. Please paste the job description manually."],
+        )
+
+    def test_empty_url_is_rejected(self) -> None:
+        with self.assertRaises(ValidationError):
+            JobUrlExtractionRequest(candidate_profile_id=uuid4(), job_url="")
 
     def test_cleans_navigation_noise_and_duplicate_lines(self) -> None:
         cleaned = self.extractor.clean_visible_text(

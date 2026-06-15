@@ -6,7 +6,7 @@ from decimal import Decimal
 from app.models import CandidateProfile, JobAnalysis, JobDescription, ResumeAnalysis
 from app.models.enums import ResumeDraftStatus, SeniorityLevel
 from app.repositories import ResumeAnalysisRepository, ResumeDraftRepository
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 
 class ResumeIntelligenceRepositoryTests(unittest.TestCase):
@@ -17,7 +17,8 @@ class ResumeIntelligenceRepositoryTests(unittest.TestCase):
         self.session = create_test_session(self.engine)
         self.analyses = ResumeAnalysisRepository(self.session)
         self.drafts = ResumeDraftRepository(self.session)
-        self.profile = CandidateProfile(full_name="Ada Lovelace")
+        user = create_test_user(self.session)
+        self.profile = CandidateProfile(user_id=user.id, full_name="Ada Lovelace")
         self.job_description = JobDescription(
             raw_title="Backend Engineer",
             description_text="Build Python services.",

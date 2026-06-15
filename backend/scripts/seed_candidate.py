@@ -22,6 +22,7 @@ from app.schemas import (
     WorkExperienceCreate,
 )
 from app.services import KnowledgeBaseService
+from scripts.demo_user import DEMO_EMAIL, DEMO_PASSWORD, get_or_create_demo_user
 
 SKILLS = [
     ("Python", "Programming Languages", 4, "2.50"),
@@ -47,6 +48,7 @@ SKILLS = [
 def seed_candidate(session: Session) -> CandidateProfileRead:
     """Create one complete fictional candidate through the knowledge-base service."""
     service = KnowledgeBaseService(session)
+    demo_user = get_or_create_demo_user(session)
     profile = service.create_candidate_profile(
         CandidateProfileCreate(
             full_name="Amina Rahman",
@@ -62,7 +64,8 @@ def seed_candidate(session: Session) -> CandidateProfileRead:
             location="Remote",
             linkedin_url="https://www.linkedin.com/in/amina-rahman-dev",
             portfolio_url="https://github.com/amina-rahman-dev",
-        )
+        ),
+        user_id=demo_user.id,
     )
 
     service.add_education(
@@ -207,6 +210,8 @@ def main() -> None:
         raise SystemExit("DATABASE_URL is required. Set it before running the seed script.")
     profile = seed_database(database_url)
     print("careerOS development candidate created")
+    print(f"demo_email={DEMO_EMAIL}")
+    print(f"demo_password={DEMO_PASSWORD}")
     print(f"candidate_profile_id={profile.id}")
     print(f"candidate_name={profile.full_name}")
     print(f"skills={len(profile.skills)} projects={len(profile.projects)}")

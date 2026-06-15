@@ -114,6 +114,10 @@ class ApplicationTrackerService:
         """List tracker records for one candidate."""
         return self._read_many(self.applications.list_by_candidate(candidate_profile_id))
 
+    def get_application_record(self, application_record_id: UUID) -> ApplicationRecordRead:
+        """Return one application record for route-level ownership checks."""
+        return ApplicationRecordRead.model_validate(self._require_record(application_record_id))
+
     def list_applied_applications(
         self, candidate_profile_id: UUID | None = None
     ) -> list[ApplicationRecordRead]:

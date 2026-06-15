@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, UserCheck, Sparkles, FolderHeart } from 'lucide-react';
+import { Search, UserCheck, Sparkles, ShieldCheck } from 'lucide-react';
 
 const features = [
   {
@@ -40,15 +40,15 @@ const features = [
     ],
   },
   {
-    id: 'tracking',
-    label: 'Application Tracking',
-    icon: <FolderHeart className="size-4" />,
-    title: 'Your dynamic career command deck',
-    description: 'Keep historical records of your created folders. Save each job description matched with the specific draft generated, logging status pipelines and follow ups seamlessly.',
+    id: 'privacy',
+    label: 'Private Profiles',
+    icon: <ShieldCheck className="size-4" />,
+    title: 'Your career evidence stays private',
+    description: 'Each account sees only its own candidate profiles, resume inputs, and generated documents. Your profile data is never mixed into another user’s workspace.',
     details: [
-      'Automated job-link metadata tracking',
-      'Dynamic timeline logs tracing applied-to-interview pipelines',
-      'Custom follow-up prompts aligned with timeline tags',
+      'Email and password protected account access',
+      'Candidate profiles isolated by account ownership',
+      'Private resume generation and document downloads',
     ],
   },
 ];
@@ -269,35 +269,25 @@ export function Features() {
                     </motion.div>
                   )}
 
-                  {activeFeature === 'tracking' && (
+                  {activeFeature === 'privacy' && (
                     <motion.div
-                      key="sim-track"
+                      key="sim-privacy"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="space-y-2"
+                      className="space-y-3"
                     >
-                      {[
-                        { company: 'Stripe, Inc', role: 'Staff Frontend Engineer', status: 'Interviewing', days: 2 },
-                        { company: 'Linear App', role: 'Senior Product Engineer', status: 'Applied', days: 5 },
-                        { company: 'Supabase Corp', role: 'Developer Advocate', status: 'Draft Created', days: 0 },
-                      ].map((app, i) => (
-                        <div 
-                          key={app.company}
-                          className="flex items-center justify-between p-3 rounded-lg bg-secondary/40 border border-border/40 hover:border-brand-amber/45 transition-all"
-                        >
-                          <div>
-                            <div className="text-xs font-medium text-foreground">{app.company}</div>
-                            <div className="text-[10px] text-muted-foreground">{app.role}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className={`text-[10px] font-semibold ${app.status === 'Interviewing' ? 'text-brand-amber' : 'text-muted-foreground'}`}>
-                              {app.status}
-                            </div>
-                            <div className="text-[8px] font-mono text-muted-foreground mt-0.5">
-                              {app.days === 0 ? 'Today' : `${app.days}d ago`}
-                            </div>
-                          </div>
+                      <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/10 p-4">
+                        <ShieldCheck className="size-6 text-primary" />
+                        <div>
+                          <div className="text-sm font-medium text-foreground">Private workspace</div>
+                          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Authenticated account</div>
+                        </div>
+                      </div>
+                      {['Candidate profile', 'Tailored resume data', 'Generated documents'].map((item) => (
+                        <div key={item} className="flex items-center justify-between rounded-lg border border-border/40 bg-secondary/40 p-3">
+                          <span className="text-xs text-foreground">{item}</span>
+                          <span className="text-[10px] font-semibold uppercase text-primary">Owner only</span>
                         </div>
                       ))}
                     </motion.div>

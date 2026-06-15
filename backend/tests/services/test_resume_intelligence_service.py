@@ -15,7 +15,7 @@ from app.schemas import (
     WorkExperienceCreate,
 )
 from app.services import JobAnalysisService, KnowledgeBaseService, ResumeIntelligenceService
-from tests.support import create_test_engine, create_test_session
+from tests.support import create_test_engine, create_test_session, create_test_user
 
 TARGET_JOB = """
 Responsibilities:
@@ -38,12 +38,14 @@ class ResumeIntelligenceServiceTests(unittest.TestCase):
         self.engine = create_test_engine()
         self.session = create_test_session(self.engine)
         knowledge_base = KnowledgeBaseService(self.session)
+        user = create_test_user(self.session)
         profile = knowledge_base.create_candidate_profile(
             CandidateProfileCreate(
                 full_name="Grace Hopper",
                 headline="Backend Engineer",
                 summary="Engineer focused on reliable backend systems.",
-            )
+            ),
+            user_id=user.id,
         )
         knowledge_base.add_skill(
             profile.id,
