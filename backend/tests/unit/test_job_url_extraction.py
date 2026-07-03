@@ -87,6 +87,13 @@ class PlaywrightJobExtractorUnitTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             JobUrlExtractionRequest(candidate_profile_id=uuid4(), job_url="")
 
+    def test_normalizes_linkedin_search_url_to_direct_job_url(self) -> None:
+        normalized = self.extractor.normalize_job_url(
+            "https://www.linkedin.com/jobs/search/?alertAction=viewjobs&currentJobId=123456789"
+        )
+
+        self.assertEqual(normalized, "https://www.linkedin.com/jobs/view/123456789")
+
     def test_cleans_navigation_noise_and_duplicate_lines(self) -> None:
         cleaned = self.extractor.clean_visible_text(
             "Home\nJobs\nBackend Engineer\nBackend Engineer\nPlatform Labs\nPrivacy\n"
@@ -134,6 +141,24 @@ class PlaywrightJobExtractorUnitTests(unittest.TestCase):
                 self.assertTrue(
                     any("manual import fallback" in item for item in result.extraction_warnings)
                 )
+
+    def test_linkedin_login_page_is_not_misread_as_a_job(self) -> None:
+        result = self.extractor.extract_from_visible_text(
+            job_url="https://www.linkedin.com/jobs/search/?currentJobId=123456789",
+            final_url="https://www.linkedin.com/login?fromSignIn=true",
+            page_title="LinkedIn Login, Sign in",
+            visible_text=(
+                "LinkedIn Login, Sign in\nSign in with Apple\n"
+                "By clicking Continue, you agree to LinkedIn's User Agreement.\n"
+                "Email or phone\nPassword\nForgot password?\nKeep me logged in"
+            ),
+        )
+
+        self.assertFalse(result.pipeline_ready)
+        self.assertIsNone(result.raw_title)
+        self.assertIsNone(result.company_name)
+        self.assertEqual(result.description_text, "")
+        self.assertTrue(any("login page" in item for item in result.extraction_warnings))
 
 
 if __name__ == "__main__":

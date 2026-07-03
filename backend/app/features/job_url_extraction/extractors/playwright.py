@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from decimal import Decimal
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from playwright.sync_api import Page, sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
@@ -23,6 +23,22 @@ BLOCKED_PAGE_MARKERS = (
     "log in to continue",
     "login required",
     "authentication required",
+)
+
+LOGIN_PAGE_MARKERS = (
+    "sign in with apple",
+    "email or phone",
+    "forgot password",
+    "keep me logged in",
+    "new to linkedin",
+    "join linkedin",
+)
+
+BLOCKED_URL_PATH_MARKERS = (
+    "/authwall",
+    "/checkpoint/",
+    "/login",
+    "/uas/login",
 )
 
 NOISE_LINES = {
@@ -114,13 +130,14 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
                 UNSUPPORTED_PLATFORM_WARNING,
             )
         timeout_ms = request.timeout_seconds * 1000
+        navigation_url = self.normalize_job_url(request.job_url)
         try:
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch(headless=request.headless)
                 page = browser.new_page()
                 try:
                     page.goto(
-                        request.job_url,
+                        navigation_url,
                         wait_until="domcontentloaded",
                         timeout=timeout_ms,
                     )
@@ -157,6 +174,7 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
             job_url=job_url,
             visible_text=visible_text,
             page_title=page.title(),
+            final_url=page.url,
             platform=detected_platform,
             selector_fields=fields,
         )
@@ -167,13 +185,18 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
         job_url: str,
         visible_text: str,
         page_title: str = "",
+        final_url: str = "",
         platform: SourcePlatform | None = None,
         selector_fields: dict[str, str | None] | None = None,
     ) -> JobUrlExtractionResult:
         """Infer job fields from visible text for browser and unit-test use."""
         detected_platform = platform or self.detect_platform(job_url)
         cleaned_text = self.clean_visible_text(visible_text)
-        warnings = self.blocked_page_warnings(cleaned_text)
+        warnings = self.blocked_page_warnings(
+            cleaned_text,
+            page_title=page_title,
+            final_url=final_url,
+        )
         if warnings:
             warnings.append("Use manual import fallback for this posting.")
             return self.failure_result(job_url, detected_platform, *warnings)
@@ -227,6 +250,17 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
         return SourcePlatform.UNKNOWN
 
     @staticmethod
+    def normalize_job_url(job_url: str) -> str:
+        """Convert LinkedIn search links with a current job ID into direct job URLs."""
+        parsed = urlparse(job_url)
+        domain = (parsed.hostname or "").casefold()
+        if domain == "linkedin.com" or domain.endswith(".linkedin.com"):
+            current_job_id = parse_qs(parsed.query).get("currentJobId", [""])[0].strip()
+            if current_job_id.isdigit():
+                return f"https://www.linkedin.com/jobs/view/{current_job_id}"
+        return job_url
+
+    @staticmethod
     def clean_visible_text(visible_text: str) -> str:
         """Remove obvious navigation noise and normalize visible page text."""
         lines = []
@@ -241,12 +275,30 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
         return "\n".join(lines)
 
     @staticmethod
-    def blocked_page_warnings(visible_text: str) -> list[str]:
+    def blocked_page_warnings(
+        visible_text: str,
+        *,
+        page_title: str = "",
+        final_url: str = "",
+    ) -> list[str]:
         """Return safe-stop warnings for login walls, CAPTCHAs, and blocked pages."""
         normalized = visible_text.casefold()
         markers = [marker for marker in BLOCKED_PAGE_MARKERS if marker in normalized]
-        if not markers:
+        title = page_title.casefold()
+        final_path = urlparse(final_url).path.casefold()
+        login_marker_count = sum(marker in normalized for marker in LOGIN_PAGE_MARKERS)
+        is_login_page = (
+            "linkedin login" in title
+            or login_marker_count >= 2
+            or any(marker in final_path for marker in BLOCKED_URL_PATH_MARKERS)
+        )
+        if not markers and not is_login_page:
             return []
+        if is_login_page:
+            return [
+                "The job site showed a login page instead of the job posting. "
+                "Paste the job description manually."
+            ]
         return [
             "Extraction stopped because the page appears blocked, gated, or requires verification."
         ]

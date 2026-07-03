@@ -201,13 +201,13 @@ export function CandidateProfiles({
   }
 
   return (
-    <div className="mt-8 border-y border-border/60 py-6">
+    <div className="mt-8 border-y border-border/45 py-6">
       <div className="flex flex-wrap items-end gap-3">
         <label className="min-w-0 flex-1">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="cozy-label mb-2 block">
             Candidate profile
           </span>
-          <div className="flex items-center rounded-lg border border-border bg-background px-4 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+          <div className="cozy-field flex items-center rounded-lg px-4 transition">
             <UserRound className="mr-3 size-4 shrink-0 text-brand-amber" />
             <select
               value={selectedCandidateId}
@@ -226,7 +226,7 @@ export function CandidateProfiles({
           type="button"
           onClick={beginCreate}
           disabled={isSaving}
-          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
+          className="cozy-button inline-flex min-h-11 items-center gap-2 rounded-lg px-5 text-sm font-semibold transition disabled:opacity-60"
         >
           <Plus className="size-4" />
           Create profile
@@ -283,13 +283,13 @@ function ProfileView({
   ].filter((item): item is [string, string] => Boolean(item[1]));
 
   return (
-    <div className="mt-5 rounded-lg border border-border bg-background/70 p-5">
+    <div className="cozy-panel-soft mt-5 rounded-xl p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h3 className="font-serif text-xl text-foreground">{profile.full_name}</h3>
+          <h3 className="text-xl font-semibold text-foreground">{profile.full_name}</h3>
           {profile.headline && <p className="mt-1 text-sm text-muted-foreground">{profile.headline}</p>}
           <p className="mt-2 text-xs text-muted-foreground">
-            {[profile.email, profile.phone, profile.location].filter(Boolean).join(' · ')}
+            {[profile.email, profile.phone, profile.location].filter(Boolean).join(' / ')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -312,16 +312,16 @@ function ProfileView({
         {profile.skills.length ? <div className="flex flex-wrap gap-2">{profile.skills.map((skill) => <Tag key={skill.id}>{skill.name}</Tag>)}</div> : <EmptyValue />}
       </ProfileSection>
       <ProfileSection title="Experience" icon={<BriefcaseBusiness className="size-4" />}>
-        {profile.work_experiences.length ? profile.work_experiences.map((item) => <RecordLine key={item.id} title={item.job_title} meta={`${item.company} · ${formatDateRange(item.start_date, item.end_date)}`} description={item.description} />) : <EmptyValue />}
+        {profile.work_experiences.length ? profile.work_experiences.map((item) => <RecordLine key={item.id} title={item.job_title} meta={`${item.company} / ${formatDateRange(item.start_date, item.end_date)}`} description={item.description} />) : <EmptyValue />}
       </ProfileSection>
       <ProfileSection title="Projects">
         {profile.projects.length ? profile.projects.map((item) => <RecordLine key={item.id} title={item.title} meta={item.technologies.join(', ')} description={item.description} />) : <EmptyValue />}
       </ProfileSection>
       <ProfileSection title="Certifications">
-        {profile.certifications.length ? profile.certifications.map((item) => <RecordLine key={item.id} title={item.name} meta={`${item.issuing_organization}${item.issue_date ? ` · ${item.issue_date.slice(0, 4)}` : ''}`} />) : <EmptyValue />}
+        {profile.certifications.length ? profile.certifications.map((item) => <RecordLine key={item.id} title={item.name} meta={`${item.issuing_organization}${item.issue_date ? ` / ${item.issue_date.slice(0, 4)}` : ''}`} />) : <EmptyValue />}
       </ProfileSection>
       <ProfileSection title="Education" icon={<GraduationCap className="size-4" />}>
-        {profile.education.length ? profile.education.map((item) => <RecordLine key={item.id} title={item.degree} meta={`${item.institution}${item.end_date ? ` · ${item.end_date.slice(0, 4)}` : ''}`} />) : <EmptyValue />}
+        {profile.education.length ? profile.education.map((item) => <RecordLine key={item.id} title={item.degree} meta={`${item.institution}${item.end_date ? ` / ${item.end_date.slice(0, 4)}` : ''}`} />) : <EmptyValue />}
       </ProfileSection>
     </div>
   );
@@ -422,11 +422,11 @@ function ProfileForm({
       </DynamicSection>
 
       <div className="flex flex-wrap gap-3">
-        <button type="submit" disabled={isSaving} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-60">
+        <button type="submit" disabled={isSaving} className="cozy-button inline-flex min-h-11 items-center gap-2 rounded-lg px-5 text-sm font-semibold transition disabled:opacity-60">
           {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
           {isSaving ? 'Saving profile' : mode === 'create' ? 'Create profile' : 'Save changes'}
         </button>
-        <button type="button" onClick={onCancel} disabled={isSaving} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border px-5 text-sm text-foreground transition hover:bg-secondary disabled:opacity-60">
+        <button type="button" onClick={onCancel} disabled={isSaving} className="cozy-button-secondary inline-flex min-h-11 items-center gap-2 rounded-lg px-5 text-sm transition disabled:opacity-60">
           <X className="size-4" />Cancel
         </button>
       </div>
@@ -435,14 +435,14 @@ function ProfileForm({
 }
 
 function FormSection({title, children}: {title: string; children: ReactNode}) {
-  return <section><h4 className="mb-4 text-xs font-semibold uppercase tracking-widest text-brand-amber">{title}</h4><div className="space-y-4">{children}</div></section>;
+  return <section><h4 className="cozy-label mb-4">{title}</h4><div className="space-y-4">{children}</div></section>;
 }
 
 function DynamicSection({title, onAdd, children}: {title: string; onAdd: () => void; children: ReactNode}) {
   return (
     <section>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h4 className="text-xs font-semibold uppercase tracking-widest text-brand-amber">{title}</h4>
+        <h4 className="cozy-label">{title}</h4>
         <button type="button" onClick={onAdd} className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground hover:text-brand-amber"><Plus className="size-4" />Add</button>
       </div>
       <div className="space-y-4">{children}</div>
@@ -452,7 +452,7 @@ function DynamicSection({title, onAdd, children}: {title: string; onAdd: () => v
 
 function DynamicRow({children, onRemove}: {children: ReactNode; onRemove: () => void; key?: string}) {
   return (
-    <div className="relative space-y-4 rounded-lg border border-border bg-background/70 p-4 pr-12">
+    <div className="cozy-panel-soft relative space-y-4 rounded-lg p-4 pr-12">
       {children}
       <button type="button" onClick={onRemove} aria-label="Remove item" title="Remove item" className="absolute right-3 top-3 text-muted-foreground transition hover:text-destructive"><Trash2 className="size-4" /></button>
     </div>
@@ -460,11 +460,11 @@ function DynamicRow({children, onRemove}: {children: ReactNode; onRemove: () => 
 }
 
 function FormField({label, value, onChange, type = 'text', required = false, error}: {label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean; error?: string}) {
-  return <label className="block"><span className="mb-2 block text-xs font-medium text-muted-foreground">{label}</span><input type={type} required={required} value={value} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} className={`w-full rounded-lg border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:ring-2 ${error ? 'border-destructive focus:border-destructive focus:ring-destructive/20' : 'border-border focus:border-primary focus:ring-primary/20'}`} />{error && <span className="mt-1.5 block text-xs text-destructive">{error}</span>}</label>;
+  return <label className="block"><span className="mb-2 block text-xs font-medium text-muted-foreground">{label}</span><input type={type} required={required} value={value} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} className={`cozy-field w-full rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition ${error ? 'border-destructive focus:border-destructive focus:ring-destructive/20' : ''}`} />{error && <span className="mt-1.5 block text-xs text-destructive">{error}</span>}</label>;
 }
 
 function FormTextArea({label, value, onChange, required = false}: {label: string; value: string; onChange: (value: string) => void; required?: boolean}) {
-  return <label className="block"><span className="mb-2 block text-xs font-medium text-muted-foreground">{label}</span><textarea required={required} rows={4} value={value} onChange={(event) => onChange(event.target.value)} className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" /></label>;
+  return <label className="block"><span className="mb-2 block text-xs font-medium text-muted-foreground">{label}</span><textarea required={required} rows={4} value={value} onChange={(event) => onChange(event.target.value)} className="cozy-field w-full resize-y rounded-lg px-3 py-2.5 text-sm text-foreground outline-none transition" /></label>;
 }
 
 function ProfileSection({title, icon, children}: {title: string; icon?: ReactNode; children: ReactNode}) {
@@ -476,7 +476,7 @@ function RecordLine({title, meta, description}: {title: string; meta?: string; d
 }
 
 function Tag({children}: {children: ReactNode; key?: string}) {
-  return <span className="rounded-full border border-border px-2.5 py-1 text-xs text-foreground">{children}</span>;
+  return <span className="rounded-full border border-border/70 bg-secondary/40 px-2.5 py-1 text-xs text-foreground">{children}</span>;
 }
 
 function EmptyValue() {

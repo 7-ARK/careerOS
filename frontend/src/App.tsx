@@ -73,7 +73,7 @@ export default function App() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-foreground">
+    <div className="cozy-shell relative min-h-screen overflow-hidden bg-background text-foreground font-sans antialiased selection:bg-primary/25 selection:text-foreground">
       <Header user={user} onLogout={logout} />
       <main className="relative" id="main-content-layout">
         <AnalyzeJob />

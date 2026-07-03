@@ -6,39 +6,38 @@
   --font-serif: 'Source Serif 4', Georgia, serif;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
 
-  /* Premium Arc dark color variables mapping to Tailwind classes */
-  --color-background: #0D1110;
-  --color-foreground: #F2F1EC;
+  /* Calm job-search workspace palette */
+  --color-background: #f7f5ef;
+  --color-foreground: #252821;
   
-  --color-card: #121816;
-  --color-card-foreground: #F2F1EC;
+  --color-card: #fffdf8;
+  --color-card-foreground: #252821;
   
-  --color-popover: #121816;
-  --color-popover-foreground: #F2F1EC;
+  --color-popover: #fffdf8;
+  --color-popover-foreground: #252821;
   
-  --color-primary: #93A86B;
-  --color-primary-foreground: #101210;
+  --color-primary: #3f6f4b;
+  --color-primary-foreground: #ffffff;
   
-  --color-secondary: #171F1C;
-  --color-secondary-foreground: #A9AAA3;
+  --color-secondary: #ece7dc;
+  --color-secondary-foreground: #4f5547;
   
-  --color-muted: #171F1C;
-  --color-muted-foreground: #A9AAA3;
+  --color-muted: #efebe3;
+  --color-muted-foreground: #6f7467;
   
-  --color-accent: #728257;
-  --color-accent-foreground: #F2F1EC;
+  --color-accent: #e4d4ae;
+  --color-accent-foreground: #252821;
   
-  --color-destructive: #C85A5A;
-  --color-destructive-foreground: #F2F1EC;
+  --color-destructive: #b94a3f;
+  --color-destructive-foreground: #ffffff;
   
-  --color-border: #2A322E;
-  --color-input: #121816;
-  --color-ring: #93A86B;
+  --color-border: #d9d3c7;
+  --color-input: #ffffff;
+  --color-ring: #3f6f4b;
 
-  /* Premium luxury palette modifiers */
-  --color-brand-amber: #C9A86A;
-  --color-brand-clay: #A87962;
-  --color-brand-border: #2A322E;
+  --color-brand-amber: #8a6d2f;
+  --color-brand-clay: #a46950;
+  --color-brand-border: #d9d3c7;
 }
 
 @layer base {
@@ -47,6 +46,70 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    background:
+      linear-gradient(135deg, rgba(63, 111, 75, 0.035) 0 1px, transparent 1px 22px),
+      #f7f5ef;
+  }
+}
+
+@layer components {
+  .cozy-shell {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(247, 245, 239, 0) 24rem),
+      #f7f5ef;
+  }
+
+  .cozy-panel {
+    border: 1px solid #d9d3c7;
+    background: rgba(255, 253, 248, 0.94);
+    box-shadow: 0 16px 36px rgba(47, 43, 36, 0.08);
+    backdrop-filter: blur(12px);
+  }
+
+  .cozy-panel-soft {
+    border: 1px solid #ddd7cc;
+    background: rgba(255, 253, 248, 0.74);
+    box-shadow: 0 8px 20px rgba(47, 43, 36, 0.05);
+  }
+
+  .cozy-field {
+    border: 1px solid #d8d1c5;
+    background: #fffdf8;
+  }
+
+  .cozy-field:focus,
+  .cozy-field:focus-within {
+    border-color: rgba(63, 111, 75, 0.72);
+    box-shadow: 0 0 0 3px rgba(63, 111, 75, 0.12);
+  }
+
+  .cozy-label {
+    color: #686f61;
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .cozy-button {
+    background: #3f6f4b;
+    color: #ffffff;
+    box-shadow: 0 10px 18px rgba(63, 111, 75, 0.16);
+  }
+
+  .cozy-button:hover {
+    background: #345f3f;
+  }
+
+  .cozy-button-secondary {
+    border: 1px solid #d8d1c5;
+    background: #fffdf8;
+    color: #252821;
+  }
+
+  .cozy-button-secondary:hover {
+    border-color: #bfc7b6;
+    background: #f2efe7;
   }
 }
 
@@ -62,14 +125,14 @@ html {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0D1110;
+  background: #f7f5ef;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2A322E;
+  background: #c9c1b5;
   border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #37413C;
+  background: #9f988c;
 }

@@ -34,7 +34,6 @@ type ManualPlatform =
   | 'glassdoor'
   | 'greenhouse'
   | 'lever'
-  | 'ashby'
   | 'company'
   | 'other'
   | 'unknown';
@@ -45,7 +44,6 @@ const PLATFORM_OPTIONS: {label: string; value: ManualPlatform}[] = [
   {label: 'Glassdoor', value: 'glassdoor'},
   {label: 'Greenhouse', value: 'greenhouse'},
   {label: 'Lever', value: 'lever'},
-  {label: 'Ashby', value: 'ashby'},
   {label: 'Company page', value: 'company'},
   {label: 'Other', value: 'other'},
   {label: 'Unknown', value: 'unknown'},
@@ -57,7 +55,6 @@ const MANUAL_PLATFORM_TO_SOURCE: Record<ManualPlatform, SourcePlatform> = {
   glassdoor: 'glassdoor',
   greenhouse: 'company_site',
   lever: 'company_site',
-  ashby: 'company_site',
   company: 'company_site',
   other: 'other',
   unknown: 'unknown',
@@ -127,11 +124,6 @@ export function AnalyzeJob() {
         timeout_seconds: 30,
       });
       setWarnings(response.extraction_warnings ?? []);
-      setRawTitle(response.raw_title ?? '');
-      setCompanyName(response.company_name ?? '');
-      setLocation(response.location ?? '');
-      setDescriptionText(response.description_text);
-      setSourcePlatform(platformFromExtraction(response.detected_platform, response.job_url));
       if (!response.pipeline_ready) {
         setMode('manual');
         setErrorMessage(
@@ -143,6 +135,11 @@ export function AnalyzeJob() {
         return;
       }
 
+      setRawTitle(response.raw_title ?? '');
+      setCompanyName(response.company_name ?? '');
+      setLocation(response.location ?? '');
+      setDescriptionText(response.description_text);
+      setSourcePlatform(platformFromExtraction(response.detected_platform, response.job_url));
       setMode('manual');
       setWorkflowState('extracted');
     } catch (error) {
@@ -216,17 +213,21 @@ export function AnalyzeJob() {
   }
 
   return (
-    <section className="min-h-screen border-y border-border/50 bg-card/40 px-6 pb-20 pt-32 md:pb-24 md:pt-36" id="analyze-job">
-      <div className="mx-auto grid max-w-5xl gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(300px,0.75fr)] lg:gap-14">
-        <div>
-          <span className="mb-3 inline-block text-xs font-semibold uppercase tracking-widest text-brand-amber">
-            Analyze a Job
+    <section className="px-4 pb-16 pt-8 sm:px-6 md:pb-20" id="analyze-job">
+      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
+        <motion.div
+          initial={{opacity: 0, y: 18}}
+          animate={{opacity: 1, y: 0}}
+          transition={{duration: 0.55, ease: [0.22, 1, 0.36, 1]}}
+        >
+          <span className="cozy-label mb-3 block">
+            Resume workspace
           </span>
-          <h2 className="max-w-2xl font-serif text-3xl font-medium leading-tight text-foreground sm:text-4xl">
-            Turn a job posting into a tailored resume.
+          <h2 className="max-w-2xl text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+            Tailor a resume for one job posting.
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Use a public job URL first. If extraction is blocked, paste the job description manually and run the same pipeline.
+            Select a candidate, add a job posting, review the details, and generate the resume file.
           </p>
 
           <CandidateProfiles
@@ -234,9 +235,14 @@ export function AnalyzeJob() {
             onSelectionChange={setCandidateProfileId}
           />
 
-          <div className="mt-7 inline-flex rounded-full border border-border bg-background p-1">
+          <div className="cozy-panel-soft mt-7 inline-flex rounded-xl p-1">
             <ModeButton active={mode === 'url'} icon={<Link2 className="size-4" />} label="Use URL" onClick={() => switchMode('url')} />
-            <ModeButton active={mode === 'manual'} icon={<FileText className="size-4" />} label="Paste job manually" onClick={() => switchMode('manual')} />
+            <ModeButton
+              active={mode === 'manual'}
+              icon={<FileText className="size-4" />}
+              label={workflowState === 'extracted' ? 'Review job details' : 'Paste job manually'}
+              onClick={() => switchMode('manual')}
+            />
           </div>
 
           {mode === 'url' ? (
@@ -257,6 +263,7 @@ export function AnalyzeJob() {
               companyEmail={companyEmail}
               documentFormat={documentFormat}
               templateName={templateName}
+              isExtracted={workflowState === 'extracted'}
               isLoading={workflowState === 'loading'}
               onRawTitleChange={setRawTitle}
               onCompanyNameChange={setCompanyName}
@@ -270,7 +277,7 @@ export function AnalyzeJob() {
               onSubmit={handleManualSubmit}
             />
           )}
-        </div>
+        </motion.div>
 
         <WorkflowResult
           state={workflowState}
@@ -299,8 +306,8 @@ function ModeButton({active, icon, label, onClick}: ModeButtonProps) {
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm transition ${
-        active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+      className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-4 py-2 text-sm transition ${
+        active ? 'cozy-button font-semibold' : 'text-muted-foreground hover:bg-secondary/70 hover:text-foreground'
       }`}
     >
       {icon}
@@ -325,17 +332,17 @@ function UrlImportForm({
   return (
     <form className="mt-8 space-y-5" onSubmit={onSubmit}>
       <div>
-        <h3 className="font-serif text-xl text-foreground">Import Job From URL</h3>
+        <h3 className="text-lg font-semibold text-foreground">Import job from URL</h3>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           LinkedIn, Indeed, Glassdoor, Greenhouse, or Lever
         </p>
       </div>
 
       <label className="block">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="cozy-label mb-2 block">
           Job posting URL
         </span>
-        <div className="flex items-center rounded-lg border border-border bg-background px-4 transition focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+        <div className="cozy-field flex items-center rounded-lg px-4 transition">
           <Link2 className="mr-3 size-4 shrink-0 text-brand-amber" />
           <input
             required
@@ -348,7 +355,7 @@ function UrlImportForm({
         </div>
       </label>
 
-      <PrimaryButton isLoading={isLoading} idleIcon={<Link2 className="size-4" />} idleLabel="Extract Job" loadingLabel="Extracting Job" />
+      <PrimaryButton isLoading={isLoading} idleIcon={<Link2 className="size-4" />} idleLabel="Extract job" loadingLabel="Extracting job" />
     </form>
   );
 }
@@ -363,6 +370,7 @@ interface ManualImportFormProps {
   companyEmail: string;
   documentFormat: DocumentFormat;
   templateName: ResumeTemplateName;
+  isExtracted: boolean;
   isLoading: boolean;
   onRawTitleChange: (value: string) => void;
   onCompanyNameChange: (value: string) => void;
@@ -386,6 +394,7 @@ function ManualImportForm({
   companyEmail,
   documentFormat,
   templateName,
+  isExtracted,
   isLoading,
   onRawTitleChange,
   onCompanyNameChange,
@@ -400,6 +409,14 @@ function ManualImportForm({
 }: ManualImportFormProps) {
   return (
     <form className="mt-8 space-y-5" onSubmit={onSubmit}>
+      {isExtracted && (
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">Review extracted job details</h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Check and edit these fields before generating the resume.
+          </p>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label="Job title" value={rawTitle} onChange={onRawTitleChange} placeholder="AI Automation Developer" required />
         <TextField label="Company" value={companyName} onChange={onCompanyNameChange} placeholder="Example Labs" required />
@@ -416,7 +433,7 @@ function ManualImportForm({
       </div>
 
       <label className="block">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="cozy-label mb-2 block">
           Job description
         </span>
         <textarea
@@ -425,7 +442,7 @@ function ManualImportForm({
           onChange={(event) => onDescriptionTextChange(event.target.value)}
           placeholder="Paste the full job description, requirements, responsibilities, and qualifications."
           rows={9}
-          className="w-full resize-y rounded-lg border border-border bg-background px-4 py-3 text-sm leading-relaxed text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="cozy-field w-full resize-y rounded-lg px-4 py-3 text-sm leading-relaxed text-foreground outline-none transition"
         />
       </label>
 
@@ -451,7 +468,7 @@ function ManualImportForm({
         />
       </div>
 
-      <PrimaryButton isLoading={isLoading} idleIcon={<FileText className="size-4" />} idleLabel="Analyze Job" loadingLabel="Generating resume" />
+      <PrimaryButton isLoading={isLoading} idleIcon={<FileText className="size-4" />} idleLabel="Generate resume" loadingLabel="Writing resume" />
     </form>
   );
 }
@@ -495,7 +512,7 @@ function TextField({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <span className="cozy-label mb-2 block">
         {label}
       </span>
       <input
@@ -504,7 +521,7 @@ function TextField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+        className="cozy-field w-full rounded-lg px-4 py-3 text-sm text-foreground outline-none transition"
       />
     </label>
   );
@@ -523,13 +540,13 @@ function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <span className="cozy-label mb-2 block">
         {label}
       </span>
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+        className="cozy-field w-full rounded-lg px-4 py-3 text-sm text-foreground outline-none transition"
       >
         {options.map((option, index) => (
           <option key={`${label}-${option.value}-${index}`} value={option.value}>
@@ -558,7 +575,7 @@ function PrimaryButton({
       disabled={isLoading}
       whileHover={isLoading ? undefined : {scale: 1.01}}
       whileTap={isLoading ? undefined : {scale: 0.99}}
-      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-7 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/10 transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+      className="cozy-button inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-70"
     >
       {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : idleIcon}
       {isLoading ? loadingLabel : idleLabel}
@@ -602,9 +619,9 @@ function WorkflowResult({
     return (
       <ResultPanel>
         <CheckCircle2 className="size-7 text-primary" />
-        <h3 className="mt-5 font-serif text-xl text-foreground">Job details extracted.</h3>
+        <h3 className="mt-5 text-lg font-semibold text-foreground">Job details are ready to review.</h3>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Review and edit the populated fields, then select Analyze Job.
+          Make any tweaks you want, then generate the resume.
         </p>
         <Warnings warnings={warnings} />
       </ResultPanel>
@@ -615,7 +632,7 @@ function WorkflowResult({
     return (
       <ResultPanel>
         <AlertCircle className="size-7 text-brand-amber" />
-        <h3 className="mt-5 font-serif text-xl text-foreground">We need the job text.</h3>
+        <h3 className="mt-5 text-lg font-semibold text-foreground">We need the job text.</h3>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           {errorMessage || 'Could not extract this job posting automatically. Please paste the job description manually.'}
         </p>
@@ -623,7 +640,7 @@ function WorkflowResult({
         <button
           type="button"
           onClick={onUseManualImport}
-          className="mt-6 inline-flex rounded-full border border-brand-amber/50 px-5 py-2.5 text-sm font-medium text-brand-amber transition hover:bg-brand-amber/10"
+          className="cozy-button-secondary mt-6 inline-flex rounded-lg px-5 py-2.5 text-sm font-medium transition"
         >
           Use Manual Import
         </button>
@@ -635,7 +652,7 @@ function WorkflowResult({
     return (
       <ResultPanel>
         <AlertCircle className="size-7 text-destructive" />
-        <h3 className="mt-5 font-serif text-xl text-foreground">The pipeline could not finish.</h3>
+        <h3 className="mt-5 text-lg font-semibold text-foreground">The pipeline could not finish.</h3>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{errorMessage}</p>
       </ResultPanel>
     );
@@ -645,7 +662,7 @@ function WorkflowResult({
     return (
       <ResultPanel>
         <CheckCircle2 className="size-7 text-primary" />
-        <h3 className="mt-5 font-serif text-2xl text-foreground">{result.role_title}</h3>
+        <h3 className="mt-5 text-xl font-semibold text-foreground">{result.role_title}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{result.company_name}</p>
         <SectionHeading label="Match Summary" />
         <div className="mt-6 grid grid-cols-2 gap-3">
@@ -678,7 +695,7 @@ function WorkflowResult({
           type="button"
           disabled={isDownloading}
           onClick={onDownload}
-          className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+          className="cozy-button mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-70"
         >
           {isDownloading ? <LoaderCircle className="size-4 animate-spin" /> : <Download className="size-4" />}
           {isDownloading ? 'Preparing download' : 'Download resume'}
@@ -690,7 +707,7 @@ function WorkflowResult({
   return (
     <ResultPanel>
       {mode === 'url' ? <Link2 className="size-7 text-brand-amber" /> : <FileText className="size-7 text-brand-amber" />}
-      <h3 className="mt-5 font-serif text-xl text-foreground">Your tailored result will appear here.</h3>
+      <h3 className="mt-5 text-lg font-semibold text-foreground">Resume output</h3>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
         {mode === 'url'
           ? 'Paste a public posting URL. If extraction fails, switch to manual import.'
@@ -701,12 +718,12 @@ function WorkflowResult({
 }
 
 function ResultPanel({children}: {children: ReactNode}) {
-  return <aside className="self-start rounded-lg border border-border bg-background/80 p-6 shadow-xl shadow-black/10 lg:mt-8">{children}</aside>;
+  return <aside className="cozy-panel self-start rounded-xl p-5 lg:mt-8">{children}</aside>;
 }
 
 function ResultMetric({label, value}: {label: string; value: string}) {
   return (
-    <div className="rounded-lg border border-border/70 bg-secondary/50 p-3">
+    <div className="cozy-panel-soft rounded-lg p-3">
       <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
       <span className="mt-1 block text-sm capitalize text-foreground">{value.replaceAll('_', ' ')}</span>
     </div>
@@ -750,7 +767,7 @@ function ReviewList({
           {values.map((value) => (
             <span
               key={`${label}-${value}`}
-              className="rounded-full border border-border bg-secondary/50 px-2.5 py-1 text-xs text-foreground/90"
+              className="rounded-full border border-border/70 bg-secondary/50 px-2.5 py-1 text-xs text-foreground/90"
             >
               {value}
             </span>
