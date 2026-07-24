@@ -22,6 +22,7 @@ _URL_SECRET = re.compile(
 )
 _BEARER = re.compile(r"(?i)(\bBearer\s+)[A-Za-z0-9._~+/=-]+")
 _TOKEN = re.compile(r"(?i)\b(?:sk|rk|ghp|github_pat|xox[baprs])-[A-Za-z0-9_-]{8,}\b")
+_MASKED_TOKEN = re.compile(r"(?i)\b(?:sk|rk|ghp|github_pat|xox[baprs])-[^\s,;'\"}]+")
 _SENSITIVE_KEY = re.compile(
     r"(?i)(?:api[_-]?key|access[_-]?token|auth(?:orization)?|secret|password|"
     r"credential|database[_-]?url)"
@@ -40,6 +41,7 @@ def redact_text(value: str, *, replacement: str = REDACTED) -> str:
     value = _ASSIGNMENT.sub(replace_assignment, value)
     value = _URL_SECRET.sub(lambda match: f"{match.group('name')}{replacement}", value)
     value = _BEARER.sub(lambda match: f"{match.group(1)}{replacement}", value)
+    value = _MASKED_TOKEN.sub(replacement, value)
     return _TOKEN.sub(replacement, value)
 
 

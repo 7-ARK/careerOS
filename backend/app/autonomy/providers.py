@@ -324,15 +324,15 @@ def _status_code(exc: Exception) -> int | None:
 
 
 def _safe_detail(detail: str, category: ProviderErrorCategory) -> str:
-    redacted = re.sub(r"sk-[A-Za-z0-9_-]+", "[REDACTED]", detail)
+    if category is ProviderErrorCategory.AUTHENTICATION:
+        return "provider authentication was rejected; credential detail [REDACTED]"
+    redacted = re.sub(r"(?i)\bsk-[^\s,;'\"}]+", "[REDACTED]", detail)
     redacted = re.sub(r"Bearer\s+\S+", "Bearer [REDACTED]", redacted, flags=re.IGNORECASE)
     redacted = re.sub(
         r"(?i)(api[_ -]?key\s*[:=]\s*)\S+",
         r"\1[REDACTED]",
         redacted,
     )
-    if category is ProviderErrorCategory.AUTHENTICATION:
-        redacted = "provider authentication was rejected: " + redacted
     return redacted[:300] or "provider request failed"
 
 
