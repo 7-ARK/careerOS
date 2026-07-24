@@ -82,6 +82,7 @@ class ControllerOptions:
     max_tasks: int = 10
     allowed_existing_dirty_paths: tuple[str, ...] = ()
     allowed_scope_paths: tuple[str, ...] = ()
+    allowed_context_paths: tuple[str, ...] = ()
     adopt_existing_dirty: bool = False
     enable_independent_critic: bool = True
     push_after_completion: bool = False
@@ -185,6 +186,7 @@ class RunController:
                     goal=task.goal,
                     dependencies=task.dependencies,
                     scope_paths=task.scope_paths,
+                    context_paths=task.context_paths,
                     acceptance_criteria=task.acceptance_criteria,
                     tests_required=task.tests_required,
                 )
@@ -232,6 +234,11 @@ class RunController:
                 path
                 for task in (state.plan.tasks if state.plan else [])
                 for path in task.scope_paths
+            ),
+            allowed_context_paths=tuple(
+                path
+                for task in (state.plan.tasks if state.plan else [])
+                for path in task.context_paths
             ),
             adopt_existing_dirty=bool(state.initial_dirty_paths),
         )
@@ -293,6 +300,7 @@ class RunController:
                 "head": initial.head,
                 "existing_changed_files": list(initial.changed_files),
                 "allowed_scope_paths": list(options.allowed_scope_paths),
+                "allowed_context_paths": list(options.allowed_context_paths),
                 "verification_ids": sorted(
                     self.verification_factory(self.store.run_directory(str(state.run_id))).catalog
                 ),
@@ -320,12 +328,23 @@ class RunController:
             if options.allowed_scope_paths
             else None
         )
+        allowed_context = (
+            TaskScope(options.allowed_context_paths, max_changed_files=40)
+            if options.allowed_context_paths
+            else None
+        )
         catalog = self.verification_factory(self.store.run_directory("_plan_validation")).catalog
         for task in plan.tasks:
             task_scope = TaskScope(tuple(task.scope_paths), max_changed_files=30)
             task_scope.validate(task.scope_paths)
             if allowed_scope is not None:
                 allowed_scope.validate(task.scope_paths)
+            if task.context_paths:
+                if allowed_context is None:
+                    raise ValueError(
+                        f"task {task.task_id} requested read-only context without approval"
+                    )
+                allowed_context.validate(task.context_paths)
             unknown_tests = set(task.tests_required).difference(catalog)
             if unknown_tests:
                 raise ValueError(
@@ -398,7 +417,9 @@ class RunController:
     def _execute_analysis(self, state: RunContract, task: TaskContract) -> None:
         task.state = TaskState.RUNNING
         self._checkpoint_task(state, task)
-        context = ContextResolver(self.repository_root).build(task.scope_paths)
+        context = ContextResolver(self.repository_root).build(
+            list(dict.fromkeys([*task.scope_paths, *task.context_paths]))
+        )
         before = self.workspace.snapshot()
         output, call, selection = self.gateway.call_structured(
             run_id=str(state.run_id),
@@ -510,7 +531,9 @@ class RunController:
                     task.attempt += 1
                 resume_worker_attempt = False
                 self._checkpoint_task(state, task)
-                context = ContextResolver(self.repository_root).build(task.scope_paths)
+                context = ContextResolver(self.repository_root).build(
+                    list(dict.fromkeys([*task.scope_paths, *task.context_paths]))
+                )
                 instructions, payload = worker_prompt(
                     task=plan_task.model_dump(mode="json"),
                     context_packet=context.render(),

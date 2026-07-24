@@ -25,12 +25,15 @@ def test_parser_requires_explicit_continuation_and_goal() -> None:
             "continuation.md",
             "--scope",
             "frontend/tests",
+            "--context",
+            "backend/tests/support.py",
         ]
     )
 
     assert arguments.command == "run"
     assert arguments.max_tasks == 10
     assert arguments.scope == ["frontend/tests"]
+    assert arguments.context == ["backend/tests/support.py"]
 
 
 def test_status_prints_safe_summary_without_provider_calls(

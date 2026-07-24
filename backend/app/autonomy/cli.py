@@ -43,6 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--max-tasks", type=int, default=10)
     run.add_argument("--allow-existing", action="append", default=[])
     run.add_argument("--scope", action="append", default=[])
+    run.add_argument("--context", action="append", default=[])
     run.add_argument("--adopt-existing", action="store_true")
     run.add_argument("--skip-critic", action="store_true")
     run.add_argument("--push", action="store_true")
@@ -51,6 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("run_id")
     resume.add_argument("--allow-existing", action="append", default=[])
     resume.add_argument("--scope", action="append", default=[])
+    resume.add_argument("--context", action="append", default=[])
     resume.add_argument("--adopt-existing", action="store_true")
     resume.add_argument("--skip-critic", action="store_true")
     resume.add_argument("--push", action="store_true")
@@ -139,6 +141,7 @@ def main(argv: list[str] | None = None) -> int:
         max_tasks=getattr(arguments, "max_tasks", 10),
         allowed_existing_dirty_paths=tuple(arguments.allow_existing),
         allowed_scope_paths=tuple(arguments.scope),
+        allowed_context_paths=tuple(arguments.context),
         adopt_existing_dirty=arguments.adopt_existing,
         enable_independent_critic=not arguments.skip_critic,
         push_after_completion=arguments.push,

@@ -448,6 +448,47 @@ def test_no_diff_implementation_is_blocked_without_commit(tmp_path: Path) -> Non
     assert git(root, "rev-parse", "HEAD") == starting_head
 
 
+def test_read_only_context_can_be_inspected_but_not_edited(tmp_path: Path) -> None:
+    root = _repository(tmp_path)
+    registry = ModelRegistry(RegistrySettings())
+    plan = _plan()
+    plan.tasks[0].context_paths = ["README.md"]
+    gateway = FakeGateway(
+        registry,
+        worker_outputs=[
+            WorkerOutput(
+                summary="Attempted to edit a read-only dependency.",
+                files_read=["README.md"],
+                operations=[
+                    FileOperation(
+                        kind=FileOperationKind.WRITE,
+                        path="README.md",
+                        expected_sha256=hashlib.sha256(b"initial\n").hexdigest(),
+                        content="not allowed\n",
+                    )
+                ],
+            )
+        ],
+        plan=plan,
+    )
+    controller = _controller(root, tmp_path, gateway, [True])
+
+    result = controller.start(
+        goal="Keep context files read-only.",
+        continuation_context="README.md is evidence, not writable scope.",
+        options=ControllerOptions(
+            max_tasks=1,
+            allowed_scope_paths=("feature.txt",),
+            allowed_context_paths=("README.md",),
+            enable_independent_critic=False,
+        ),
+    )
+
+    assert result.state is RunState.BLOCKED
+    assert "outside task scope" in result.blockers[-1]
+    assert (root / "README.md").read_text(encoding="utf-8") == "initial\n"
+
+
 def test_completed_run_resume_does_not_repeat_models_or_tasks(tmp_path: Path) -> None:
     root = _repository(tmp_path)
     registry = ModelRegistry(RegistrySettings())

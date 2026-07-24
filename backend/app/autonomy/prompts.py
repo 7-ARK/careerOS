@@ -29,6 +29,8 @@ You are the CEO/overseer for a bounded repository implementation run.
 {CONTROLLER_RULES}
 Create one plan with at most {max_tasks} tasks. Every task must have a concrete scope, explicit
 dependencies, measurable acceptance criteria, and controller-owned verification IDs.
+Select writable scope_paths only from allowed_scope_paths. Select supporting read-only
+context_paths only from allowed_context_paths; context_paths can be inspected but never edited.
 Use implementation workers for edits, research workers for read-only evidence, and test workers
 only for focused test work. Do not delegate routine work to the CEO.
 Do not invent files. Prefer the smallest plan that can complete the stated goal.

@@ -289,6 +289,7 @@ class TaskPlan(ContractModel):
     assigned_role: LogicalRole
     dependencies: list[str] = Field(default_factory=list, max_length=10)
     scope_paths: list[str] = Field(min_length=1, max_length=20)
+    context_paths: list[str] = Field(default_factory=list, max_length=20)
     acceptance_criteria: list[str] = Field(min_length=1, max_length=12)
     tests_required: list[str] = Field(default_factory=list, max_length=10)
     commit_message: str | None = Field(default=None, min_length=5, max_length=120)
@@ -420,6 +421,7 @@ class TaskContract(ContractModel):
     checkpoint_diff_hash: str | None = None
     dependencies: list[str] = Field(default_factory=list)
     scope_paths: list[str] = Field(default_factory=list)
+    context_paths: list[str] = Field(default_factory=list)
     acceptance_criteria: list[str] = Field(default_factory=list)
     tests_required: list[str] = Field(default_factory=list)
     tests_completed: list[VerificationRecord] = Field(default_factory=list)

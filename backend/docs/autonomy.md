@@ -117,6 +117,7 @@ The controller refuses:
 - `.env`, credential, key, token, password, and secret-bearing paths;
 - model-supplied shell commands;
 - edits outside a task's scope;
+- edits to files supplied only as read-only context;
 - worker-created commits or branch changes;
 - unrelated staged files;
 - an implementation task with no relevant diff;
@@ -140,7 +141,8 @@ Run:
   --goal "Complete one bounded repository task" `
   --continuation-file artifacts\autonomous_live_validation_<timestamp>\continuation_map.md `
   --max-tasks 1 `
-  --scope frontend\tests
+  --scope frontend\tests `
+  --context backend\tests\support.py
 ```
 
 Resume:
