@@ -13,6 +13,12 @@ careerOS acts as a personal career copilot by combining:
 * AI Agents
 * Future Automation
 
+## Autonomous Development
+
+Repository-local autonomous development is documented in
+[`docs/autonomy.md`](docs/autonomy.md). It is a CLI tool and is not exposed through
+the customer-facing FastAPI application.
+
 ## Status
 
 🚧 Under Development
