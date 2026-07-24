@@ -41,11 +41,11 @@ class PolicyTests(unittest.TestCase):
     def test_redaction_handles_text_and_nested_artifacts(self) -> None:
         text = (
             "OPENAI_API_KEY=sk-proj-123456789 and Authorization: Bearer abc123 "
-            "and provider echo sk-proj-****************qDYA"
+            "and provider echo sk-proj-****************ABCD"
         )
         redacted = redact_text(text)
         self.assertNotIn("sk-proj-123456789", redacted)
-        self.assertNotIn("qDYA", redacted)
+        self.assertNotIn("ABCD", redacted)
         self.assertNotIn("Bearer abc123", redacted)
         artifact = redact_mapping({"env": {"DATABASE_URL": "postgres://secret"}})
         self.assertEqual(artifact["env"]["DATABASE_URL"], "[REDACTED]")

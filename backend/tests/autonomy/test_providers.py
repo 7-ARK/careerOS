@@ -157,13 +157,13 @@ def test_authentication_failure_is_not_retried_and_secret_is_redacted() -> None:
 def test_authentication_error_never_preserves_a_masked_key_suffix() -> None:
     error = classify_provider_error(
         FakeProviderError(
-            "Incorrect API key provided: sk-proj-****************qDYA",
+            "Incorrect API key provided: sk-proj-****************ABCD",
             401,
         )
     )
 
     assert error.category is ProviderErrorCategory.AUTHENTICATION
-    assert "qDYA" not in error.detail
+    assert "ABCD" not in error.detail
     assert "Incorrect API key" not in error.detail
     assert error.detail == ("provider authentication was rejected; credential detail [REDACTED]")
 
