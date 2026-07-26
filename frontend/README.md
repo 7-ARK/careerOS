@@ -45,14 +45,38 @@ run against Chromium only and do not use cloud browser infrastructure.
 A single command runs the whole suite. Playwright starts both servers itself,
 so no manual pre-start is required:
 
-- the FastAPI backend at `http://127.0.0.1:8000`, backed by a disposable local
-  SQLite database at `frontend/test-results/careeros-e2e.db` with
-  `USE_LLM_RESUME_INTELLIGENCE=false` (paid LLM resume intelligence disabled);
+- the FastAPI backend at the fixed port `http://127.0.0.1:8000`, backed by a
+  disposable local SQLite database at `frontend/test-results/careeros-e2e.db`
+  with `USE_LLM_RESUME_INTELLIGENCE=false` (paid LLM resume intelligence
+  disabled);
 - the Vite frontend at the fixed port `http://127.0.0.1:3000`, with
   `VITE_API_BASE_URL` pointed at the test backend. The Playwright `baseURL`
   matches this port.
 
+Both web servers are pinned to their fixed ports with `strictPort` and
+`reuseExistingServer: false`, so a run never silently attaches to a foreign
+server: if port 8000 or 3000 is already in use, the run fails fast instead of
+testing against the wrong backend or frontend.
+
 No real database, `.env` file, or cloud service is used during the run.
+
+### Isolated harness
+
+Importing `playwright.config.ts` performs no database or filesystem side
+effects; it only computes settings. All disposable-state setup happens in
+`tests/global-setup.ts`, which Playwright runs exactly once per test run,
+before any web server or test worker starts:
+
+1. `tests/e2e-state.ts` resets the run-scoped state: it deletes any leftover
+   disposable database from a previous run and records the database path and
+   URL in `frontend/test-results/e2e-state.json`.
+2. Global setup then creates the database schema (`Base.metadata.create_all`)
+   with the same interpreter and `DATABASE_URL` that the backend web server
+   uses.
+
+Because this happens once per run rather than once per worker, all four
+default workers share the single initialized database. No manual migration
+step is required.
 
 ### One-time setup
 
@@ -98,7 +122,8 @@ npm run test:e2e:ui
 ### Smoke run
 
 The smoke test (`tests/smoke.spec.ts`) only opens the auth screen and does not
-talk to the backend:
+talk to the backend, so it runs safely in parallel across the default four
+workers:
 
 ```powershell
 npm run test:e2e:smoke
@@ -116,13 +141,13 @@ npm run test:e2e:auth
 ### Disposable test state
 
 Each run uses the throwaway SQLite database
-`frontend/test-results/careeros-e2e.db`. Playwright creates the database
+`frontend/test-results/careeros-e2e.db`. Global setup recreates the database
 schema automatically before starting the backend, so no manual migration step
-is required. Delete that file to reset the test state completely. Each test
-also gets a unique email address via the `isolatedUser` fixture so parallel
-workers do not collide. Login state is
-stored in `localStorage` by the app and survives page reloads; the harness
-exercises this in `tests/auth.spec.ts`.
+is required. Delete that file (and the `e2e-state.json` descriptor next to
+it) to reset the test state completely. Each test also gets a unique email
+address via the `isolatedUser` fixture so parallel workers do not collide.
+Login state is stored in `localStorage` by the app and survives page reloads;
+the harness exercises this in `tests/auth.spec.ts`.
 
 ### Failure artifacts
 

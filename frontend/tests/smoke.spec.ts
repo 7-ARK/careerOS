@@ -2,7 +2,11 @@ import {test, expect} from '@playwright/test';
 
 /**
  * Minimal smoke test: the frontend builds, serves, and reaches the auth screen.
- * This test intentionally does not require the backend to be running.
+ *
+ * Under the isolated harness this test runs against the disposable backend
+ * that Playwright starts automatically (global setup initializes its database
+ * exactly once per run), but the test itself still performs no backend calls,
+ * so it stays safe to run in parallel across the default four workers.
  */
 test('landing page shows the authentication screen', async ({page}) => {
   await page.goto('/');

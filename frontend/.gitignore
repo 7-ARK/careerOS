@@ -7,7 +7,8 @@ coverage/
 .env*
 !.env.example
 
-# Playwright test outputs
+# Playwright test outputs (includes the disposable e2e SQLite database
+# careeros-e2e.db and the run-scoped state descriptor e2e-state.json)
 test-results/
 playwright-report/
 playwright/.cache/
