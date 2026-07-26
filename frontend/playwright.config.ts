@@ -1,7 +1,7 @@
 import {defineConfig, devices} from '@playwright/test';
-import {existsSync} from 'node:fs';
-import {resolve, sep} from 'node:path';
 import {env} from 'node:process';
+
+import {backendDirectory, e2eDatabaseUrl, resolvePythonCommand} from './tests/backend-runtime';
 
 /**
  * Deterministic local browser test harness for the careerOS frontend.
@@ -9,22 +9,26 @@ import {env} from 'node:process';
  * A single command runs the whole suite (no manual pre-start):
  *   cd frontend && npm run test:e2e
  *
- * Importing this config has NO database or filesystem side effects. The
- * disposable SQLite database schema is initialized exactly once per test run
- * by tests/global-setup.ts (see `globalSetup` below), which records the
- * run-scoped database path in tests/e2e-state.ts so all workers share the
- * single initialized database.
- *
- * Playwright starts both servers automatically, each pinned to a fixed port
- * with strictPort so a port collision fails fast instead of silently reusing
- * a foreign server:
- *   1. The FastAPI backend at PLAYWRIGHT_BACKEND_URL (default
- *      http://127.0.0.1:8000), backed by the disposable SQLite database,
- *      with paid LLM resume intelligence disabled via
+ * Importing this config has NO database or filesystem side effects; it only
+ * computes settings. All disposable-state setup is sequenced inside the
+ * backend webServer launcher (tests/backend-launcher.ts), which Playwright
+ * starts exactly once per test run before any test worker connects:
+ *   1. The launcher fails fast when the fixed backend port is already
+ *      occupied, so a run never silently attaches to a foreign server.
+ *   2. It resets only the disposable, gitignored SQLite database file.
+ *   3. It initializes the schema with the existing backend SQLAlchemy entry
+ *      points (Base.metadata.create_all) using the same interpreter and
+ *      DATABASE_URL that uvicorn will use.
+ *   4. It starts uvicorn only after schema initialization succeeds, with
+ *      paid LLM resume intelligence disabled via
  *      USE_LLM_RESUME_INTELLIGENCE=false.
- *   2. The Vite frontend at PLAYWRIGHT_BASE_URL (default
- *      http://127.0.0.1:3000), with VITE_API_BASE_URL pointed at the test
- *      backend. baseURL matches this fixed port.
+ *
+ * Playwright also starts the Vite frontend at PLAYWRIGHT_BASE_URL (default
+ * http://127.0.0.1:3000), with VITE_API_BASE_URL pointed at the test
+ * backend. baseURL matches this fixed port. Both servers are pinned to fixed
+ * ports: the frontend uses Vite's --strictPort and the backend launcher
+ * verifies the backend port is free before starting uvicorn, so a port
+ * collision fails fast instead of silently reusing a foreign server.
  *
  * One-time setup:
  *   1. Create the backend virtualenv and install dependencies:
@@ -48,14 +52,11 @@ const frontendPort = new URL(baseUrl).port || '3000';
 const headless = env.PLAYWRIGHT_HEADLESS !== 'false';
 const workers = env.PLAYWRIGHT_WORKERS ? parseInt(env.PLAYWRIGHT_WORKERS, 10) : 4;
 
-const backendDir = resolve(process.cwd(), '..', 'backend');
+const backendDir = backendDirectory();
 
 export default defineConfig({
   testDir: './tests',
   outputDir: './test-results',
-  // Initializes the disposable database exactly once per run, before any
-  // worker or webServer starts. See tests/global-setup.ts.
-  globalSetup: './tests/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!env.CI,
   retries: env.CI ? 2 : 0,
@@ -80,16 +81,19 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `${resolvePythonCommand(backendDir)} -m uvicorn app.main:app --host 127.0.0.1 --port ${backendPort}`,
-      cwd: backendDir,
+      // The launcher sequences port verification, disposable database reset,
+      // and schema initialization before starting uvicorn. It owns the
+      // backend environment (DATABASE_URL, USE_LLM_RESUME_INTELLIGENCE) so
+      // the interpreter and database URL are resolved in exactly one place.
+      command: `npx tsx tests/backend-launcher.ts`,
+      cwd: resolveFrontendDirectory(),
       url: `${backendUrl}/docs`,
       // Never reuse a foreign server: the harness owns this backend and its
       // disposable database for the duration of the run.
       reuseExistingServer: false,
       timeout: 120 * 1000,
       env: {
-        DATABASE_URL: e2eDatabaseUrl(),
-        USE_LLM_RESUME_INTELLIGENCE: 'false',
+        PLAYWRIGHT_BACKEND_URL: backendUrl,
       },
     },
     {
@@ -106,25 +110,17 @@ export default defineConfig({
   ],
 });
 
-/**
- * Resolve a Python interpreter that has the backend dependencies installed.
- * Prefer the backend virtualenv (backend/.venv) so `uvicorn` is always found;
- * fall back to `python` on PATH for environments that install globally.
- */
-function resolvePythonCommand(backendDirPath: string): string {
-  const venvPython = process.platform === 'win32'
-    ? resolve(backendDirPath, '.venv', 'Scripts', 'python.exe')
-    : resolve(backendDirPath, '.venv', 'bin', 'python');
-  return existsSync(venvPython) ? `"${venvPython}"` : 'python';
+/** Absolute path of the frontend directory (this config's working directory). */
+function resolveFrontendDirectory(): string {
+  return process.cwd();
 }
 
-/**
- * The disposable local test database URL. This is a pure function of the
- * working directory; it performs no I/O. The file itself is created and its
- * schema initialized once per run by tests/global-setup.ts.
- */
-export function e2eDatabaseUrl(): string {
-  const artifactDir = resolve(process.cwd(), 'test-results');
-  const e2eDatabasePath = resolve(artifactDir, 'careeros-e2e.db').split(sep).join('/');
-  return `sqlite+pysqlite:///${e2eDatabasePath}`;
-}
+// Re-exported for backward compatibility with any tooling that imported the
+// disposable database URL from the config. The single source of truth is
+// tests/backend-runtime.ts; this re-export performs no I/O.
+export {e2eDatabaseUrl};
+
+// Referenced so the resolved backend directory and interpreter stay anchored
+// to the shared helper even though the launcher owns the backend process.
+void backendDir;
+void resolvePythonCommand;

@@ -53,30 +53,41 @@ so no manual pre-start is required:
   `VITE_API_BASE_URL` pointed at the test backend. The Playwright `baseURL`
   matches this port.
 
-Both web servers are pinned to their fixed ports with `strictPort` and
-`reuseExistingServer: false`, so a run never silently attaches to a foreign
-server: if port 8000 or 3000 is already in use, the run fails fast instead of
-testing against the wrong backend or frontend.
+Both web servers are pinned to their fixed ports, so a run never silently
+attaches to a foreign server: the frontend dev server uses Vite's
+`--strictPort`, and the backend is started by a launcher that verifies the
+backend port is free before doing anything else. If port 8000 or 3000 is
+already in use, the run fails fast instead of testing against the wrong
+backend or frontend.
 
 No real database, `.env` file, or cloud service is used during the run.
 
-### Isolated harness
+### Launcher-sequenced startup
 
 Importing `playwright.config.ts` performs no database or filesystem side
-effects; it only computes settings. All disposable-state setup happens in
-`tests/global-setup.ts`, which Playwright runs exactly once per test run,
-before any web server or test worker starts:
+effects; it only computes settings. There is no global setup module. All
+disposable-state setup is sequenced inside the backend webServer launcher,
+`tests/backend-launcher.ts`, which Playwright starts exactly once per test
+run (as the backend `webServer` command) before any test worker connects:
 
-1. `tests/e2e-state.ts` resets the run-scoped state: it deletes any leftover
-   disposable database from a previous run and records the database path and
-   URL in `frontend/test-results/e2e-state.json`.
-2. Global setup then creates the database schema (`Base.metadata.create_all`)
-   with the same interpreter and `DATABASE_URL` that the backend web server
-   uses.
+1. The launcher fails fast when the fixed backend port is already occupied.
+2. It resets only the disposable, gitignored SQLite database file
+   (`frontend/test-results/careeros-e2e.db`).
+3. It initializes the database schema (`Base.metadata.create_all`) with the
+   existing backend SQLAlchemy entry points, using the same interpreter and
+   `DATABASE_URL` that the backend will use.
+4. Only after schema initialization succeeds does it start uvicorn, and it
+   forwards SIGTERM/SIGINT to uvicorn and exits nonzero on any failure.
 
-Because this happens once per run rather than once per worker, all four
+Because the launcher runs once per run rather than once per worker, all four
 default workers share the single initialized database. No manual migration
 step is required.
+
+The backend directory and Python interpreter resolution live in one shared
+helper, `tests/backend-runtime.ts`, imported by both `playwright.config.ts`
+and the launcher, so the resolution logic is never duplicated. That module is
+also the single side-effect-free source of truth for the disposable database
+path and URL.
 
 ### One-time setup
 
@@ -141,13 +152,13 @@ npm run test:e2e:auth
 ### Disposable test state
 
 Each run uses the throwaway SQLite database
-`frontend/test-results/careeros-e2e.db`. Global setup recreates the database
-schema automatically before starting the backend, so no manual migration step
-is required. Delete that file (and the `e2e-state.json` descriptor next to
-it) to reset the test state completely. Each test also gets a unique email
-address via the `isolatedUser` fixture so parallel workers do not collide.
-Login state is stored in `localStorage` by the app and survives page reloads;
-the harness exercises this in `tests/auth.spec.ts`.
+`frontend/test-results/careeros-e2e.db`. The backend launcher recreates the
+database schema automatically before starting uvicorn, so no manual migration
+step is required. Delete that file to reset the test state completely. Each
+test also gets a unique email address via the `isolatedUser` fixture so
+parallel workers do not collide. Login state is stored in `localStorage` by
+the app and survives page reloads; the harness exercises this in
+`tests/auth.spec.ts`.
 
 ### Failure artifacts
 
