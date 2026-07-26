@@ -8,7 +8,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:smoke": "playwright test tests/smoke.spec.ts",
+    "test:e2e:auth": "playwright test tests/auth.spec.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -23,6 +28,7 @@
     "motion": "^12.23.24"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",

@@ -37,6 +37,113 @@ Create `frontend/.env.local` when you need to override the local API:
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
 
+## Browser tests
+
+The frontend includes a Playwright harness for local end-to-end tests. Tests
+run against Chromium only and do not use cloud browser infrastructure.
+
+A single command runs the whole suite. Playwright starts both servers itself,
+so no manual pre-start is required:
+
+- the FastAPI backend at `http://127.0.0.1:8000`, backed by a disposable local
+  SQLite database at `frontend/test-results/careeros-e2e.db` with
+  `USE_LLM_RESUME_INTELLIGENCE=false` (paid LLM resume intelligence disabled);
+- the Vite frontend at the fixed port `http://127.0.0.1:3000`, with
+  `VITE_API_BASE_URL` pointed at the test backend. The Playwright `baseURL`
+  matches this port.
+
+No real database, `.env` file, or cloud service is used during the run.
+
+### One-time setup
+
+Install the frontend dependencies and the Chromium binary:
+
+```powershell
+cd frontend
+npm install
+npx playwright install chromium
+```
+
+Create the backend virtualenv and install its dependencies so Playwright can
+launch uvicorn:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+On macOS/Linux, activate with `source .venv/bin/activate` instead.
+
+Playwright auto-detects the interpreter: it prefers `backend/.venv`
+(`Scripts/python.exe` on Windows, `bin/python` otherwise) and falls back to
+`python` on PATH when no virtualenv exists. If you skip the virtualenv, make
+sure `python` resolves to an environment where the backend requirements are
+installed.
+
+### Run the full suite
+
+```powershell
+cd frontend
+npm run test:e2e
+```
+
+Run with the Playwright UI for debugging:
+
+```powershell
+npm run test:e2e:ui
+```
+
+### Smoke run
+
+The smoke test (`tests/smoke.spec.ts`) only opens the auth screen and does not
+talk to the backend:
+
+```powershell
+npm run test:e2e:smoke
+```
+
+### Authenticated run
+
+The authenticated journeys (`tests/auth.spec.ts`) register and log in against
+the disposable backend that Playwright starts automatically:
+
+```powershell
+npm run test:e2e:auth
+```
+
+### Disposable test state
+
+Each run uses the throwaway SQLite database
+`frontend/test-results/careeros-e2e.db`. Playwright creates the database
+schema automatically before starting the backend, so no manual migration step
+is required. Delete that file to reset the test state completely. Each test
+also gets a unique email address via the `isolatedUser` fixture so parallel
+workers do not collide. Login state is
+stored in `localStorage` by the app and survives page reloads; the harness
+exercises this in `tests/auth.spec.ts`.
+
+### Failure artifacts
+
+Traces, screenshots, and videos are retained automatically on failure and
+written to `frontend/test-results/`. The HTML report is written to
+`frontend/playwright-report/`. Both directories are generated outputs and are
+ignored by Git (see `.gitignore`). Open the report with:
+
+```powershell
+npx playwright show-report
+```
+
+### Environment overrides
+
+```dotenv
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000
+PLAYWRIGHT_BACKEND_URL=http://127.0.0.1:8000
+PLAYWRIGHT_HEADLESS=false
+PLAYWRIGHT_WORKERS=1
+```
+
 ## URL Pipeline
 
 Paste an existing `candidate_profile_id` and a public job-posting URL into the
