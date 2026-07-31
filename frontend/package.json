@@ -13,7 +13,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:smoke": "playwright test tests/smoke.spec.ts",
-    "test:e2e:auth": "playwright test tests/auth.spec.ts"
+    "test:e2e:auth": "playwright test tests/auth.spec.ts",
+    "acceptance:backend": "cd ../backend && python -m pytest && python -m ruff check . && python -m compileall -q app",
+    "acceptance": "npm run acceptance:backend && npm run lint && npm run build && npm run test:e2e"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

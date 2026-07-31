@@ -1,24 +1,33 @@
-# careerOS
+# careerOS backend
 
-An AI-powered career operating system that helps users manage their professional profile, optimize resumes, analyze job opportunities, and automate career workflows using intelligent agents.
+The FastAPI backend for careerOS manages authenticated candidate profiles, job
+analysis, resume generation, application history, and generated documents.
 
-## Vision
+## Local testing
 
-careerOS acts as a personal career copilot by combining:
+Install backend dependencies in a local virtual environment, then use the
+frontend acceptance gate to run all repository checks:
 
-* Knowledge Base
-* Resume Intelligence
-* Job Analysis
-* Application Tracking
-* AI Agents
-* Future Automation
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 
-## Autonomous Development
+cd ..\frontend
+npm install
+npx playwright install chromium
+npm run acceptance
+```
 
-Repository-local autonomous development is documented in
-[`docs/autonomy.md`](docs/autonomy.md). It is a CLI tool and is not exposed through
-the customer-facing FastAPI application.
+`npm run acceptance` is the documented full regression command. It runs backend
+pytest, Ruff, backend compilation, frontend type checking, frontend production
+build, and the complete Playwright suite sequentially. It exits nonzero when
+any check fails.
+
+See [local testing](docs/local_testing.md) for the backend test coverage and
+for separately running the application during local development.
 
 ## Status
 
-🚧 Under Development
+Under development.

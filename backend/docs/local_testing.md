@@ -1,127 +1,89 @@
-# Local MVP Testing
+# Local Testing
 
-## Prerequisites
+## Full local acceptance gate
 
-Create `backend/.env` with a local PostgreSQL connection and a private JWT secret:
-
-```dotenv
-DATABASE_URL=postgresql+psycopg://user:password@localhost/careeros
-JWT_SECRET_KEY=replace-with-a-long-random-local-secret
-USE_LLM_RESUME_INTELLIGENCE=false
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-4.1-mini
-```
-
-The OpenAI quality layer is optional. When it is disabled, missing a key, or unavailable,
-careerOS uses the deterministic resume-quality implementation.
-
-For a database created before local authentication was added, run from `backend`:
+The repository's complete local regression command is run from `frontend`:
 
 ```powershell
+cd frontend
+npm run acceptance
+```
+
+It uses sequential `&&` commands and exits nonzero as soon as any stage fails.
+The gate runs backend pytest, `ruff check .`, backend compilation, frontend
+TypeScript checking, the frontend production build, and the full Playwright
+suite.
+
+Before the first run, install the local backend and frontend dependencies:
+
+```powershell
+cd backend
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m scripts.add_user_auth
+pip install -r requirements.txt
+
+cd ..\frontend
+npm install
+npx playwright install chromium
 ```
 
-## Optional Demo Account
+On macOS or Linux, activate the virtual environment with
+`source .venv/bin/activate`.
 
-Seed a complete local candidate profile:
+## Browser-test runtime
+
+The Playwright stage starts its own local FastAPI and Vite servers. It uses a
+throwaway SQLite database at `frontend/test-results/careeros-e2e.db`, with LLM
+resume intelligence disabled. The default configuration uses four workers.
+
+The test frontend is fixed at `http://127.0.0.1:3000`; the disposable backend
+is fixed at `http://127.0.0.1:8000`. The harness fails if either owned server
+port cannot be used, preventing it from silently testing a separately started
+server. No local environment file, production database, or external browser
+service is used by this browser-test runtime.
+
+Use these commands only for focused browser debugging:
 
 ```powershell
-cd C:\Users\Ahmed\careerOS\backend
-.\.venv\Scripts\Activate.ps1
-python -m scripts.seed_candidate
+cd frontend
+npm run test:e2e:auth
+npm run test:e2e:smoke
+npm run test:e2e:ui
 ```
 
-The seed creates or reuses this local-only account:
+## Verified coverage
 
-```text
-Email: demo@careeros.local
-Password: password123
-```
+The browser suite verifies registration, login, logout, and restored sessions;
+private candidate-profile creation and editing; validation-value retention and
+empty states; manual job entry and PDF resume downloads; private resource
+isolation between two users; URL extraction review and manual fallback; and
+resume history ordering with historical PDF download.
 
-Do not use these credentials outside local development.
+The URL tests use loopback fixture markup and mocked extraction responses. They
+verify the local application flow and fallback behavior, not live job-site
+availability or third-party site layouts.
 
-## Start The Backend
+Backend API tests additionally verify registration, duplicate-user handling,
+login, the current-user endpoint, required authentication for private
+candidate routes, and sanitized owner-scoped rejection for foreign candidate,
+application, pipeline, and document identifiers. They verify that rejected
+foreign requests do not disclose or mutate owner fixture data.
+
+## Run the application locally
+
+For manual development, configure a local database connection using your own
+ignored local environment configuration, then start FastAPI:
 
 ```powershell
-cd C:\Users\Ahmed\careerOS\backend
+cd backend
 .\.venv\Scripts\Activate.ps1
 python -m uvicorn app.main:app --reload
 ```
 
-Backend: `http://127.0.0.1:8000`
+The local backend is available at `http://127.0.0.1:8000`, and its OpenAPI UI
+is available at `http://127.0.0.1:8000/docs`. Start Vite separately with
+`cd frontend` followed by `npm run dev`.
 
-Swagger: `http://127.0.0.1:8000/docs`
-
-## Start The Frontend
-
-In another terminal:
-
-```powershell
-cd C:\Users\Ahmed\careerOS\frontend
-npm install
-npm run dev
-```
-
-Frontend: `http://localhost:3000`
-
-## Register Or Login
-
-1. Open the frontend.
-2. Register with a name, email, and password of at least eight characters, or log in with
-   the demo account.
-3. Refresh the page once to confirm the session is restored.
-4. Select **Logout** and confirm the login screen returns.
-
-## Create And Select A Profile
-
-1. Select **Create profile**.
-2. Enter a full name and any relevant contact details, summary, skills, certifications,
-   projects, experience, and education.
-3. Select **Save profile** and confirm the success message appears.
-4. Confirm the new profile is selected in the candidate dropdown.
-5. Edit one field and save again to verify updates.
-
-Candidate profiles are private. A different account must not see the profile in its dropdown
-or access its profile ID through the API.
-
-## Test Job URL Extraction
-
-1. Select a candidate profile.
-2. Choose **Use URL**.
-3. Paste one public LinkedIn, Indeed, Glassdoor, Greenhouse, or Lever job URL.
-4. Select **Extract Job**.
-5. Confirm job title, company, location, and description populate the editable job form.
-6. Review or edit the fields before selecting **Analyze Job**.
-
-Some sites may display login walls, CAPTCHAs, or changed page layouts. careerOS should show a
-clear extraction warning and keep manual entry available instead of crashing.
-
-## Test Manual Fallback
-
-1. Select **Paste job manually**.
-2. Enter job title, company, and the complete job description.
-3. Optionally enter location, source platform, job URL, and company email.
-4. Select the desired PDF, DOCX, or Markdown output.
-5. Select **Analyze Job**.
-
-The job description must not be empty, and a candidate profile must be selected.
-
-## Generate And Download A Resume
-
-1. Wait for the completed match and resume review result.
-2. Confirm the selected projects and skill matches belong to the selected candidate.
-3. Select **Download resume**.
-4. Open the downloaded file and verify it uses the selected candidate and current job.
-5. For PDF output, confirm the file opens normally and internal truthfulness warnings are not
-   printed inside the resume.
-
-Repeat once for PDF, DOCX, and Markdown when validating all exporters.
-
-## Expected MVP Limitations
-
-- Access tokens expire after 24 hours and there are no refresh tokens.
-- There is no password reset, email verification, OAuth, roles, or payments.
-- Job-site login walls, CAPTCHAs, and layout changes can prevent URL extraction.
-- Extraction is synchronous and intended for one user-provided URL at a time.
-- The optional OpenAI quality layer falls back to deterministic processing when unavailable.
+Manual exploration can cover additional product behavior, but it is not a
+substitute for the acceptance gate and is not represented as automated
+coverage here.
