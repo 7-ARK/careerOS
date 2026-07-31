@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {Download, FileText, LoaderCircle} from 'lucide-react';
 
+import {DataState} from './DataState';
 import {
   ApiError,
   downloadGeneratedDocument,
@@ -71,11 +72,9 @@ export function ApplicationHistory({
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
         Previously generated resumes are kept here for download.
       </p>
-      {errorMessage && <p className="mt-3 text-xs text-destructive">{errorMessage}</p>}
+      {errorMessage && <DataState state="error" message={errorMessage} />}
       {isLoading ? (
-        <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <LoaderCircle className="size-4 animate-spin" />Loading resume history...
-        </p>
+        <DataState state="loading" message="Loading resume history..." />
       ) : entries.length ? (
         <ol className="mt-4 space-y-3">
           {entries.map((entry) => (
@@ -103,9 +102,9 @@ export function ApplicationHistory({
           ))}
         </ol>
       ) : candidateProfileId ? (
-        <p className="mt-4 text-sm text-muted-foreground">No generated resumes yet.</p>
+        <DataState state="empty" message="No generated resumes yet." />
       ) : (
-        <p className="mt-4 text-sm text-muted-foreground">Select a candidate to view resume history.</p>
+        <DataState state="empty" message="No profile selected yet, so there is no resume history to show." />
       )}
     </section>
   );

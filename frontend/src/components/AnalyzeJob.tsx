@@ -20,6 +20,7 @@ import {
 } from '../lib/api';
 import {ApplicationHistory} from './ApplicationHistory';
 import {CandidateProfiles} from './CandidateProfiles';
+import {DataState} from './DataState';
 
 type ImportMode = 'url' | 'manual';
 type WorkflowState =
@@ -614,10 +615,10 @@ function WorkflowResult({
   if (state === 'loading') {
     return (
       <ResultPanel>
-        <LoaderCircle className="size-7 animate-spin text-primary" />
-        <p className="mt-5 text-sm leading-relaxed text-foreground">
-          {mode === 'url' ? 'Reading the job page...' : 'Preparing your resume from the reviewed job description...'}
-        </p>
+        <DataState
+          state="loading"
+          message={mode === 'url' ? 'Reading the job page...' : 'Preparing your resume from the reviewed job description...'}
+        />
       </ResultPanel>
     );
   }
@@ -638,19 +639,21 @@ function WorkflowResult({
   if (state === 'extraction_failed') {
     return (
       <ResultPanel>
-        <AlertCircle className="size-7 text-brand-amber" />
-        <h3 className="mt-5 text-lg font-semibold text-foreground">We need the job text.</h3>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          {errorMessage || 'Could not extract this job posting automatically. Please paste the job description manually.'}
-        </p>
+        <DataState
+          state="error"
+          title="We need the job text."
+          message={errorMessage || 'Could not extract this job posting automatically. Please paste the job description manually.'}
+          action={(
+            <button
+              type="button"
+              onClick={onUseManualImport}
+              className="cozy-button-secondary mt-4 inline-flex rounded-lg px-5 py-2.5 text-sm font-medium transition"
+            >
+              Use Manual Import
+            </button>
+          )}
+        />
         <Warnings warnings={warnings.filter((warning) => warning !== errorMessage)} />
-        <button
-          type="button"
-          onClick={onUseManualImport}
-          className="cozy-button-secondary mt-6 inline-flex rounded-lg px-5 py-2.5 text-sm font-medium transition"
-        >
-          Use Manual Import
-        </button>
       </ResultPanel>
     );
   }
@@ -658,9 +661,11 @@ function WorkflowResult({
   if (state === 'pipeline_failed') {
     return (
       <ResultPanel>
-        <AlertCircle className="size-7 text-destructive" />
-        <h3 className="mt-5 text-lg font-semibold text-foreground">The pipeline could not finish.</h3>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{errorMessage}</p>
+        <DataState
+          state="error"
+          title="The pipeline could not finish."
+          message={errorMessage}
+        />
       </ResultPanel>
     );
   }
@@ -697,7 +702,7 @@ function WorkflowResult({
           hideWhenEmpty
         />
         <Warnings warnings={warnings} />
-        {errorMessage && <p className="mt-4 text-xs leading-relaxed text-destructive">{errorMessage}</p>}
+        {errorMessage && <DataState state="error" message={errorMessage} />}
         <button
           type="button"
           disabled={isDownloading}
