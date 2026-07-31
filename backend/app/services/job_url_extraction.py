@@ -10,6 +10,7 @@ from app.schemas import (
     JobUrlPipelineResult,
     ManualJobPipelineRequest,
 )
+from app.schemas.job_url_extraction import JobUrlExtractionOutcome
 from app.services.pipeline import ApplicationPipelineService
 
 
@@ -30,7 +31,10 @@ class JobUrlPipelineService:
     def run_url_pipeline(self, request: JobUrlPipelineRequest) -> JobUrlPipelineResult:
         """Extract visible page data and run the existing pipeline only when ready."""
         extraction = self.extract_url(JobUrlExtractionRequest(**request.model_dump()))
-        if not extraction.pipeline_ready:
+        if (
+            extraction.outcome is not JobUrlExtractionOutcome.SUCCESS
+            or not extraction.pipeline_ready
+        ):
             return JobUrlPipelineResult(extraction=extraction)
         pipeline_result = self.pipeline.run_manual_job_pipeline(
             self.to_manual_pipeline_request(request, extraction)

@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from app.features.job_url_extraction.extractors import PlaywrightJobExtractor
 from app.models.enums import SourcePlatform
 from app.schemas import JobUrlExtractionRequest
+from app.schemas.job_url_extraction import JobUrlExtractionOutcome
 
 
 class PlaywrightJobExtractorUnitTests(unittest.TestCase):
@@ -66,6 +67,7 @@ class PlaywrightJobExtractorUnitTests(unittest.TestCase):
                 self.assertEqual(result.detected_platform, expected_platform)
                 self.assertEqual(result.raw_title, "Backend Engineer")
                 self.assertEqual(result.company_name, "Platform Labs")
+                self.assertEqual(result.outcome, JobUrlExtractionOutcome.SUCCESS)
                 self.assertTrue(result.pipeline_ready)
 
     def test_unsupported_url_returns_manual_fallback_without_browser_launch(self) -> None:
@@ -78,10 +80,23 @@ class PlaywrightJobExtractorUnitTests(unittest.TestCase):
 
         self.assertFalse(result.pipeline_ready)
         self.assertEqual(result.detected_platform, SourcePlatform.UNKNOWN)
+        self.assertEqual(result.outcome, JobUrlExtractionOutcome.UNSUPPORTED_SOURCE)
+        self.assertTrue(result.message)
         self.assertEqual(
             result.extraction_warnings,
             ["Unsupported job platform. Please paste the job description manually."],
         )
+
+    def test_malformed_document_returns_extraction_failure(self) -> None:
+        result = self.extractor.extract_from_visible_text(
+            job_url="https://www.linkedin.com/jobs/view/123",
+            visible_text="Unavailable",
+        )
+
+        self.assertFalse(result.pipeline_ready)
+        self.assertEqual(result.outcome, JobUrlExtractionOutcome.EXTRACTION_FAILURE)
+        self.assertTrue(result.message)
+        self.assertEqual(result.description_text, "")
 
     def test_empty_url_is_rejected(self) -> None:
         with self.assertRaises(ValidationError):

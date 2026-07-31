@@ -10,7 +10,11 @@ from playwright.sync_api import Page, sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from app.models.enums import SourcePlatform
-from app.schemas.job_url_extraction import JobUrlExtractionRequest, JobUrlExtractionResult
+from app.schemas.job_url_extraction import (
+    JobUrlExtractionOutcome,
+    JobUrlExtractionRequest,
+    JobUrlExtractionResult,
+)
 
 from .base import BaseJobUrlExtractor
 
@@ -115,6 +119,11 @@ DOMAIN_SELECTORS: dict[str, dict[str, tuple[str, ...]]] = {
 UNSUPPORTED_PLATFORM_WARNING = (
     "Unsupported job platform. Please paste the job description manually."
 )
+UNSUPPORTED_SOURCE_MESSAGE = "This job source is not supported. Paste the job description manually."
+EXTRACTION_FAILURE_MESSAGE = (
+    "We could not read a complete job posting. Paste the job description manually."
+)
+SUCCESS_MESSAGE = "Job details were extracted. Review the editable fields before continuing."
 
 
 class PlaywrightJobExtractor(BaseJobUrlExtractor):
@@ -128,6 +137,8 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
                 request.job_url,
                 platform,
                 UNSUPPORTED_PLATFORM_WARNING,
+                outcome=JobUrlExtractionOutcome.UNSUPPORTED_SOURCE,
+                message=UNSUPPORTED_SOURCE_MESSAGE,
             )
         timeout_ms = request.timeout_seconds * 1000
         navigation_url = self.normalize_job_url(request.job_url)
@@ -152,11 +163,11 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
                     )
                 finally:
                     browser.close()
-        except Exception as exc:
+        except Exception:
             return self.failure_result(
                 request.job_url,
                 platform,
-                f"Playwright extraction failed: {exc}. Use manual import fallback.",
+                "Browser extraction could not complete. Use manual import fallback.",
             )
 
     def extract_from_page(
@@ -212,6 +223,9 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
         if len(description) < 80:
             warnings.append("Visible job-description text is too short for reliable analysis.")
         pipeline_ready = bool(title and company and len(description) >= 80)
+        if not pipeline_ready:
+            warnings.append("Use manual import fallback for this posting.")
+            return self.failure_result(job_url, detected_platform, *warnings)
         confidence = self._confidence(
             title=title,
             company=company,
@@ -230,7 +244,9 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
             workplace_type=self.infer_workplace_type(cleaned_text),
             extraction_confidence=confidence,
             extraction_warnings=warnings,
-            pipeline_ready=pipeline_ready,
+            outcome=JobUrlExtractionOutcome.SUCCESS,
+            message=SUCCESS_MESSAGE,
+            pipeline_ready=True,
         )
 
     @staticmethod
@@ -377,14 +393,18 @@ class PlaywrightJobExtractor(BaseJobUrlExtractor):
         job_url: str,
         platform: SourcePlatform,
         *warnings: str,
+        outcome: JobUrlExtractionOutcome = JobUrlExtractionOutcome.EXTRACTION_FAILURE,
+        message: str = EXTRACTION_FAILURE_MESSAGE,
     ) -> JobUrlExtractionResult:
-        """Build a safe non-pipeline-ready result."""
+        """Build a safe non-pipeline-ready result without internal error disclosure."""
         return JobUrlExtractionResult(
             job_url=job_url,
             detected_platform=platform,
             description_text="",
             extraction_confidence=Decimal("0"),
             extraction_warnings=list(warnings),
+            outcome=outcome,
+            message=message,
             pipeline_ready=False,
         )
 

@@ -1,6 +1,7 @@
 """Pydantic contracts for user-authorized single-URL job extraction."""
 
 from decimal import Decimal
+from enum import Enum
 from uuid import UUID
 
 from pydantic import AnyHttpUrl, EmailStr, Field, TypeAdapter, field_validator
@@ -14,6 +15,14 @@ from app.schemas.knowledge_base import ReadSchema, SchemaBase
 from app.schemas.pipeline import ManualJobPipelineResult
 
 HTTP_URL_ADAPTER = TypeAdapter(AnyHttpUrl)
+
+
+class JobUrlExtractionOutcome(str, Enum):
+    """Stable machine-readable categories for URL extraction results."""
+
+    SUCCESS = "success"
+    UNSUPPORTED_SOURCE = "unsupported_source"
+    EXTRACTION_FAILURE = "extraction_failure"
 
 
 class JobUrlExtractionRequest(SchemaBase):
@@ -45,7 +54,7 @@ class JobUrlExtractionRequest(SchemaBase):
 
 
 class JobUrlExtractionResult(ReadSchema):
-    """Return safely extracted visible job-posting data."""
+    """Return safely extracted visible job-posting data and its typed outcome."""
 
     job_url: str
     detected_platform: SourcePlatform
@@ -60,6 +69,8 @@ class JobUrlExtractionResult(ReadSchema):
     currency: str | None = None
     extraction_confidence: Decimal = Field(ge=0, le=1)
     extraction_warnings: list[str] = Field(default_factory=list)
+    outcome: JobUrlExtractionOutcome = JobUrlExtractionOutcome.SUCCESS
+    message: str = "Job details were extracted. Review the editable fields before continuing."
     pipeline_ready: bool
 
 
