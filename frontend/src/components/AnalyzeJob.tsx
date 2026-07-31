@@ -18,6 +18,7 @@ import {
   runManualPipeline,
   SourcePlatform,
 } from '../lib/api';
+import {ApplicationHistory} from './ApplicationHistory';
 import {CandidateProfiles} from './CandidateProfiles';
 
 type ImportMode = 'url' | 'manual';
@@ -234,6 +235,11 @@ export function AnalyzeJob() {
           <CandidateProfiles
             selectedCandidateId={candidateProfileId}
             onSelectionChange={setCandidateProfileId}
+          />
+
+          <ApplicationHistory
+            candidateProfileId={candidateProfileId}
+            refreshToken={pipelineResult?.generated_document_id}
           />
 
           <div className="cozy-panel-soft mt-7 inline-flex rounded-xl p-1">

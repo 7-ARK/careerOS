@@ -36,6 +36,11 @@ OWNER_SCOPED_ROUTE_INVENTORY = (
     ),
     (
         "backend/app/api/routes/applications.py",
+        "GET /api/v1/applications/{candidate_profile_id}/history",
+        "document history",
+    ),
+    (
+        "backend/app/api/routes/applications.py",
         "GET /api/v1/applications/{candidate_profile_id}",
         "application list",
     ),
@@ -296,6 +301,12 @@ class AuthPrivacyTests(unittest.TestCase):
                 ),
             ),
             (
+                "document history",
+                lambda: self.client.get(
+                    f"/api/v1/applications/{owner_profile['id']}/history", headers=stranger_headers
+                ),
+            ),
+            (
                 "application list",
                 lambda: self.client.get(
                     f"/api/v1/applications/{owner_profile['id']}", headers=stranger_headers
@@ -437,6 +448,40 @@ class AuthPrivacyTests(unittest.TestCase):
             str(owner_document.id),
         )
         self.assertEqual(after, before)
+
+    def test_document_history_is_owner_scoped(self) -> None:
+        """History exposes only documents belonging to the authorized candidate owner."""
+        owner = self._register("history-owner@example.com", "History Owner")
+        stranger = self._register("history-stranger@example.com", "History Stranger")
+        owner_profile = self._create_profile(owner, "Owner History Candidate")
+        stranger_profile = self._create_profile(stranger, "Stranger History Candidate")
+        owner_document = self._create_generated_document(UUID(owner_profile["id"]))
+        stranger_document = self._create_generated_document(UUID(stranger_profile["id"]))
+
+        owner_history = self.client.get(
+            f"/api/v1/applications/{owner_profile['id']}/history",
+            headers=self._headers(owner),
+        )
+        stranger_history = self.client.get(
+            f"/api/v1/applications/{stranger_profile['id']}/history",
+            headers=self._headers(stranger),
+        )
+        foreign_history = self.client.get(
+            f"/api/v1/applications/{owner_profile['id']}/history",
+            headers=self._headers(stranger),
+        )
+
+        self.assertEqual(owner_history.status_code, 200)
+        self.assertEqual([row["id"] for row in owner_history.json()], [str(owner_document.id)])
+        self.assertEqual(owner_history.json()[0]["role_title"], "Private Role")
+        self.assertEqual(stranger_history.status_code, 200)
+        self.assertEqual([row["id"] for row in stranger_history.json()], [str(stranger_document.id)])
+        self.assertNotIn(str(owner_document.id), stranger_history.text)
+        self.assertEqual(foreign_history.status_code, 404)
+        self.assertEqual(
+            foreign_history.json(),
+            {"error": {"code": "not_found", "message": "Resource was not found."}},
+        )
 
     def _create_generated_document(self, candidate_profile_id: UUID) -> object:
         """Persist an owner-owned document and its required provenance records."""
