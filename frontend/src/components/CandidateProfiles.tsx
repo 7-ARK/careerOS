@@ -203,13 +203,15 @@ export function CandidateProfiles({
   return (
     <div className="mt-8 border-y border-border/45 py-6">
       <div className="flex flex-wrap items-end gap-3">
-        <label className="min-w-0 flex-1">
-          <span className="cozy-label mb-2 block">
+        <label htmlFor="candidate-profile" className="min-w-0 flex-1">
+          <span id="candidate-profile-label" className="cozy-label mb-2 block">
             Candidate profile
           </span>
           <div className="cozy-field flex items-center rounded-lg px-4 transition">
             <UserRound className="mr-3 size-4 shrink-0 text-brand-amber" />
             <select
+              id="candidate-profile"
+              aria-labelledby="candidate-profile-label"
               value={selectedCandidateId}
               disabled={isLoading || mode !== 'view' || !candidates.length}
               onChange={(event) => onSelectionChange(event.target.value)}
@@ -224,12 +226,13 @@ export function CandidateProfiles({
         </label>
         <button
           type="button"
+          aria-label="New candidate profile"
           onClick={beginCreate}
           disabled={isSaving}
           className="cozy-button inline-flex min-h-11 items-center gap-2 rounded-lg px-5 text-sm font-semibold transition disabled:opacity-60"
         >
           <Plus className="size-4" />
-          Create profile
+          Add profile
         </button>
       </div>
 
@@ -443,7 +446,7 @@ function DynamicSection({title, onAdd, children}: {title: string; onAdd: () => v
     <section>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h4 className="cozy-label">{title}</h4>
-        <button type="button" onClick={onAdd} className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground hover:text-brand-amber"><Plus className="size-4" />Add</button>
+        <button type="button" onClick={onAdd} aria-label={title === 'Skills' ? 'Add competency' : `Add ${title.toLowerCase()}`} className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground hover:text-brand-amber"><Plus className="size-4" />Add</button>
       </div>
       <div className="space-y-4">{children}</div>
     </section>
