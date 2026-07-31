@@ -114,6 +114,100 @@ test('a local URL import populates editable fields and generates a resume from t
   expect(artifact.subarray(0, 5).toString('ascii')).toBe('%PDF-');
 });
 
+test('a malformed URL shows its extraction problem without persisting an application before manual completion', async ({authenticatedPage}) => {
+  const malformedUrl = 'http://127.0.0.1:8011/malformed.html';
+  const failureMessage = 'We could not read a complete job posting. Paste the job description manually.';
+
+  await authenticatedPage.route('**/api/v1/pipeline/extract', async (route) => {
+    const submittedRequest = JSON.parse(route.request().postData() ?? '{}') as Record<string, unknown>;
+    expect(submittedRequest.job_url).toBe(malformedUrl);
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        job_url: malformedUrl,
+        detected_platform: 'company_site',
+        raw_title: null,
+        company_name: null,
+        location: null,
+        description_text: '',
+        extraction_confidence: '0',
+        extraction_warnings: ['Use manual import fallback.'],
+        outcome: 'extraction_failure',
+        message: failureMessage,
+        pipeline_ready: false,
+      }),
+    });
+  });
+
+  const profileId = await createPrivateProfile(authenticatedPage, {
+    fullName: 'Malformed URL Candidate',
+    skills: ['Python'],
+    projects: [
+      {
+        name: 'Fallback Portfolio',
+        description: 'Built reliable automation workflows.',
+        technologies: 'Python, FastAPI',
+      },
+    ],
+  });
+  const applicationsBeforeFailure = await applicationRecordCount(authenticatedPage, profileId);
+
+  await authenticatedPage.getByLabel('Job posting URL').fill(malformedUrl);
+  await authenticatedPage.getByRole('button', {name: 'Extract job', exact: true}).click();
+
+  await expect(authenticatedPage.getByText(failureMessage, {exact: true})).toBeVisible();
+  await expect(authenticatedPage.getByRole('heading', {name: 'We need the job text.'})).toBeVisible();
+  await expect(authenticatedPage.getByText('Traceback', {exact: true})).not.toBeVisible();
+  await expect(authenticatedPage.getByLabel('Job URL')).toHaveValue(malformedUrl);
+  await expect(authenticatedPage.getByLabel('Job title')).toBeEditable();
+  await expect(authenticatedPage.getByRole('textbox', {name: 'Company', exact: true})).toBeEditable();
+  await expect(authenticatedPage.getByLabel('Job description')).toBeEditable();
+  await expect(authenticatedPage.getByRole('button', {name: 'Generate resume', exact: true})).toBeEnabled();
+  await expect.poll(() => applicationRecordCount(authenticatedPage, profileId)).toBe(applicationsBeforeFailure);
+
+  await authenticatedPage.getByLabel('Job title').fill('Manual Recovery Engineer');
+  await authenticatedPage.getByRole('textbox', {name: 'Company', exact: true}).fill('Fallback Labs');
+  await authenticatedPage.getByLabel('Location').fill('Remote');
+  await authenticatedPage.getByLabel('Job description').fill(
+    'Build reliable Python APIs, FastAPI services, PostgreSQL integrations, and automation workflows.',
+  );
+  await authenticatedPage.getByRole('button', {name: 'Generate resume', exact: true}).click();
+
+  const resultPanel = authenticatedPage.getByRole('complementary');
+  await expect(resultPanel.getByRole('heading', {name: 'Manual Recovery Engineer', exact: true})).toBeVisible();
+  await expect(resultPanel.getByText('Fallback Labs', {exact: true})).toBeVisible();
+  await expect(resultPanel.getByText('Match Summary', {exact: true})).toBeVisible();
+
+  const downloadPromise = authenticatedPage.waitForEvent('download');
+  await resultPanel.getByRole('button', {name: 'Download resume', exact: true}).click();
+  const download = await downloadPromise;
+  const stream = await download.createReadStream();
+  if (!stream) {
+    throw new Error('The generated resume download did not provide a readable stream.');
+  }
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk as Uint8Array);
+  }
+  const artifact = Buffer.concat(chunks);
+  expect(artifact.length).toBeGreaterThan(0);
+  expect(artifact.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+});
+
+async function applicationRecordCount(page: import('@playwright/test').Page, profileId: string): Promise<number> {
+  return page.evaluate(async (candidateProfileId) => {
+    const token = localStorage.getItem('careeros_access_token');
+    const response = await fetch(`http://127.0.0.1:8000/api/v1/applications/${candidateProfileId}`, {
+      headers: token ? {Authorization: `Bearer ${token}`} : {},
+    });
+    if (!response.ok) {
+      throw new Error(`Could not read application records: ${response.status}`);
+    }
+    const records = await response.json() as unknown[];
+    return records.length;
+  }, profileId);
+}
+
 function fixtureValue(markup: string, name: string): string {
   const match = new RegExp(`<[^>]+data-fixture-field="${name}"[^>]*>([\\s\\S]*?)</[^>]+>`).exec(markup);
   if (!match) {

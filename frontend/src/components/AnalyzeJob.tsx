@@ -127,9 +127,10 @@ export function AnalyzeJob() {
       if (!response.pipeline_ready) {
         setMode('manual');
         setErrorMessage(
-          response.detected_platform === 'unknown'
-            ? 'Unsupported job platform. Please paste the job description manually.'
-            : 'Could not extract this job posting automatically. Please paste the job description manually.',
+          response.message
+            || (response.detected_platform === 'unknown'
+              ? 'Unsupported job platform. Please paste the job description manually.'
+              : 'Could not extract this job posting automatically. Please paste the job description manually.'),
         );
         setWorkflowState('extraction_failed');
         return;

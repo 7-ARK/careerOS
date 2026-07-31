@@ -213,6 +213,29 @@ class JobUrlPipelineServiceTests(unittest.TestCase):
 
         self.assertEqual(len(pipeline.requests), 1)
 
+    def test_malformed_fixture_does_not_persist_partial_records(self) -> None:
+        before = self._persisted_counts()
+        service = JobUrlPipelineService(
+            self.session,
+            extractor=LocalFixtureExtractor(),
+            pipeline=ApplicationPipelineService(self.session),
+        )
+
+        result = service.run_url_pipeline(
+            self._request(
+                job_url=self.malformed_fixture_url,
+                candidate_profile_id=self.profile.id,
+            )
+        )
+
+        self.assertEqual(
+            result.extraction.outcome,
+            JobUrlExtractionOutcome.EXTRACTION_FAILURE,
+        )
+        self.assertFalse(result.extraction.pipeline_ready)
+        self.assertIsNone(result.pipeline)
+        self.assertEqual(self._persisted_counts(), before)
+
     def test_failure_outcomes_do_not_persist_partial_records(self) -> None:
         failures = (
             self._extraction(

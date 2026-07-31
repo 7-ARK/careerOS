@@ -172,6 +172,8 @@ export interface JobUrlExtractionResult {
   description_text: string;
   extraction_confidence: string;
   extraction_warnings: string[];
+  outcome: 'success' | 'unsupported_source' | 'extraction_failure';
+  message: string;
   pipeline_ready: boolean;
 }
 
