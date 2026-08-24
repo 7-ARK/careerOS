@@ -9,8 +9,11 @@ from fastapi.responses import JSONResponse
 
 from app.services import (
     ApplicationRecordNotFoundError,
+    CareerAnalysisExecutionError,
+    CareerAnalysisRunNotFoundError,
     DuplicateUserError,
     GeneratedDocumentNotFoundError,
+    InvalidCareerAnalysisStateError,
     InvalidCredentialsError,
     JobAnalysisNotFoundError,
     JobDescriptionNotFoundError,
@@ -18,10 +21,12 @@ from app.services import (
     ProfileNotFoundError,
     ResumeAnalysisNotFoundError,
     ResumeDraftNotFoundError,
+    ResumeGroundingError,
 )
 
 NOT_FOUND_EXCEPTIONS = (
     ApplicationRecordNotFoundError,
+    CareerAnalysisRunNotFoundError,
     GeneratedDocumentNotFoundError,
     JobAnalysisNotFoundError,
     JobDescriptionNotFoundError,
@@ -36,10 +41,13 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(RequestValidationError, validation_error_handler)
     app.add_exception_handler(HTTPException, http_error_handler)
     app.add_exception_handler(PipelineExecutionError, pipeline_error_handler)
+    app.add_exception_handler(CareerAnalysisExecutionError, career_analysis_error_handler)
     for exception_type in NOT_FOUND_EXCEPTIONS:
         app.add_exception_handler(exception_type, not_found_error_handler)
     app.add_exception_handler(DuplicateUserError, duplicate_user_error_handler)
     app.add_exception_handler(InvalidCredentialsError, invalid_credentials_error_handler)
+    app.add_exception_handler(InvalidCareerAnalysisStateError, conflict_error_handler)
+    app.add_exception_handler(ResumeGroundingError, grounding_error_handler)
 
 
 async def validation_error_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
@@ -64,13 +72,30 @@ async def http_error_handler(_: Request, exc: HTTPException) -> JSONResponse:
     )
 
 
-async def pipeline_error_handler(_: Request, exc: PipelineExecutionError) -> JSONResponse:
+async def pipeline_error_handler(request: Request, exc: PipelineExecutionError) -> JSONResponse:
     """Return stage-aware pipeline failures."""
     return _error_response(
         500,
         code="pipeline_execution_error",
         message=str(exc),
-        details={"stage": str(exc.stage)},
+        details={"stage": str(exc.stage), "request_id": _request_id(request)},
+    )
+
+
+async def career_analysis_error_handler(
+    request: Request,
+    exc: CareerAnalysisExecutionError,
+) -> JSONResponse:
+    """Return a safe stage-aware Golden Flow failure with a correlation ID."""
+    return _error_response(
+        500,
+        code="career_analysis_execution_error",
+        message="Career analysis could not complete. Use the request ID when reporting it.",
+        details={
+            "stage": str(exc.stage),
+            "run_id": str(exc.run_id),
+            "request_id": _request_id(request),
+        },
     )
 
 
@@ -89,6 +114,16 @@ async def invalid_credentials_error_handler(_: Request, exc: Exception) -> JSONR
     return _error_response(401, code="invalid_credentials", message=str(exc))
 
 
+async def conflict_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Return lifecycle conflicts without exposing internal state."""
+    return _error_response(409, code="invalid_state", message=str(exc))
+
+
+async def grounding_error_handler(_: Request, exc: Exception) -> JSONResponse:
+    """Return explicit unsupported-claim validation failures."""
+    return _error_response(422, code="grounding_validation_failed", message=str(exc))
+
+
 def _error_response(
     status_code: int,
     *,
@@ -101,3 +136,7 @@ def _error_response(
     if details is not None:
         error["details"] = details
     return JSONResponse(status_code=status_code, content={"error": error})
+
+
+def _request_id(request: Request) -> str:
+    return str(getattr(request.state, "request_id", "unavailable"))

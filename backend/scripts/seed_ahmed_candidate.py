@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from os import environ
 
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.db import Base, create_database_engine, create_session_factory, session_scope
+from app.db import create_database_engine, create_session_factory, session_scope
 from app.models.enums import RelocationPreference, RemotePreference, ResumeStyle
 from app.schemas import (
     CandidateProfileCreate,
@@ -51,6 +52,9 @@ SKILLS = [
     ("Document generation", "Career Automation", 4, "1.00"),
 ]
 
+DEVELOPER_EMAIL = environ.get("CAREEROS_DEVELOPER_EMAIL", "ahmed.raza@example.com")
+DEVELOPER_PHONE = environ.get("CAREEROS_DEVELOPER_PHONE") or None
+
 
 def seed_ahmed_candidate(session: Session) -> CandidateProfileRead:
     """Create Ahmed Raza's complete early-career profile through application services."""
@@ -59,8 +63,8 @@ def seed_ahmed_candidate(session: Session) -> CandidateProfileRead:
     profile = service.create_candidate_profile(
         CandidateProfileCreate(
             full_name="Ahmed Raza",
-            email="ahmed_kahoot@outlook.com",
-            phone="+92-337-7408870",
+            email=DEVELOPER_EMAIL,
+            phone=DEVELOPER_PHONE,
             headline="Early-Career AI Engineer and AI Automation Developer",
             summary=(
                 "Bachelor of Artificial Intelligence candidate with hands-on project "
@@ -190,10 +194,9 @@ def seed_ahmed_candidate(session: Session) -> CandidateProfileRead:
 
 
 def seed_database(database_url: str) -> CandidateProfileRead:
-    """Create required tables and seed Ahmed's candidate profile."""
+    """Seed Ahmed's profile after Alembic initializes the configured database."""
     engine = create_database_engine(database_url)
     try:
-        Base.metadata.create_all(engine)
         factory = create_session_factory(engine)
         with session_scope(factory) as session:
             return seed_ahmed_candidate(session)

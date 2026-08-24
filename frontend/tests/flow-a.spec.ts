@@ -2,13 +2,24 @@ import {expect, test} from './fixtures';
 
 /**
  * Flow A browser acceptance: register -> login -> private candidate profile ->
- * manual job -> tailored resume -> PDF download.
+ * manual job -> evidence analysis -> human approval -> PDF -> tracker.
  *
  * Runs entirely against the disposable local SQLite/Playwright harness with
  * deterministic local data only; no external network dependency.
  */
 
 test('Flow A: register to resume download', async ({page, isolatedUser}) => {
+  const applicationErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error' && !message.location().url.startsWith('chrome-extension://')) {
+      applicationErrors.push(`console: ${message.text()}`);
+    }
+  });
+  page.on('requestfailed', (request) => {
+    if (request.url().startsWith('http://127.0.0.1:')) {
+      applicationErrors.push(`request: ${request.method()} ${request.url()} ${request.failure()?.errorText ?? ''}`);
+    }
+  });
   await page.goto('/');
 
   // Register a fresh isolated user.
@@ -34,7 +45,7 @@ test('Flow A: register to resume download', async ({page, isolatedUser}) => {
   await page.getByLabel('Full name').fill('Ada Candidate');
   await page.getByLabel('Email').fill('ada.candidate@example.com');
   await page.getByLabel('Phone number').fill('+1-555-0100');
-  await page.getByLabel('Location').fill('Remote');
+  await page.getByLabel('Location').first().fill('Remote');
   await page.getByLabel('Professional headline').fill('Backend Engineer');
   await page.getByLabel('Professional summary').fill('Backend engineer building reliable Python services.');
 
@@ -47,7 +58,7 @@ test('Flow A: register to resume download', async ({page, isolatedUser}) => {
   await expect(page.getByText('Profile created successfully.')).toBeVisible();
   await expect(page.getByLabel('Candidate profile', {exact: true})).toContainText('Ada Candidate');
 
-  // Enter a manual job and generate the tailored resume.
+  // Enter a manual job and run the deterministic evidence analysis.
   await page.getByRole('button', {name: 'Paste job manually'}).click();
   await page.getByLabel('Job title').fill('Backend Engineer');
   await page.getByLabel('Company', {exact: true}).fill('Platform Labs');
@@ -55,14 +66,23 @@ test('Flow A: register to resume download', async ({page, isolatedUser}) => {
   await page.getByLabel('Job description').fill(
     'Build reliable Python and FastAPI services, PostgreSQL integrations, automated tests, and production API workflows.',
   );
-  await page.getByRole('button', {name: 'Generate resume'}).click();
+  await page.getByRole('button', {name: 'Analyze evidence'}).click();
 
-  await expect(page.getByRole('heading', {name: 'Backend Engineer'})).toBeVisible();
-  await expect(page.getByText('Platform Labs')).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Backend Engineer', exact: true})).toBeVisible();
+  await expect(page.locator('#analysis-results').getByText('Platform Labs')).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Requirement-to-evidence map'})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Human review required'})).toBeVisible();
+
+  // Documents do not exist until the reviewer explicitly approves the grounded draft.
+  await expect(page.getByRole('button', {name: /Download PDF/})).toHaveCount(0);
+  await page.getByLabel('Review notes').fill('Reviewed the evidence citations and candidate facts.');
+  await page.getByRole('button', {name: 'Approve and export'}).click();
+  await expect(page.getByRole('heading', {name: 'Approved and saved'})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Analysis history'})).toBeVisible();
 
   // Download the generated resume and assert it is a non-empty PDF.
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', {name: 'Download resume'}).click();
+  await page.getByRole('button', {name: 'Download PDF'}).click();
   const download = await downloadPromise;
   const stream = await download.createReadStream();
   const chunks: Buffer[] = [];
@@ -72,4 +92,49 @@ test('Flow A: register to resume download', async ({page, isolatedUser}) => {
   const fileBuffer = Buffer.concat(chunks);
   expect(fileBuffer.length).toBeGreaterThan(0);
   expect(fileBuffer.subarray(0, 4).toString('latin1')).toBe('%PDF');
+
+  // The approved flow saves a user-editable tracker record with evidence coverage.
+  await page.getByRole('button', {name: 'Applications'}).click();
+  await expect(page.getByRole('cell', {name: 'Backend Engineer', exact: true})).toBeVisible();
+  await expect(page.getByRole('cell', {name: 'Platform Labs', exact: true})).toBeVisible();
+  const status = page.getByLabel('Status for Backend Engineer at Platform Labs');
+  await expect(status).toHaveValue('saved');
+  await status.selectOption('applied');
+  await expect(status).toHaveValue('applied');
+  await status.selectOption('offer');
+  await expect(status).toHaveValue('offer');
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await page.getByRole('button', {name: 'View analysis for Backend Engineer at Platform Labs'}).click();
+  await expect(page.getByRole('heading', {name: 'Backend Engineer', exact: true})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Requirement-to-evidence map'})).toBeVisible();
+  await expect(page.getByText('Saved evidence analysis')).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Approved and saved'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Download DOCX'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Download PDF'})).toBeVisible();
+  await expect(page.locator('#analysis-results')).toBeFocused();
+
+  // A browser reload still exposes the same persisted run through history.
+  await page.reload();
+  const persistedHistoryCard = page.getByRole('button', {
+    name: /Backend Engineer at Platform Labs, Remote, completed, \d+\.\d% coverage, .+ 20\d{2}/,
+  });
+  await expect(persistedHistoryCard).toBeVisible();
+  await persistedHistoryCard.click();
+  await expect(page.getByRole('heading', {name: 'Requirement-to-evidence map'})).toBeVisible();
+  await expect(page.getByRole('heading', {name: 'Approved and saved'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Download DOCX'})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Download PDF'})).toBeVisible();
+  for (const format of ['DOCX', 'PDF']) {
+    const persistedDownload = page.waitForEvent('download');
+    await page.getByRole('button', {name: `Download ${format}`}).click();
+    const downloadedDocument = await persistedDownload;
+    expect(downloadedDocument.suggestedFilename().toLowerCase()).toMatch(
+      format === 'DOCX' ? /\.docx$/ : /\.pdf$/,
+    );
+  }
+
+  // Opening the persisted run does not create a second run or tracker record.
+  await page.getByRole('button', {name: 'Applications'}).click();
+  await expect(page.locator('tbody tr')).toHaveCount(1);
+  expect(applicationErrors).toEqual([]);
 });

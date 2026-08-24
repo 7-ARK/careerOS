@@ -26,15 +26,18 @@ npm install
 npm run dev
 ```
 
-The frontend is available at `http://localhost:3000`. Swagger is available at
+The frontend is available at `http://127.0.0.1:3000`. Swagger is available at
 `http://127.0.0.1:8000/docs`.
 
 ## Environment
 
-Create `frontend/.env.local` when you need to override the local API:
+The default API base is same-origin `/api`. During development, Vite forwards
+that path to the loopback FastAPI server. Create `frontend/.env.local` only
+when you need an explicit override:
 
 ```dotenv
-VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_API_BASE_URL=/api
+VITE_PREVIEW_MODE=false
 ```
 
 ## Browser tests
@@ -49,9 +52,9 @@ so no manual pre-start is required:
   disposable local SQLite database at `frontend/test-results/careeros-e2e.db`
   with `USE_LLM_RESUME_INTELLIGENCE=false` (paid LLM resume intelligence
   disabled);
-- the Vite frontend at the fixed port `http://127.0.0.1:3000`, with
-  `VITE_API_BASE_URL` pointed at the test backend. The Playwright `baseURL`
-  matches this port.
+- the Vite frontend at the fixed port `http://127.0.0.1:3000`; same-origin
+  `/api` requests are forwarded to the test backend by Vite. The Playwright
+  `baseURL` matches this port.
 
 Both web servers are pinned to their fixed ports, so a run never silently
 attaches to a foreign server: the frontend dev server uses Vite's
@@ -73,8 +76,7 @@ run (as the backend `webServer` command) before any test worker connects:
 1. The launcher fails fast when the fixed backend port is already occupied.
 2. It resets only the disposable, gitignored SQLite database file
    (`frontend/test-results/careeros-e2e.db`).
-3. It initializes the database schema (`Base.metadata.create_all`) with the
-   existing backend SQLAlchemy entry points, using the same interpreter and
+3. It applies `python -m alembic upgrade head` with the same interpreter and
    `DATABASE_URL` that the backend will use.
 4. Only after schema initialization succeeds does it start uvicorn, and it
    forwards SIGTERM/SIGINT to uvicorn and exits nonzero on any failure.
@@ -180,6 +182,18 @@ PLAYWRIGHT_HEADLESS=false
 PLAYWRIGHT_WORKERS=1
 ```
 
+## Golden Career Analysis
+
+The primary frontend path sends manual job details to
+`POST /api/v1/career-analyses`. It displays typed requirements, the calculated
+Evidence Coverage Score, supporting evidence, gaps, pipeline telemetry, and a
+grounded resume preview. DOCX/PDF generation remains blocked until the user
+submits an explicit approval to `/api/v1/career-analyses/{run_id}/review`.
+
+The Applications tab loads `/api/v1/applications/{candidate_id}` and updates
+Saved, Applied, Interviewing, and Rejected statuses through the authenticated
+status endpoint.
+
 ## URL Pipeline
 
 Paste an existing `candidate_profile_id` and a public job-posting URL into the
@@ -193,8 +207,10 @@ Use the `Paste job manually` toggle in the Analyze a Job section when a site
 blocks browser extraction or hides job text. Paste the candidate profile ID, job
 title, company, optional job URL, and full job description.
 
-The frontend sends the request to `POST /api/v1/pipeline/manual`. It runs the
-same backend pipeline as URL import after skipping Playwright extraction:
+The legacy frontend path previously sent this request directly to
+`POST /api/v1/pipeline/manual`. That endpoint remains available for backward
+compatibility, while the recruiter-facing UI uses the human-reviewed Golden
+Career Analysis endpoint.
 
 ```text
 manual job details -> job analysis -> resume analysis -> resume draft -> document generation -> optional application record

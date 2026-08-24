@@ -1,833 +1,592 @@
-import {FormEvent, ReactNode, useState} from 'react';
+import {FormEvent, ReactNode, useEffect, useState} from 'react';
 import {
   AlertCircle,
+  Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Download,
+  FileCheck2,
   FileText,
+  History,
   Link2,
   LoaderCircle,
+  SearchCheck,
+  ShieldCheck,
+  X,
 } from 'lucide-react';
-import {motion} from 'motion/react';
 import {
   ApiError,
+  CandidateEvidence,
   DocumentFormat,
   downloadGeneratedDocument,
   extractJobUrl,
-  ManualJobPipelineResult,
-  ResumeTemplateName,
-  runManualPipeline,
+  GeneratedDocument,
+  getActiveCandidateId,
+  getGoldenCareerAnalysis,
+  GoldenCareerAnalysis,
+  listCandidateCareerAnalyses,
+  RequirementEvidenceMatch,
+  reviewGoldenCareerAnalysis,
   SourcePlatform,
+  startGoldenCareerAnalysis,
+  setActiveCandidateId,
 } from '../lib/api';
 import {CandidateProfiles} from './CandidateProfiles';
 
-type ImportMode = 'url' | 'manual';
-type WorkflowState =
-  | 'idle'
-  | 'loading'
-  | 'extracted'
-  | 'success'
-  | 'extraction_failed'
-  | 'pipeline_failed';
-type ManualPlatform =
-  | 'linkedin'
-  | 'indeed'
-  | 'glassdoor'
-  | 'greenhouse'
-  | 'lever'
-  | 'company'
-  | 'other'
-  | 'unknown';
+type ImportMode = 'manual' | 'url';
+type ManualPlatform = 'linkedin' | 'indeed' | 'glassdoor' | 'company' | 'other' | 'unknown';
 
 const PLATFORM_OPTIONS: {label: string; value: ManualPlatform}[] = [
+  {label: 'Company page', value: 'company'},
   {label: 'LinkedIn', value: 'linkedin'},
   {label: 'Indeed', value: 'indeed'},
   {label: 'Glassdoor', value: 'glassdoor'},
-  {label: 'Greenhouse', value: 'greenhouse'},
-  {label: 'Lever', value: 'lever'},
-  {label: 'Company page', value: 'company'},
   {label: 'Other', value: 'other'},
   {label: 'Unknown', value: 'unknown'},
 ];
 
-const MANUAL_PLATFORM_TO_SOURCE: Record<ManualPlatform, SourcePlatform> = {
+const SOURCE_PLATFORM: Record<ManualPlatform, SourcePlatform> = {
   linkedin: 'linkedin',
   indeed: 'indeed',
   glassdoor: 'glassdoor',
-  greenhouse: 'company_site',
-  lever: 'company_site',
   company: 'company_site',
   other: 'other',
   unknown: 'unknown',
 };
+const IS_EXTERNAL_PREVIEW = import.meta.env.VITE_PREVIEW_MODE === 'true';
 
-function platformFromExtraction(
-  platform: SourcePlatform,
-  jobUrl: string,
-): ManualPlatform {
-  if (platform !== 'company_site') {
-    return platform;
-  }
-  const hostname = new URL(jobUrl).hostname.toLowerCase();
-  if (hostname === 'greenhouse.io' || hostname.endsWith('.greenhouse.io')) {
-    return 'greenhouse';
-  }
-  if (hostname === 'lever.co' || hostname.endsWith('.lever.co')) {
-    return 'lever';
-  }
-  return 'company';
+interface AnalyzeJobProps {
+  analysisSelection: {analysisId: string; candidateProfileId: string} | null;
 }
 
-export function AnalyzeJob() {
-  const [mode, setMode] = useState<ImportMode>('url');
-  const [candidateProfileId, setCandidateProfileId] = useState('');
+export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
+  const [candidateProfileId, setCandidateProfileId] = useState(getActiveCandidateId);
+  const [importMode, setImportMode] = useState<ImportMode>('manual');
   const [jobUrl, setJobUrl] = useState('');
-  const [sourcePlatform, setSourcePlatform] = useState<ManualPlatform>('unknown');
   const [rawTitle, setRawTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [location, setLocation] = useState('');
   const [descriptionText, setDescriptionText] = useState('');
-  const [companyEmail, setCompanyEmail] = useState('');
-  const [documentFormat, setDocumentFormat] = useState<DocumentFormat>('pdf');
-  const [templateName, setTemplateName] = useState<ResumeTemplateName>('clean_ats');
-  const [workflowState, setWorkflowState] = useState<WorkflowState>('idle');
-  const [pipelineResult, setPipelineResult] = useState<ManualJobPipelineResult | null>(null);
-  const [warnings, setWarnings] = useState<string[]>([]);
+  const [sourcePlatform, setSourcePlatform] = useState<ManualPlatform>('company');
+  const [run, setRun] = useState<GoldenCareerAnalysis | null>(null);
+  const [history, setHistory] = useState<GoldenCareerAnalysis[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [isWorking, setIsWorking] = useState(false);
+  const [downloadingId, setDownloadingId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [isDownloading, setIsDownloading] = useState(false);
 
-  async function handleUrlSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    let active = true;
+    async function loadHistory() {
+      if (!candidateProfileId) {
+        setHistory([]);
+        return;
+      }
+      setIsLoadingHistory(true);
+      try {
+        const items = await listCandidateCareerAnalyses(candidateProfileId);
+        if (active) setHistory(items);
+      } catch (error) {
+        if (active) {
+          setErrorMessage(getErrorMessage(error, 'Analysis history could not be loaded.'));
+        }
+      } finally {
+        if (active) setIsLoadingHistory(false);
+      }
+    }
+    void loadHistory();
+    return () => { active = false; };
+  }, [candidateProfileId]);
+
+  useEffect(() => {
+    if (!analysisSelection) return;
+    let active = true;
+    setCandidateProfileId(analysisSelection.candidateProfileId);
+    setActiveCandidateId(analysisSelection.candidateProfileId);
+    setIsWorking(true);
+    setErrorMessage('');
+    void getGoldenCareerAnalysis(analysisSelection.analysisId)
+      .then((persistedRun) => {
+        if (!active) return;
+        setRun(persistedRun);
+        setReviewNotes(persistedRun.review_notes ?? '');
+        setHistory((items) => [
+          persistedRun,
+          ...items.filter((item) => item.id !== persistedRun.id),
+        ]);
+        requestAnimationFrame(() => document.getElementById('analysis-results')?.focus());
+      })
+      .catch((error) => {
+        if (active) {
+          setErrorMessage(getErrorMessage(error, 'The saved analysis could not be loaded.'));
+        }
+      })
+      .finally(() => {
+        if (active) setIsWorking(false);
+      });
+    return () => { active = false; };
+  }, [analysisSelection]);
+
+  async function handleUrlExtraction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!candidateProfileId) {
-      setErrorMessage('Select a candidate before extracting a job.');
-      setWorkflowState('pipeline_failed');
+      setErrorMessage('Select a candidate profile first.');
       return;
     }
-    setWorkflowState('loading');
-    setPipelineResult(null);
-    setWarnings([]);
+    setIsWorking(true);
     setErrorMessage('');
-    setRawTitle('');
-    setCompanyName('');
-    setLocation('');
-    setDescriptionText('');
-    setCompanyEmail('');
-    setSourcePlatform('unknown');
-
     try {
-      const response = await extractJobUrl({
-        candidate_profile_id: candidateProfileId.trim(),
+      const extracted = await extractJobUrl({
+        candidate_profile_id: candidateProfileId,
         job_url: jobUrl.trim(),
         create_application_record: false,
-        resume_template_name: 'clean_ats',
-        document_format: 'pdf',
         headless: true,
         timeout_seconds: 30,
       });
-      setWarnings(response.extraction_warnings ?? []);
-      if (!response.pipeline_ready) {
-        setMode('manual');
-        setErrorMessage(
-          response.detected_platform === 'unknown'
-            ? 'Unsupported job platform. Please paste the job description manually.'
-            : 'Could not extract this job posting automatically. Please paste the job description manually.',
-        );
-        setWorkflowState('extraction_failed');
-        return;
+      if (!extracted.pipeline_ready) {
+        throw new ApiError('Automatic extraction was incomplete. Paste the job description manually.', {
+          code: 'extraction_incomplete',
+        });
       }
-
-      setRawTitle(response.raw_title ?? '');
-      setCompanyName(response.company_name ?? '');
-      setLocation(response.location ?? '');
-      setDescriptionText(response.description_text);
-      setSourcePlatform(platformFromExtraction(response.detected_platform, response.job_url));
-      setMode('manual');
-      setWorkflowState('extracted');
+      setRawTitle(extracted.raw_title ?? '');
+      setCompanyName(extracted.company_name ?? '');
+      setLocation(extracted.location ?? '');
+      setDescriptionText(extracted.description_text);
+      setSourcePlatform(extracted.detected_platform === 'company_site' ? 'company' : extracted.detected_platform);
+      setImportMode('manual');
     } catch (error) {
-      setMode('manual');
-      setErrorMessage(
-        error instanceof ApiError
-          ? error.message
-          : 'Could not extract this job posting automatically. Please paste the job description manually.',
-      );
-      setWorkflowState('extraction_failed');
+      setImportMode('manual');
+      setErrorMessage(getErrorMessage(error, 'Job extraction failed. Paste the description manually.'));
+    } finally {
+      setIsWorking(false);
     }
   }
 
-  async function handleManualSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleAnalysis(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!candidateProfileId) {
-      setErrorMessage('Select a candidate before running the pipeline.');
-      setWorkflowState('pipeline_failed');
+      setErrorMessage('Select a candidate profile before starting analysis.');
       return;
     }
-    setWorkflowState('loading');
-    setPipelineResult(null);
-    setWarnings([]);
+    setIsWorking(true);
+    setRun(null);
     setErrorMessage('');
-
     try {
-      const response = await runManualPipeline({
-        candidate_profile_id: candidateProfileId.trim(),
+      const completedRun = await startGoldenCareerAnalysis({
+        candidate_profile_id: candidateProfileId,
         raw_title: rawTitle.trim(),
         company_name: companyName.trim(),
         location: location.trim(),
-        source_platform: MANUAL_PLATFORM_TO_SOURCE[sourcePlatform],
+        source_platform: SOURCE_PLATFORM[sourcePlatform],
         job_url: jobUrl.trim(),
         description_text: descriptionText.trim(),
-        company_email: companyEmail.trim(),
-        document_format: documentFormat,
-        resume_template_name: templateName,
-        create_application_record: false,
+        mode: 'mock',
       });
-      setPipelineResult(response);
-      setWarnings(response.warnings ?? []);
-      setWorkflowState('success');
+      setRun(completedRun);
+      setHistory((items) => [
+        completedRun,
+        ...items.filter((item) => item.id !== completedRun.id),
+      ]);
     } catch (error) {
-      setErrorMessage(error instanceof ApiError ? error.message : 'The manual pipeline could not be completed.');
-      setWorkflowState('pipeline_failed');
+      setErrorMessage(getErrorMessage(error, 'The evidence analysis could not be completed.'));
+    } finally {
+      setIsWorking(false);
     }
   }
 
-  async function handleDownload() {
-    if (!pipelineResult) {
-      return;
-    }
-
-    setIsDownloading(true);
+  async function handleReview(decision: 'approve' | 'reject') {
+    if (!run) return;
+    setIsWorking(true);
     setErrorMessage('');
     try {
-      await downloadGeneratedDocument(pipelineResult.generated_document_id);
+      const reviewedRun = await reviewGoldenCareerAnalysis(
+        run.id,
+        decision,
+        reviewNotes.trim(),
+      );
+      setRun(reviewedRun);
+      setHistory((items) =>
+        items.map((item) => item.id === reviewedRun.id ? reviewedRun : item),
+      );
     } catch (error) {
-      setErrorMessage(error instanceof ApiError ? error.message : 'The resume download failed.');
+      setErrorMessage(getErrorMessage(error, 'The review decision could not be saved.'));
     } finally {
-      setIsDownloading(false);
+      setIsWorking(false);
     }
   }
 
-  function switchMode(nextMode: ImportMode) {
-    setMode(nextMode);
-    setWorkflowState('idle');
-    setPipelineResult(null);
-    setWarnings([]);
+  async function handleDownload(document: GeneratedDocument) {
+    setDownloadingId(document.id);
     setErrorMessage('');
+    try {
+      await downloadGeneratedDocument(document.id);
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'The document download failed.'));
+    } finally {
+      setDownloadingId('');
+    }
   }
 
   return (
-    <section className="px-4 pb-16 pt-8 sm:px-6 md:pb-20" id="analyze-job">
-      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
-        <motion.div
-          initial={{opacity: 0, y: 18}}
-          animate={{opacity: 1, y: 0}}
-          transition={{duration: 0.55, ease: [0.22, 1, 0.36, 1]}}
-        >
-          <span className="cozy-label mb-3 block">
-            Resume workspace
-          </span>
-          <h2 className="max-w-2xl text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+    <section className="px-4 pb-16 pt-8 sm:px-6" id="analyze-job">
+      <div className="mx-auto max-w-6xl">
+        <div className="max-w-3xl">
+          <span className="cozy-label mb-3 block">Golden Career Analysis Flow</span>
+          <h2 className="text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
             Tailor a resume for one job posting.
           </h2>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Select a candidate, add a job posting, review the details, and generate the resume file.
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Compare a verified candidate profile with one job, inspect every evidence citation, then approve the grounded draft before export.
           </p>
+        </div>
 
-          <CandidateProfiles
-            selectedCandidateId={candidateProfileId}
-            onSelectionChange={setCandidateProfileId}
-          />
+        <CandidateProfiles
+          selectedCandidateId={candidateProfileId}
+          onSelectionChange={(candidateId) => {
+            setCandidateProfileId(candidateId);
+            setActiveCandidateId(candidateId);
+          }}
+        />
 
-          <div className="cozy-panel-soft mt-7 inline-flex rounded-xl p-1">
-            <ModeButton active={mode === 'url'} icon={<Link2 className="size-4" />} label="Use URL" onClick={() => switchMode('url')} />
-            <ModeButton
-              active={mode === 'manual'}
-              icon={<FileText className="size-4" />}
-              label={workflowState === 'extracted' ? 'Review job details' : 'Paste job manually'}
-              onClick={() => switchMode('manual')}
-            />
+        <section className="border-b border-border/60 py-5" aria-labelledby="analysis-history-title">
+          <div className="flex items-center gap-2">
+            <History className="size-4 text-primary" />
+            <h3 className="text-sm font-semibold" id="analysis-history-title">
+              Analysis history
+            </h3>
+            {isLoadingHistory && (
+              <LoaderCircle className="size-3.5 animate-spin text-muted-foreground" />
+            )}
+          </div>
+          {history.length ? (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {(IS_EXTERNAL_PREVIEW ? history.slice(0, 10) : history).map((item) => (
+                <button
+                  aria-label={historyAccessibleName(item)}
+                  aria-pressed={run?.id === item.id}
+                  className={`min-w-64 rounded-md border px-3 py-3 text-left text-xs transition ${run?.id === item.id ? 'border-primary bg-primary/10 ring-1 ring-primary/25' : 'border-border bg-card hover:border-primary/40'}`}
+                  key={item.id}
+                  onClick={() => {
+                    setRun(item);
+                    setReviewNotes(item.review_notes ?? '');
+                  }}
+                  type="button"
+                >
+                  <strong className="block truncate text-foreground">
+                    {analysisTitle(item)}
+                  </strong>
+                  <span className="mt-1 block truncate text-muted-foreground">{analysisCompany(item)}</span>
+                  {analysisLocation(item) && <span className="mt-1 block truncate text-muted-foreground">{analysisLocation(item)}</span>}
+                  <span className="mt-2 flex items-center justify-between gap-3 text-muted-foreground">
+                    <span>{formatAnalysisDate(item.started_at)}</span>
+                    <strong className="font-semibold text-primary">{formatScore(item.evidence_coverage_score)}%</strong>
+                  </span>
+                  <span className="mt-1 block font-medium text-foreground">{analysisState(item.status)}</span>
+                </button>
+              ))}
+            </div>
+          ) : !isLoadingHistory ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              No saved analyses for this profile yet.
+            </p>
+          ) : null}
+        </section>
+
+        <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="cozy-panel rounded-lg p-5 sm:p-6">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+              <div>
+                <p className="cozy-label">Job input</p>
+                <h3 className="mt-1 text-lg font-semibold">Manual description is the reliable path</h3>
+              </div>
+              <div className="cozy-panel-soft inline-flex rounded-lg p-1" aria-label="Job input method">
+                <ModeButton active={importMode === 'manual'} label="Paste job manually" icon={<FileText className="size-4" />} onClick={() => setImportMode('manual')} />
+                <ModeButton active={importMode === 'url'} disabled={IS_EXTERNAL_PREVIEW} label="Use job URL" icon={<Link2 className="size-4" />} onClick={() => setImportMode('url')} title="URL extraction is disabled in the shared demo; paste the job description manually." />
+              </div>
+            </div>
+
+            {IS_EXTERNAL_PREVIEW && (
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+                Job URL extraction is disabled in this shared demo. Paste the job description manually to keep the preview local and deterministic.
+              </p>
+            )}
+
+            {importMode === 'url' ? (
+              <form className="space-y-4" onSubmit={handleUrlExtraction}>
+                <Field label="Job URL">
+                  <input className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" type="url" value={jobUrl} onChange={(event) => setJobUrl(event.target.value)} required />
+                </Field>
+                <PrimaryButton disabled={isWorking} label="Extract job details" loading={isWorking} />
+              </form>
+            ) : (
+              <form className="space-y-4" onSubmit={handleAnalysis}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Job title"><input className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" value={rawTitle} onChange={(event) => setRawTitle(event.target.value)} maxLength={250} required /></Field>
+                  <Field label="Company"><input className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" value={companyName} onChange={(event) => setCompanyName(event.target.value)} maxLength={250} required /></Field>
+                  <Field label="Location"><input className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" value={location} onChange={(event) => setLocation(event.target.value)} maxLength={250} /></Field>
+                  <Field label="Source"><select className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" value={sourcePlatform} onChange={(event) => setSourcePlatform(event.target.value as ManualPlatform)}>{PLATFORM_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
+                </div>
+                <Field label="Job description">
+                  <textarea className="cozy-field min-h-48 w-full resize-y rounded-lg px-3 py-2.5 text-sm leading-relaxed outline-none" value={descriptionText} onChange={(event) => setDescriptionText(event.target.value)} minLength={80} maxLength={50000} required />
+                </Field>
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <p className="text-xs text-muted-foreground">Deterministic demo mode uses no paid API key.</p>
+                  <PrimaryButton disabled={isWorking} label="Analyze evidence" loading={isWorking} />
+                </div>
+              </form>
+            )}
           </div>
 
-          {mode === 'url' ? (
-            <UrlImportForm
-              jobUrl={jobUrl}
-              isLoading={workflowState === 'loading'}
-              onJobUrlChange={setJobUrl}
-              onSubmit={handleUrlSubmit}
-            />
-          ) : (
-            <ManualImportForm
-              rawTitle={rawTitle}
-              companyName={companyName}
-              location={location}
-              sourcePlatform={sourcePlatform}
-              jobUrl={jobUrl}
-              descriptionText={descriptionText}
-              companyEmail={companyEmail}
-              documentFormat={documentFormat}
-              templateName={templateName}
-              isExtracted={workflowState === 'extracted'}
-              isLoading={workflowState === 'loading'}
-              onRawTitleChange={setRawTitle}
-              onCompanyNameChange={setCompanyName}
-              onLocationChange={setLocation}
-              onSourcePlatformChange={setSourcePlatform}
-              onJobUrlChange={setJobUrl}
-              onDescriptionTextChange={setDescriptionText}
-              onCompanyEmailChange={setCompanyEmail}
-              onDocumentFormatChange={setDocumentFormat}
-              onTemplateNameChange={setTemplateName}
-              onSubmit={handleManualSubmit}
-            />
-          )}
-        </motion.div>
+          <aside className="cozy-panel self-start rounded-lg p-5">
+            <p className="cozy-label">Bounded workflow</p>
+            <ol className="mt-4 space-y-3 text-sm">
+              {['Validate profile and job', 'Extract typed requirements', 'Retrieve verified evidence', 'Calculate coverage in code', 'Draft and validate claims', 'Wait for human approval'].map((label, index) => (
+                <li className="flex items-start gap-3" key={label}><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold">{index + 1}</span><span className="pt-0.5 text-muted-foreground">{label}</span></li>
+              ))}
+            </ol>
+            <div className="mt-5 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
+              Suggestions remain separate from verified profile evidence. Exports stay blocked until approval.
+            </div>
+          </aside>
+        </div>
 
-        <WorkflowResult
-          state={workflowState}
-          mode={mode}
-          result={pipelineResult}
-          warnings={warnings}
-          errorMessage={errorMessage}
-          isDownloading={isDownloading}
-          onDownload={handleDownload}
-          onUseManualImport={() => switchMode('manual')}
-        />
+        {errorMessage && <div className="mt-5 flex items-start gap-2 rounded-lg border border-destructive/35 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert"><AlertCircle className="mt-0.5 size-4 shrink-0" />{errorMessage}</div>}
+        {run && <AnalysisResults run={run} reviewNotes={reviewNotes} setReviewNotes={setReviewNotes} isWorking={isWorking} onReview={handleReview} onDownload={handleDownload} downloadingId={downloadingId} />}
       </div>
     </section>
   );
 }
 
-interface ModeButtonProps {
-  active: boolean;
-  icon: ReactNode;
-  label: string;
-  onClick: () => void;
-}
-
-function ModeButton({active, icon, label, onClick}: ModeButtonProps) {
+function AnalysisResults({run, reviewNotes, setReviewNotes, isWorking, onReview, onDownload, downloadingId}: {
+  run: GoldenCareerAnalysis;
+  reviewNotes: string;
+  setReviewNotes: (value: string) => void;
+  isWorking: boolean;
+  onReview: (decision: 'approve' | 'reject') => void;
+  onDownload: (document: GeneratedDocument) => void;
+  downloadingId: string;
+}) {
+  const explanation = run.match_explanation;
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex min-h-10 items-center gap-2 rounded-lg px-4 py-2 text-sm transition ${
-        active ? 'cozy-button font-semibold' : 'text-muted-foreground hover:bg-secondary/70 hover:text-foreground'
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-interface UrlImportFormProps {
-  jobUrl: string;
-  isLoading: boolean;
-  onJobUrlChange: (value: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-}
-
-function UrlImportForm({
-  jobUrl,
-  isLoading,
-  onJobUrlChange,
-  onSubmit,
-}: UrlImportFormProps) {
-  return (
-    <form className="mt-8 space-y-5" onSubmit={onSubmit}>
-      <div>
-        <h3 className="text-lg font-semibold text-foreground">Import job from URL</h3>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          LinkedIn, Indeed, Glassdoor, Greenhouse, or Lever
-        </p>
-      </div>
-
-      <label className="block">
-        <span className="cozy-label mb-2 block">
-          Job posting URL
-        </span>
-        <div className="cozy-field flex items-center rounded-lg px-4 transition">
-          <Link2 className="mr-3 size-4 shrink-0 text-brand-amber" />
-          <input
-            required
-            type="url"
-            value={jobUrl}
-            onChange={(event) => onJobUrlChange(event.target.value)}
-            placeholder="https://www.linkedin.com/jobs/view/..."
-            className="min-w-0 flex-1 bg-transparent py-3 text-sm text-foreground outline-none"
-          />
+    <div className="mt-8 space-y-6 outline-none" aria-live="polite" id="analysis-results" tabIndex={-1}>
+      <section className="cozy-panel rounded-lg p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div><p className="cozy-label">Saved evidence analysis</p><h3 className="mt-2 text-2xl font-semibold">{run.resume_draft?.target_role ?? 'Career analysis'}</h3><p className="mt-1 text-sm text-muted-foreground">{run.match_explanation?.requirements.company}</p></div>
+          <div className="grid min-w-56 grid-cols-2 gap-3">
+            <Metric label="Evidence coverage" value={`${formatScore(run.evidence_coverage_score)}%`} />
+            <Metric label="Grounding" value={run.grounding_validation?.valid ? 'Validated' : 'Review'} />
+          </div>
         </div>
-      </label>
-
-      <PrimaryButton isLoading={isLoading} idleIcon={<Link2 className="size-4" />} idleLabel="Extract job" loadingLabel="Extracting job" />
-    </form>
-  );
-}
-
-interface ManualImportFormProps {
-  rawTitle: string;
-  companyName: string;
-  location: string;
-  sourcePlatform: ManualPlatform;
-  jobUrl: string;
-  descriptionText: string;
-  companyEmail: string;
-  documentFormat: DocumentFormat;
-  templateName: ResumeTemplateName;
-  isExtracted: boolean;
-  isLoading: boolean;
-  onRawTitleChange: (value: string) => void;
-  onCompanyNameChange: (value: string) => void;
-  onLocationChange: (value: string) => void;
-  onSourcePlatformChange: (value: ManualPlatform) => void;
-  onJobUrlChange: (value: string) => void;
-  onDescriptionTextChange: (value: string) => void;
-  onCompanyEmailChange: (value: string) => void;
-  onDocumentFormatChange: (value: DocumentFormat) => void;
-  onTemplateNameChange: (value: ResumeTemplateName) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-}
-
-function ManualImportForm({
-  rawTitle,
-  companyName,
-  location,
-  sourcePlatform,
-  jobUrl,
-  descriptionText,
-  companyEmail,
-  documentFormat,
-  templateName,
-  isExtracted,
-  isLoading,
-  onRawTitleChange,
-  onCompanyNameChange,
-  onLocationChange,
-  onSourcePlatformChange,
-  onJobUrlChange,
-  onDescriptionTextChange,
-  onCompanyEmailChange,
-  onDocumentFormatChange,
-  onTemplateNameChange,
-  onSubmit,
-}: ManualImportFormProps) {
-  return (
-    <form className="mt-8 space-y-5" onSubmit={onSubmit}>
-      {isExtracted && (
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">Review extracted job details</h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Check and edit these fields before generating the resume.
-          </p>
+        <div className="mt-5 grid gap-2 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-4">
+          {run.stages.map((stage) => <div className="flex items-start gap-2 rounded-md bg-secondary/55 px-3 py-2 text-xs" key={stage.stage}>{stage.status === 'completed' ? <Check className="mt-0.5 size-3.5 shrink-0 text-primary" /> : <LoaderCircle className="mt-0.5 size-3.5 shrink-0 text-brand-amber" />}<span><strong className="block font-medium text-foreground">{humanize(stage.stage)}</strong><span className="text-muted-foreground">{stage.latency_ms === null ? 'Waiting' : `${stage.latency_ms} ms`}</span></span></div>)}
         </div>
+      </section>
+
+      {explanation && (
+        <section className="cozy-panel rounded-lg p-5 sm:p-6">
+          <div className="flex items-start gap-3"><SearchCheck className="mt-0.5 size-5 text-primary" /><div><h3 className="text-lg font-semibold">Requirement-to-evidence map</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{explanation.overall_fit_summary}</p></div></div>
+          <div className="mt-5 divide-y divide-border border-y border-border">
+            {explanation.requirement_matches.map((match) => <div key={match.requirement.requirement_id}><RequirementRow match={match} /></div>)}
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">Score formula: {explanation.evidence_coverage.formula}</p>
+        </section>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextField label="Job title" value={rawTitle} onChange={onRawTitleChange} placeholder="AI Automation Developer" required />
-        <TextField label="Company" value={companyName} onChange={onCompanyNameChange} placeholder="Example Labs" required />
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextField label="Location" value={location} onChange={onLocationChange} placeholder="Remote, US" />
-        <TextField label="Company email" value={companyEmail} onChange={onCompanyEmailChange} placeholder="careers@example.com" type="email" />
-      </div>
+      {run.resume_draft && <ResumePreview run={run} />}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <PlatformField value={sourcePlatform} onChange={onSourcePlatformChange} />
-        <TextField label="Job URL" value={jobUrl} onChange={onJobUrlChange} placeholder="https://company.com/jobs/123" type="url" />
-      </div>
+      {run.status === 'awaiting_review' && (
+        <section className="cozy-panel rounded-lg p-5 sm:p-6">
+          <div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 size-5 text-primary" /><div><h3 className="text-lg font-semibold">Human review required</h3><p className="mt-1 text-sm text-muted-foreground">Approval confirms you reviewed the cited draft. Only then will DOCX and PDF files be generated.</p></div></div>
+          <label className="mt-5 block"><span className="cozy-label mb-2 block">Review notes</span><textarea className="cozy-field min-h-24 w-full rounded-lg px-3 py-2.5 text-sm outline-none" value={reviewNotes} onChange={(event) => setReviewNotes(event.target.value)} maxLength={2000} /></label>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button className="cozy-button inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50" disabled={isWorking} onClick={() => onReview('approve')} type="button">{isWorking ? <LoaderCircle className="size-4 animate-spin" /> : <FileCheck2 className="size-4" />}Approve and export</button>
+            <button className="cozy-button-secondary inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50" disabled={isWorking} onClick={() => onReview('reject')} type="button"><X className="size-4" />Reject draft</button>
+          </div>
+        </section>
+      )}
 
-      <label className="block">
-        <span className="cozy-label mb-2 block">
-          Job description
-        </span>
-        <textarea
-          required
-          value={descriptionText}
-          onChange={(event) => onDescriptionTextChange(event.target.value)}
-          placeholder="Paste the full job description, requirements, responsibilities, and qualifications."
-          rows={9}
-          className="cozy-field w-full resize-y rounded-lg px-4 py-3 text-sm leading-relaxed text-foreground outline-none transition"
-        />
-      </label>
+      {run.status === 'completed' && (
+        <section className="cozy-panel rounded-lg p-5 sm:p-6">
+          <div className="flex items-start gap-3"><CheckCircle2 className="mt-0.5 size-5 text-primary" /><div><h3 className="text-lg font-semibold">Approved and saved</h3><p className="mt-1 text-sm text-muted-foreground">The grounded resume was exported and the application remains available in the tracker.</p></div></div>
+          <div className="mt-5 flex flex-wrap gap-3">{run.generated_documents.map((document) => <button className="cozy-button inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium" key={document.id} onClick={() => onDownload(document)} type="button">{downloadingId === document.id ? <LoaderCircle className="size-4 animate-spin" /> : <Download className="size-4" />}Download {document.output_format.toUpperCase()}</button>)}</div>
+        </section>
+      )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField
-          label="Document format"
-          value={documentFormat}
-          onChange={(value) => onDocumentFormatChange(value as DocumentFormat)}
-          options={[
-            {label: 'PDF', value: 'pdf'},
-            {label: 'DOCX', value: 'docx'},
-            {label: 'Markdown', value: 'markdown'},
-          ]}
-        />
-        <SelectField
-          label="Resume template"
-          value={templateName}
-          onChange={(value) => onTemplateNameChange(value as ResumeTemplateName)}
-          options={[
-            {label: 'Clean ATS', value: 'clean_ats'},
-            {label: 'Modern Professional', value: 'modern_professional'},
-          ]}
-        />
-      </div>
-
-      <PrimaryButton isLoading={isLoading} idleIcon={<FileText className="size-4" />} idleLabel="Generate resume" loadingLabel="Writing resume" />
-    </form>
-  );
-}
-
-function PlatformField({
-  value,
-  onChange,
-  includeAutoDetect = false,
-}: {
-  value: ManualPlatform;
-  onChange: (value: ManualPlatform) => void;
-  includeAutoDetect?: boolean;
-}) {
-  return (
-    <SelectField
-      label="Source platform"
-      value={value}
-      onChange={(selected) => onChange(selected as ManualPlatform)}
-      options={[
-        ...(includeAutoDetect ? [{label: 'Detect automatically', value: 'unknown'}] : []),
-        ...PLATFORM_OPTIONS,
-      ]}
-    />
-  );
-}
-
-function TextField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = 'text',
-  required = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  type?: string;
-  required?: boolean;
-}) {
-  return (
-    <label className="block">
-      <span className="cozy-label mb-2 block">
-        {label}
-      </span>
-      <input
-        required={required}
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="cozy-field w-full rounded-lg px-4 py-3 text-sm text-foreground outline-none transition"
-      />
-    </label>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: {label: string; value: string}[];
-}) {
-  return (
-    <label className="block">
-      <span className="cozy-label mb-2 block">
-        {label}
-      </span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="cozy-field w-full rounded-lg px-4 py-3 text-sm text-foreground outline-none transition"
-      >
-        {options.map((option, index) => (
-          <option key={`${label}-${option.value}-${index}`} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function PrimaryButton({
-  isLoading,
-  idleIcon,
-  idleLabel,
-  loadingLabel,
-}: {
-  isLoading: boolean;
-  idleIcon: ReactNode;
-  idleLabel: string;
-  loadingLabel: string;
-}) {
-  return (
-    <motion.button
-      type="submit"
-      disabled={isLoading}
-      whileHover={isLoading ? undefined : {scale: 1.01}}
-      whileTap={isLoading ? undefined : {scale: 0.99}}
-      className="cozy-button inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 py-3 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-70"
-    >
-      {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : idleIcon}
-      {isLoading ? loadingLabel : idleLabel}
-    </motion.button>
-  );
-}
-
-interface WorkflowResultProps {
-  state: WorkflowState;
-  mode: ImportMode;
-  result: ManualJobPipelineResult | null;
-  warnings: string[];
-  errorMessage: string;
-  isDownloading: boolean;
-  onDownload: () => void;
-  onUseManualImport: () => void;
-}
-
-function WorkflowResult({
-  state,
-  mode,
-  result,
-  warnings,
-  errorMessage,
-  isDownloading,
-  onDownload,
-  onUseManualImport,
-}: WorkflowResultProps) {
-  if (state === 'loading') {
-    return (
-      <ResultPanel>
-        <LoaderCircle className="size-7 animate-spin text-primary" />
-        <p className="mt-5 text-sm leading-relaxed text-foreground">
-          {mode === 'url' ? 'Reading the job page...' : 'Preparing your resume from the reviewed job description...'}
-        </p>
-      </ResultPanel>
-    );
-  }
-
-  if (state === 'extracted') {
-    return (
-      <ResultPanel>
-        <CheckCircle2 className="size-7 text-primary" />
-        <h3 className="mt-5 text-lg font-semibold text-foreground">Job details are ready to review.</h3>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Make any tweaks you want, then generate the resume.
-        </p>
-        <Warnings warnings={warnings} />
-      </ResultPanel>
-    );
-  }
-
-  if (state === 'extraction_failed') {
-    return (
-      <ResultPanel>
-        <AlertCircle className="size-7 text-brand-amber" />
-        <h3 className="mt-5 text-lg font-semibold text-foreground">We need the job text.</h3>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          {errorMessage || 'Could not extract this job posting automatically. Please paste the job description manually.'}
-        </p>
-        <Warnings warnings={warnings.filter((warning) => warning !== errorMessage)} />
-        <button
-          type="button"
-          onClick={onUseManualImport}
-          className="cozy-button-secondary mt-6 inline-flex rounded-lg px-5 py-2.5 text-sm font-medium transition"
-        >
-          Use Manual Import
-        </button>
-      </ResultPanel>
-    );
-  }
-
-  if (state === 'pipeline_failed') {
-    return (
-      <ResultPanel>
-        <AlertCircle className="size-7 text-destructive" />
-        <h3 className="mt-5 text-lg font-semibold text-foreground">The pipeline could not finish.</h3>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{errorMessage}</p>
-      </ResultPanel>
-    );
-  }
-
-  if (state === 'success' && result) {
-    return (
-      <ResultPanel>
-        <CheckCircle2 className="size-7 text-primary" />
-        <h3 className="mt-5 text-xl font-semibold text-foreground">{result.role_title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{result.company_name}</p>
-        <SectionHeading label="Match Summary" />
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <ResultMetric label="Match score" value={`${result.match_score}%`} />
-          <ResultMetric label="Status" value={result.status} />
-        </div>
-        <ResultId label="Document ID" value={result.generated_document_id} />
-        <SectionHeading label="Resume Review" />
-        <ReviewList label="Matched Skills" values={result.matched_skills ?? []} />
-        <ReviewList label="Missing Skills" values={result.missing_skills ?? []} emptyLabel="No required skill gaps found." />
-        <ReviewList label="Matched Technologies" values={result.matched_technologies ?? []} />
-        <ReviewList
-          label="Missing Technologies"
-          values={result.missing_technologies ?? []}
-          emptyLabel="No required technology gaps found."
-        />
-        <ProjectReviewList
-          label="Selected Projects"
-          projects={result.selected_projects ?? []}
-          emptyLabel="No selected project review available yet."
-        />
-        <ProjectReviewList
-          label="Excluded Projects"
-          projects={result.excluded_projects ?? []}
-          hideWhenEmpty
-        />
-        <Warnings warnings={warnings} />
-        {errorMessage && <p className="mt-4 text-xs leading-relaxed text-destructive">{errorMessage}</p>}
-        <button
-          type="button"
-          disabled={isDownloading}
-          onClick={onDownload}
-          className="cozy-button mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition disabled:cursor-wait disabled:opacity-70"
-        >
-          {isDownloading ? <LoaderCircle className="size-4 animate-spin" /> : <Download className="size-4" />}
-          {isDownloading ? 'Preparing download' : 'Download resume'}
-        </button>
-      </ResultPanel>
-    );
-  }
-
-  return (
-    <ResultPanel>
-      {mode === 'url' ? <Link2 className="size-7 text-brand-amber" /> : <FileText className="size-7 text-brand-amber" />}
-      <h3 className="mt-5 text-lg font-semibold text-foreground">Resume output</h3>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        {mode === 'url'
-          ? 'Paste a public posting URL. If extraction fails, switch to manual import.'
-          : 'Paste the job details manually to run the same resume pipeline without URL extraction.'}
-      </p>
-    </ResultPanel>
-  );
-}
-
-function ResultPanel({children}: {children: ReactNode}) {
-  return <aside className="cozy-panel self-start rounded-xl p-5 lg:mt-8">{children}</aside>;
-}
-
-function ResultMetric({label, value}: {label: string; value: string}) {
-  return (
-    <div className="cozy-panel-soft rounded-lg p-3">
-      <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className="mt-1 block text-sm capitalize text-foreground">{value.replaceAll('_', ' ')}</span>
-    </div>
-  );
-}
-
-function ResultId({label, value}: {label: string; value: string}) {
-  return (
-    <div className="mt-4">
-      <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className="mt-1 block break-all font-mono text-[11px] leading-relaxed text-foreground/80">{value}</span>
-    </div>
-  );
-}
-
-function SectionHeading({label}: {label: string}) {
-  return (
-    <div className="mt-6 border-t border-border/60 pt-4">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-amber">{label}</span>
-    </div>
-  );
-}
-
-function ReviewList({
-  label,
-  values,
-  emptyLabel = 'No matches found.',
-}: {
-  label: string;
-  values: string[];
-  emptyLabel?: string;
-}) {
-  const hasValues = values.length > 0;
-  return (
-    <div className="mt-4">
-      <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      {hasValues ? (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {values.map((value) => (
-            <span
-              key={`${label}-${value}`}
-              className="rounded-full border border-border/70 bg-secondary/50 px-2.5 py-1 text-xs text-foreground/90"
-            >
-              {value}
-            </span>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{emptyLabel}</p>
+      {run.status === 'rejected' && (
+        <section className="cozy-panel rounded-lg border-destructive/35 p-5 sm:p-6" role="status">
+          <div className="flex items-start gap-3">
+            <X className="mt-0.5 size-5 text-destructive" />
+            <div>
+              <h3 className="text-lg font-semibold">Rejected</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                This draft was rejected during human review. No documents were exported.
+              </p>
+              {run.review_notes && (
+                <p className="mt-3 text-sm"><strong>Review note:</strong> {run.review_notes}</p>
+              )}
+            </div>
+          </div>
+        </section>
       )}
     </div>
   );
 }
 
-function ProjectReviewList({
-  label,
-  projects = [],
-  emptyLabel,
-  hideWhenEmpty = false,
-}: {
-  label: string;
-  projects?: {title: string; score: number; reason: string}[];
-  emptyLabel?: string;
-  hideWhenEmpty?: boolean;
-}) {
-  const projectItems = projects ?? [];
-  if (!projectItems.length && hideWhenEmpty) {
-    return null;
-  }
+function RequirementRow({match}: {match: RequirementEvidenceMatch}) {
+  const [open, setOpen] = useState(match.status !== 'matched');
   return (
-    <div className="mt-4">
-      <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      {projectItems.length ? (
-        <ul className="mt-2 space-y-2 text-xs leading-relaxed text-muted-foreground">
-          {projectItems.map((project) => (
-            <li key={`${label}-${project.title}`}>
-              <span className="text-foreground">{project.title}</span>
-              <span className="block">{project.reason}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          {emptyLabel ?? 'No project review available yet.'}
-        </p>
-      )}
+    <div className="py-3">
+      <button aria-expanded={open} className="flex w-full items-start justify-between gap-4 text-left" onClick={() => setOpen((value) => !value)} type="button">
+        <span className="flex items-start gap-3"><StatusIcon status={match.status} /><span><strong className="block text-sm font-medium">{match.requirement.text}</strong><span className="mt-0.5 block text-xs text-muted-foreground">{humanize(match.status)} · {match.requirement.priority}</span></span></span>
+        {open ? <ChevronDown className="size-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
+      </button>
+      {open && <div className="ml-8 mt-3 space-y-2"><p className="text-sm text-muted-foreground">{match.explanation}</p>{match.supporting_evidence.map((evidence) => <div key={evidence.evidence_id}><EvidenceCitation evidence={evidence} /></div>)}{match.recommendation && <p className="rounded-md bg-accent/40 px-3 py-2 text-sm"><strong>Next step:</strong> {match.recommendation}</p>}</div>}
     </div>
   );
 }
 
-function Warnings({warnings}: {warnings: string[]}) {
-  if (!warnings.length) {
-    return null;
+function EvidenceCitation({evidence}: {evidence: CandidateEvidence}) {
+  return <div className="rounded-md border border-border bg-card px-3 py-2"><div className="flex flex-wrap items-center gap-2 text-xs"><span className="font-mono text-primary">{evidence.evidence_id}</span><span className="text-muted-foreground">verified {evidence.category} · score {Number(evidence.retrieval_score).toFixed(2)}</span></div><p className="mt-1 text-sm leading-relaxed">{evidence.text}</p></div>;
+}
+
+function ResumePreview({run}: {run: GoldenCareerAnalysis}) {
+  const draft = run.resume_draft!;
+  return <section className="cozy-panel rounded-lg p-5 sm:p-6"><div className="flex items-start gap-3"><FileText className="mt-0.5 size-5 text-primary" /><div><h3 className="text-lg font-semibold">Grounded resume preview</h3><p className="mt-1 text-sm text-muted-foreground">Every generated claim group stores supporting evidence IDs.</p></div></div><div className="mt-5 rounded-lg border border-border bg-card p-5"><h4 className="text-xl font-semibold">{draft.title}</h4><p className="mt-3 text-sm leading-relaxed">{draft.summary}</p><PreviewSection label="Skills" items={draft.skills_section} /><PreviewSection label="Experience" items={draft.experience_section} /><PreviewSection label="Projects" items={draft.projects_section} /><PreviewSection label="Education" items={draft.education_section} /><PreviewSection label="Certifications" items={draft.certifications_section} /></div><div className="mt-4 flex flex-wrap gap-2">{draft.grounding_manifest.map((claim, index) => <span className="rounded-md bg-secondary px-2.5 py-1 text-xs text-muted-foreground" key={`${claim.claim_type}-${index}`}>{claim.claim_type}: {claim.evidence_ids.length} citation(s)</span>)}</div></section>;
+}
+
+function PreviewSection({label, items}: {label: string; items: Record<string, unknown>[]}) {
+  if (!items.length) return null;
+  return <div className="mt-5"><h5 className="cozy-label">{label}</h5><ul className="mt-2 space-y-3 text-sm">{items.map((item, index) => <li className="border-l-2 border-primary/30 pl-3" key={index}><PreviewItem item={item} section={label} /></li>)}</ul></div>;
+}
+
+function PreviewItem({item, section}: {item: Record<string, unknown>; section: string}) {
+  if (section === 'Skills') {
+    const skills = listValue(item, 'skills');
+    return <><strong className="font-medium">{textValue(item, 'category') ?? textValue(item, 'name') ?? 'Skills'}</strong>{skills.length ? `: ${skills.join(', ')}` : ''}</>;
   }
-  return (
-    <div className="mt-5 border-t border-border/60 pt-4">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-amber">Warnings</span>
-      <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-        {warnings.map((warning) => <li key={warning}>{warning}</li>)}
-      </ul>
-    </div>
-  );
+  const heading = section === 'Experience'
+    ? [textValue(item, 'job_title'), textValue(item, 'company')].filter(Boolean).join(' at ')
+    : section === 'Projects'
+      ? textValue(item, 'title')
+      : section === 'Education'
+        ? [textValue(item, 'degree'), textValue(item, 'institution')].filter(Boolean).join(' at ')
+        : [textValue(item, 'name'), textValue(item, 'issuing_organization')].filter(Boolean).join(' - ');
+  const description = textValue(item, 'description') ?? (section === 'Education' ? textValue(item, 'field_of_study') : null);
+  const details = section === 'Projects' ? listValue(item, 'technologies') : [];
+  const bullets = section === 'Projects' ? listValue(item, 'outcomes') : listValue(item, 'achievements');
+  const dateRange = section === 'Experience' ? previewDateRange(item.start_date, item.end_date) : null;
+  const links = section === 'Projects'
+    ? [
+        ['GitHub', textValue(item, 'github_url')],
+        ['Project link', textValue(item, 'portfolio_url')],
+      ].filter((entry): entry is [string, string] => Boolean(entry[1]))
+    : [];
+  return <div><div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"><strong className="font-medium">{heading || section}</strong>{dateRange && <span className="text-xs text-muted-foreground">{dateRange}</span>}</div>{details.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{details.join(', ')}</p>}{description && <p className="mt-1 leading-relaxed text-muted-foreground">{description}</p>}{bullets.length > 0 && <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">{bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul>}{links.length > 0 && <div className="mt-2 flex gap-3">{links.map(([label, url]) => <a className="text-xs font-medium text-primary underline-offset-2 hover:underline" href={url} key={url} rel="noreferrer" target="_blank">{label}</a>)}</div>}</div>;
+}
+
+function Field({label, children}: {label: string; children: ReactNode}) {
+  return <label className="block"><span className="cozy-label mb-2 block">{label}</span>{children}</label>;
+}
+
+function ModeButton({active, disabled = false, label, icon, onClick, title}: {active: boolean; disabled?: boolean; label: string; icon: ReactNode; onClick: () => void; title?: string}) {
+  return <button className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`} disabled={disabled} onClick={onClick} title={title} type="button">{icon}{label}</button>;
+}
+
+function PrimaryButton({disabled, label, loading}: {disabled: boolean; label: string; loading: boolean}) {
+  return <button className="cozy-button inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50" disabled={disabled} type="submit">{loading ? <LoaderCircle className="size-4 animate-spin" /> : <SearchCheck className="size-4" />}{label}</button>;
+}
+
+function Metric({label, value}: {label: string; value: string}) {
+  return <div className="rounded-md border border-border bg-card px-3 py-2"><span className="cozy-label block">{label}</span><strong className="mt-1 block text-sm">{value}</strong></div>;
+}
+
+function StatusIcon({status}: {status: RequirementEvidenceMatch['status']}) {
+  if (status === 'matched') return <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />;
+  if (status === 'partially_matched') return <AlertCircle className="mt-0.5 size-4 shrink-0 text-brand-amber" />;
+  return <X className="mt-0.5 size-4 shrink-0 text-destructive" />;
+}
+
+function textValue(item: Record<string, unknown>, key: string): string | null {
+  const value = item[key];
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
+function listValue(item: Record<string, unknown>, key: string): string[] {
+  const value = item[key];
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string' && Boolean(entry.trim())) : [];
+}
+
+function previewDateRange(start: unknown, end: unknown): string | null {
+  if (typeof start !== 'string') return null;
+  return `${formatPreviewDate(start)} - ${typeof end === 'string' ? formatPreviewDate(end) : 'Present'}`;
+}
+
+function formatPreviewDate(value: string): string {
+  const parsed = new Date(`${value.slice(0, 10)}T00:00:00`);
+  return Number.isNaN(parsed.valueOf()) ? value : new Intl.DateTimeFormat(undefined, {month: 'short', year: 'numeric'}).format(parsed);
+}
+
+function formatScore(score: string | null): string {
+  return score === null ? '0' : Number(score).toFixed(1);
+}
+
+function analysisTitle(analysis: GoldenCareerAnalysis): string {
+  return analysis.structured_requirements?.job_title
+    ?? analysis.match_explanation?.requirements.job_title
+    ?? analysis.resume_draft?.target_role
+    ?? 'Career analysis';
+}
+
+function analysisCompany(analysis: GoldenCareerAnalysis): string {
+  return analysis.structured_requirements?.company
+    ?? analysis.match_explanation?.requirements.company
+    ?? 'Company not recorded';
+}
+
+function analysisLocation(analysis: GoldenCareerAnalysis): string | null {
+  return analysis.structured_requirements?.location
+    ?? analysis.match_explanation?.requirements.location
+    ?? null;
+}
+
+function analysisState(status: GoldenCareerAnalysis['status']): string {
+  if (status === 'awaiting_review' || status === 'running') return 'Awaiting review';
+  if (status === 'completed') return 'Completed';
+  if (status === 'rejected') return 'Rejected';
+  return 'Analysis unavailable';
+}
+
+function formatAnalysisDate(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf())
+    ? 'Date unavailable'
+    : new Intl.DateTimeFormat(undefined, {dateStyle: 'medium'}).format(date);
+}
+
+function historyAccessibleName(analysis: GoldenCareerAnalysis): string {
+  const date = new Date(analysis.started_at);
+  const accessibleDate = Number.isNaN(date.valueOf())
+    ? 'date unavailable'
+    : new Intl.DateTimeFormat(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(date);
+  return [
+    `${analysisTitle(analysis)} at ${analysisCompany(analysis)}`,
+    analysisLocation(analysis),
+    analysisState(analysis.status).toLowerCase(),
+    `${formatScore(analysis.evidence_coverage_score)}% coverage`,
+    accessibleDate,
+  ].filter(Boolean).join(', ');
+}
+
+function humanize(value: string): string {
+  return value.replaceAll('_', ' ').replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback;
 }

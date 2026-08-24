@@ -9,10 +9,19 @@ from typing import Any
 class OpenAIResumeClient:
     """Create structured JSON responses without leaking application secrets."""
 
-    def __init__(self, *, api_key: str, model: str) -> None:
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        model: str,
+        timeout_seconds: int = 30,
+        max_retries: int = 1,
+    ) -> None:
         """Store credentials for lazy SDK initialization."""
         self.api_key = api_key
         self.model = model
+        self.timeout_seconds = timeout_seconds
+        self.max_retries = max_retries
 
     def create_json_response(
         self,
@@ -26,7 +35,11 @@ class OpenAIResumeClient:
         except ImportError as exc:  # pragma: no cover - depends on optional install state
             raise RuntimeError("The openai package is not installed.") from exc
 
-        client = OpenAI(api_key=self.api_key)
+        client = OpenAI(
+            api_key=self.api_key,
+            timeout=float(self.timeout_seconds),
+            max_retries=self.max_retries,
+        )
         response = client.chat.completions.create(
             model=self.model,
             response_format={"type": "json_object"},

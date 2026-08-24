@@ -1,10 +1,11 @@
 """Persistence model for the lightweight application tracker."""
 
 from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -22,8 +23,14 @@ class ApplicationRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "application_records"
     __table_args__ = (
         CheckConstraint(
-            "status IN ('not_applied', 'applied')",
-            name="status_two_state",
+            "status IN ('not_applied', 'saved', 'applied', 'interviewing', 'offer', "
+            "'accepted', 'rejected', 'withdrawn', 'archived')",
+            name="status_supported",
+        ),
+        CheckConstraint(
+            "evidence_coverage_score IS NULL OR "
+            "(evidence_coverage_score >= 0 AND evidence_coverage_score <= 100)",
+            name="evidence_coverage_score_range",
         ),
         Index("ix_application_records_candidate_status", "candidate_profile_id", "status"),
         Index("ix_application_records_candidate_company", "candidate_profile_id", "company_name"),
@@ -50,6 +57,7 @@ class ApplicationRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         String(50), nullable=False, default=ApplicationStatus.NOT_APPLIED, index=True
     )
     notes: Mapped[str | None] = mapped_column(Text)
+    evidence_coverage_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
     applied_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
     candidate_profile: Mapped["CandidateProfile"] = relationship(

@@ -2,10 +2,10 @@
 
 ## Purpose
 
-`backend/scripts/seed_ahmed_candidate.py` creates a real development candidate
-profile for Ahmed Raza. It replaces the fictional Amina Rahman seed for local
-frontend and pipeline testing when you want the generated resume to use Ahmed's
-own candidate knowledge base.
+`backend/scripts/seed_ahmed_candidate.py` creates a development candidate
+profile for Ahmed Raza. It replaces the fictional Amina Rahman seed for private
+local testing when you want the generated resume to use Ahmed's own candidate
+knowledge base.
 
 The original fake seed remains available as `python -m scripts.seed_candidate`.
 
@@ -13,7 +13,7 @@ The original fake seed remains available as `python -m scripts.seed_candidate`.
 
 The seed creates a fresh candidate profile with:
 
-- Ahmed Raza's contact details, LinkedIn, GitHub, and Islamabad location.
+- Public LinkedIn/GitHub links and an environment-configurable email/phone.
 - Bachelor of Artificial Intelligence education at Bahria University Islamabad.
 - Ignite Learning tutoring/business/operations experience from 2018 to current.
 - Early-career AI engineering, AI automation, backend, cloud ML, MLOps, and
@@ -38,7 +38,16 @@ From the `backend` directory:
 python -m scripts.seed_ahmed_candidate
 ```
 
-`DATABASE_URL` is loaded from the ignored `backend/.env` file.
+`DATABASE_URL` is loaded from the ignored `backend/.env` file. Real contact
+values must also remain in that ignored file:
+
+```dotenv
+CAREEROS_DEVELOPER_EMAIL=your-private-email
+CAREEROS_DEVELOPER_PHONE=your-private-phone
+```
+
+Without those variables, the script uses a non-deliverable example email and
+no phone number.
 
 Example output:
 
@@ -60,9 +69,9 @@ certifications, projects, skills, and career goals.
 
 ## Real Vs Project-Based Data
 
-Real data:
+Profile data:
 
-- Name, email, phone, location, LinkedIn, GitHub.
+- Name, location, LinkedIn, and GitHub. Email and phone are private environment overrides.
 - Bahria University Islamabad education.
 - Ignite Learning online tutoring/business experience.
 - Listed certifications and verification URLs where provided.

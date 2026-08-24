@@ -2,10 +2,12 @@
 
 import unittest
 from collections.abc import Iterator
+from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
+from docx import Document
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
@@ -185,6 +187,35 @@ class AuthPrivacyTests(unittest.TestCase):
         response = self.client.get("/api/v1/candidates")
 
         self.assertEqual(response.status_code, 401)
+
+    def test_resume_import_requires_auth_and_does_not_persist_before_review(self) -> None:
+        document = Document()
+        document.add_paragraph("Review Candidate")
+        document.add_paragraph("Skills")
+        document.add_paragraph("Python, FastAPI")
+        content = BytesIO()
+        document.save(content)
+        files = {
+            "resume": (
+                "resume.docx",
+                content.getvalue(),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        }
+
+        unauthenticated = self.client.post("/api/v1/candidates/import-preview", files=files)
+        owner = self._register("importer@example.com", "Importer")
+        preview = self.client.post(
+            "/api/v1/candidates/import-preview",
+            files=files,
+            headers=self._headers(owner),
+        )
+        candidates = self.client.get("/api/v1/candidates", headers=self._headers(owner))
+
+        self.assertEqual(unauthenticated.status_code, 401)
+        self.assertEqual(preview.status_code, 200)
+        self.assertTrue(preview.json()["requires_review"])
+        self.assertEqual(candidates.json(), [])
 
     def _register(self, email: str, full_name: str) -> object:
         return self.client.post(

@@ -139,6 +139,7 @@ SECTION_HEADINGS = {
     "what you'll do": "responsibilities",
     "the role": "responsibilities",
     "requirements": "qualifications",
+    "required qualifications": "qualifications",
     "qualifications": "qualifications",
     "what we are looking for": "qualifications",
     "what we're looking for": "qualifications",
@@ -186,13 +187,16 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
         job = job_description
         text = job.description_text.strip()
         contexts = self._contexts(text)
+        prioritized_contexts = self._prioritized_contexts(text)
         sections = self._sections(text)
         normalized_title = self._normalize_title(job.raw_title)
         experience_min, experience_max = self._estimated_experience(text)
         seniority = self._seniority(normalized_title, text, experience_min)
-        required_skills, preferred_skills = self._classified_keywords(contexts, SKILLS)
+        required_skills, preferred_skills = self._classified_keywords(
+            prioritized_contexts, SKILLS
+        )
         required_technologies, preferred_technologies = self._classified_keywords(
-            contexts, TECHNOLOGIES
+            prioritized_contexts, TECHNOLOGIES
         )
         soft_skills = self._keywords(text, SOFT_SKILLS)
         domain_keywords = self._keywords(text, DOMAIN_KEYWORDS)
@@ -239,6 +243,9 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
                 "maximum": str(job.salary_max) if job.salary_max is not None else None,
                 "currency": job.currency,
             },
+            "requirement_groups": self._requirement_groups(prioritized_contexts),
+            "canonical_requirements": self._canonical_requirements(text),
+            "preferred_qualifications": sections["preferred"],
             "scoring_ready": True,
         }
         return JobAnalysisResult(
@@ -279,7 +286,7 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
     @classmethod
     def _classified_keywords(
         cls,
-        contexts: list[str],
+        contexts: list[tuple[str, str]],
         catalog: Mapping[str, tuple[str, ...]],
     ) -> tuple[list[str], list[str]]:
         """Split extracted keywords into required and preferred groups."""
@@ -287,13 +294,13 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
         preferred: list[str] = []
         for canonical, variants in catalog.items():
             matches = [
-                context
-                for context in contexts
+                (context, priority)
+                for context, priority in contexts
                 if any(cls._contains(context, variant) for variant in variants)
             ]
             if not matches:
                 continue
-            if all(cls._is_preferred(context) for context in matches):
+            if all(priority == "preferred" for _, priority in matches):
                 preferred.append(canonical)
             else:
                 required.append(canonical)
@@ -334,6 +341,120 @@ class RuleBasedJobAnalyzer(BaseJobAnalyzer):
                 continue
             contexts.extend(part.strip() for part in re.split(r"(?<=[.!?])\s+", cleaned) if part)
         return contexts or ([text] if text else [])
+
+    @classmethod
+    def _prioritized_contexts(cls, text: str) -> list[tuple[str, str]]:
+        """Retain section priority for every sentence or bullet context."""
+        contexts: list[tuple[str, str]] = []
+        active_section: str | None = None
+        for raw_line in text.splitlines():
+            cleaned = cls._clean_line(raw_line)
+            if not cleaned:
+                continue
+            heading = cleaned.lower().rstrip(":")
+            if heading in SECTION_HEADINGS:
+                active_section = SECTION_HEADINGS[heading]
+                continue
+            priority = (
+                "preferred"
+                if active_section == "preferred" or cls._is_preferred(cleaned)
+                else "required"
+            )
+            parts = [
+                part.strip()
+                for part in re.split(r"(?<=[.!?])\s+", cleaned)
+                if part.strip()
+            ]
+            contexts.extend((part, priority) for part in parts)
+        return contexts or ([(text, "required")] if text else [])
+
+    @classmethod
+    def _requirement_groups(cls, contexts: list[tuple[str, str]]) -> list[dict[str, object]]:
+        """Capture explicit OR alternatives without converting them into separate must-haves."""
+        groups: list[dict[str, object]] = []
+        catalogs = (("technology", TECHNOLOGIES), ("skill", SKILLS))
+        education_catalog = {
+            "Artificial Intelligence": ("artificial intelligence", "ai"),
+            "Computer Science": ("computer science",),
+            "Machine Learning": ("machine learning",),
+        }
+        for context, priority in contexts:
+            if not re.search(r"\bor\b", context, flags=re.I):
+                continue
+            if any(term in context.casefold() for term in ("degree", "field", "computer science")):
+                alternatives = cls._keywords(context, education_catalog)
+                if len(alternatives) >= 2:
+                    groups.append(
+                        {
+                            "text": context,
+                            "kind": "education",
+                            "priority": priority,
+                            "logic": "any",
+                            "alternatives": alternatives,
+                        }
+                    )
+                    continue
+            for kind, catalog in catalogs:
+                alternatives = cls._keywords(context, catalog)
+                if len(alternatives) >= 2:
+                    groups.append(
+                        {
+                            "text": context,
+                            "kind": kind,
+                            "priority": priority,
+                            "logic": "any",
+                            "alternatives": alternatives,
+                        }
+                    )
+        return groups
+
+    @classmethod
+    def _canonical_requirements(cls, text: str) -> list[dict[str, object]]:
+        """Preserve scoreable list items with their explicit JD section membership."""
+        requirements: list[dict[str, object]] = []
+        active_section: str | None = None
+        for raw_line in text.splitlines():
+            cleaned = cls._clean_line(raw_line)
+            if not cleaned:
+                continue
+            heading = cleaned.lower().rstrip(":")
+            if heading in SECTION_HEADINGS:
+                active_section = SECTION_HEADINGS[heading]
+                continue
+            if active_section not in {"qualifications", "preferred"} or not re.match(
+                r"^\s*(?:[-*]|\u2022|\d+[.)])\s+", raw_line
+            ):
+                continue
+
+            priority = "preferred" if active_section == "preferred" else "required"
+            groups = cls._requirement_groups([(cleaned, priority)])
+            group = groups[0] if groups else None
+            requirements.append(
+                {
+                    "text": cleaned,
+                    "kind": (
+                        str(group["kind"])
+                        if group
+                        else cls._requirement_kind(cleaned)
+                    ),
+                    "priority": priority,
+                    "logic": "any" if group else "all",
+                    "alternatives": list(group["alternatives"]) if group else [],
+                }
+            )
+        return requirements
+
+    @classmethod
+    def _requirement_kind(cls, text: str) -> str:
+        """Assign a display-oriented kind without changing requirement priority."""
+        lowered = text.casefold()
+        if any(term in lowered for term in ("degree", "bachelor", "master")):
+            return "education"
+        if re.search(r"\b\d+\s*(?:-|\u2013|\+|to)\s*\d*\s*years?\b", lowered):
+            return "experience"
+        if cls._keywords(text, TECHNOLOGIES):
+            return "technology"
+        return "skill"
 
     @staticmethod
     def _sections(text: str) -> dict[str, list[str]]:

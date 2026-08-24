@@ -8,7 +8,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings
-from app.db import Base, create_database_engine, create_session_factory, session_scope
+from app.db import create_database_engine, create_session_factory, session_scope
 from app.models.enums import RelocationPreference, RemotePreference, ResumeStyle
 from app.schemas import (
     CandidateProfileCreate,
@@ -24,6 +24,7 @@ from app.schemas import (
 from app.services import KnowledgeBaseService
 from scripts.demo_user import DEMO_EMAIL, DEMO_PASSWORD, get_or_create_demo_user
 
+DEMO_CANDIDATE_EMAIL = "amina.rahman.dev@example.com"
 SKILLS = [
     ("Python", "Programming Languages", 4, "2.50"),
     ("FastAPI", "Backend Development", 4, "1.75"),
@@ -49,10 +50,23 @@ def seed_candidate(session: Session) -> CandidateProfileRead:
     """Create one complete fictional candidate through the knowledge-base service."""
     service = KnowledgeBaseService(session)
     demo_user = get_or_create_demo_user(session)
+    existing = service.profiles.list_by_user_and_email(
+        demo_user.id,
+        DEMO_CANDIDATE_EMAIL,
+    )
+    if existing:
+        keeper = existing[0]
+        for duplicate in existing[1:]:
+            service.delete_profile(duplicate.id, user_id=demo_user.id)
+        current = service.get_profile(keeper.id, user_id=demo_user.id)
+        if _is_complete_demo_profile(current):
+            return current
+        service.delete_profile(keeper.id, user_id=demo_user.id)
+
     profile = service.create_candidate_profile(
         CandidateProfileCreate(
             full_name="Amina Rahman",
-            email="amina.rahman.dev@example.com",
+            email=DEMO_CANDIDATE_EMAIL,
             phone="+1-555-014-0284",
             headline="AI Automation and Backend Developer",
             summary=(
@@ -191,11 +205,23 @@ def seed_candidate(session: Session) -> CandidateProfileRead:
     return service.get_profile(profile.id)
 
 
+def _is_complete_demo_profile(profile: CandidateProfileRead) -> bool:
+    """Return whether an existing fixture is complete enough to reuse safely."""
+    return (
+        len(profile.education) == 1
+        and len(profile.work_experiences) == 2
+        and len(profile.projects) == 4
+        and len(profile.skills) == len(SKILLS)
+        and len(profile.certifications) == 1
+        and profile.career_goals is not None
+        and profile.preferences is not None
+    )
+
+
 def seed_database(database_url: str) -> CandidateProfileRead:
-    """Create required tables and seed one candidate in the configured database."""
+    """Seed one candidate after Alembic has initialized the configured database."""
     engine = create_database_engine(database_url)
     try:
-        Base.metadata.create_all(engine)
         factory = create_session_factory(engine)
         with session_scope(factory) as session:
             return seed_candidate(session)

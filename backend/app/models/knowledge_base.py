@@ -41,6 +41,9 @@ class CandidateProfile(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """Aggregate root containing a candidate's durable professional identity."""
 
     __tablename__ = "candidate_profiles"
+    __table_args__ = (
+        UniqueConstraint("user_id", "email", name="uq_candidate_profiles_user_email"),
+    )
 
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True

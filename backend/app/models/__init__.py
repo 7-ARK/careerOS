@@ -2,15 +2,19 @@
 
 from app.models.application_tracking import ApplicationRecord
 from app.models.auth import User
+from app.models.career_analysis import CareerAnalysisRun
 from app.models.document_generation import GeneratedDocument
 from app.models.enums import (
     ApplicationStatus,
+    CareerAnalysisStage,
+    CareerAnalysisStatus,
     DocumentFormat,
     DocumentGenerationStatus,
     EmploymentType,
     MatchQuality,
     RelocationPreference,
     RemotePreference,
+    RequirementMatchStatus,
     ResumeDraftStatus,
     ResumeSectionType,
     ResumeStyle,
@@ -38,6 +42,9 @@ __all__ = [
     "ApplicationHistory",
     "ApplicationRecord",
     "ApplicationStatus",
+    "CareerAnalysisRun",
+    "CareerAnalysisStage",
+    "CareerAnalysisStatus",
     "User",
     "CandidateProfile",
     "CareerGoal",
@@ -56,6 +63,7 @@ __all__ = [
     "RemotePreference",
     "ResumeStyle",
     "ResumeTemplateName",
+    "RequirementMatchStatus",
     "ResumeAnalysis",
     "ResumeDraft",
     "ResumeDraftStatus",

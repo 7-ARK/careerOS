@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import date
 from typing import Any
 
 from app.models import CandidateProfile, ResumeDraft
@@ -216,5 +217,20 @@ def _date_range(start_date: object, end_date: object) -> str | None:
     """Create a readable date range from structured ISO date values."""
     if not start_date and not end_date:
         return None
-    values = [str(value) for value in (start_date, end_date or "Present") if value]
+    values = [_display_date(value) for value in (start_date, end_date or "Present") if value]
     return " - ".join(values) if values else None
+
+
+def _display_date(value: object) -> str:
+    """Format known dates compactly while preserving unexpected source values."""
+    if isinstance(value, date):
+        parsed = value
+    else:
+        raw = str(value)
+        if raw == "Present":
+            return raw
+        try:
+            parsed = date.fromisoformat(raw)
+        except ValueError:
+            return raw
+    return parsed.strftime("%b %Y")

@@ -2,6 +2,7 @@
 
 from app.repositories.application_tracking import ApplicationRecordRepository
 from app.repositories.auth import UserRepository
+from app.repositories.career_analysis import CareerAnalysisRunRepository
 from app.repositories.document_generation import GeneratedDocumentRepository
 from app.repositories.job_analysis import JobAnalysisRepository, JobDescriptionRepository
 from app.repositories.knowledge_base import (
@@ -25,6 +26,7 @@ __all__ = [
     "ApplicationRecordRepository",
     "CandidateOwnedRepository",
     "CandidateProfileRepository",
+    "CareerAnalysisRunRepository",
     "CareerGoalRepository",
     "CertificationRepository",
     "EducationRepository",

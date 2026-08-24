@@ -16,16 +16,15 @@ import {backendDirectory, e2eDatabaseUrl, resolvePythonCommand} from './tests/ba
  *   1. The launcher fails fast when the fixed backend port is already
  *      occupied, so a run never silently attaches to a foreign server.
  *   2. It resets only the disposable, gitignored SQLite database file.
- *   3. It initializes the schema with the existing backend SQLAlchemy entry
- *      points (Base.metadata.create_all) using the same interpreter and
- *      DATABASE_URL that uvicorn will use.
+ *   3. It applies the backend Alembic migrations using the same interpreter
+ *      and DATABASE_URL that uvicorn will use.
  *   4. It starts uvicorn only after schema initialization succeeds, with
  *      paid LLM resume intelligence disabled via
  *      USE_LLM_RESUME_INTELLIGENCE=false.
  *
  * Playwright also starts the Vite frontend at PLAYWRIGHT_BASE_URL (default
- * http://127.0.0.1:3000), with VITE_API_BASE_URL pointed at the test
- * backend. baseURL matches this fixed port. Both servers are pinned to fixed
+ * http://127.0.0.1:3000); same-origin `/api` requests use Vite's loopback
+ * proxy to reach the test backend. baseURL matches this fixed port. Both servers are pinned to fixed
  * ports: the frontend uses Vite's --strictPort and the backend launcher
  * verifies the backend port is free before starting uvicorn, so a port
  * collision fails fast instead of silently reusing a foreign server.
@@ -104,7 +103,7 @@ export default defineConfig({
       env: {
         // Keep the dev server stable during agent edits.
         DISABLE_HMR: 'true',
-        VITE_API_BASE_URL: backendUrl,
+        VITE_API_PROXY_TARGET: backendUrl,
       },
     },
   ],

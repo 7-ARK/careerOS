@@ -2,7 +2,12 @@
 
 import unittest
 
-from scripts.seed_ahmed_candidate import SKILLS, seed_ahmed_candidate
+from scripts.seed_ahmed_candidate import (
+    DEVELOPER_EMAIL,
+    DEVELOPER_PHONE,
+    SKILLS,
+    seed_ahmed_candidate,
+)
 from tests.support import create_test_engine, create_test_session
 
 
@@ -21,7 +26,8 @@ class AhmedSeedCandidateTests(unittest.TestCase):
         profile = seed_ahmed_candidate(self.session)
 
         self.assertEqual(profile.full_name, "Ahmed Raza")
-        self.assertEqual(profile.email, "ahmed_kahoot@outlook.com")
+        self.assertEqual(profile.email, DEVELOPER_EMAIL)
+        self.assertEqual(profile.phone, DEVELOPER_PHONE)
         self.assertEqual(profile.location, "Islamabad, Pakistan")
         self.assertEqual(len(profile.education), 1)
         self.assertEqual(len(profile.work_experiences), 1)

@@ -12,6 +12,7 @@ from app.core.config import Settings
 from app.core.security import InvalidTokenError, decode_access_token
 from app.db import create_database_engine, create_session_factory
 from app.features.document_generation import DocumentGenerationService
+from app.features.resume_intelligence.matching import EvidenceMatchService
 from app.models import User
 from app.repositories import UserRepository
 from app.services import (
@@ -21,6 +22,7 @@ from app.services import (
     JobUrlPipelineService,
     KnowledgeBaseService,
 )
+from app.services.career_analysis import GoldenCareerAnalysisService
 
 
 @lru_cache
@@ -105,3 +107,15 @@ def get_application_tracker_service(db: DatabaseSession) -> ApplicationTrackerSe
 def get_knowledge_base_service(db: DatabaseSession) -> KnowledgeBaseService:
     """Provide candidate knowledge-base profile management operations."""
     return KnowledgeBaseService(db)
+
+
+def get_golden_career_analysis_service(
+    db: DatabaseSession,
+) -> GoldenCareerAnalysisService:
+    """Provide the bounded, human-reviewed golden career flow."""
+    return GoldenCareerAnalysisService(db)
+
+
+def get_evidence_match_service(db: DatabaseSession) -> EvidenceMatchService:
+    """Provide transparent requirement-to-evidence matching."""
+    return EvidenceMatchService(db)

@@ -23,7 +23,7 @@ from app.services.exceptions import (
 
 
 class ApplicationTrackerService:
-    """Track a candidate's simple applied or not-applied job records."""
+    """Track the bounded saved-to-outcome application lifecycle."""
 
     def __init__(self, session: Session) -> None:
         """Build the lightweight tracker service."""
@@ -62,9 +62,10 @@ class ApplicationTrackerService:
             generated_document_id=values.get("generated_document_id", record.generated_document_id),
         )
         if "status" in values:
-            values["status"] = str(values["status"])
-            values["applied_at"] = self._applied_at(
-                ApplicationStatus(values["status"]),
+            next_status = ApplicationStatus(values["status"])
+            values["status"] = str(next_status)
+            values["applied_at"] = self._transition_applied_at(
+                next_status,
                 record.applied_at,
             )
         self.applications.update(record, values)
@@ -93,6 +94,18 @@ class ApplicationTrackerService:
         self._commit()
         return ApplicationRecordRead.model_validate(record)
 
+    def update_status(
+        self,
+        application_record_id: UUID,
+        status: ApplicationStatus,
+    ) -> ApplicationRecordRead:
+        """Update a record to one supported user-facing lifecycle state."""
+        record = self._require_record(application_record_id)
+        applied_at = self._transition_applied_at(status, record.applied_at)
+        self.applications.update_status(record, status, applied_at=applied_at)
+        self._commit()
+        return ApplicationRecordRead.model_validate(record)
+
     def attach_resume_document(
         self, application_record_id: UUID, generated_document_id: UUID | None
     ) -> ApplicationRecordRead:
@@ -117,6 +130,22 @@ class ApplicationTrackerService:
     def get_application_record(self, application_record_id: UUID) -> ApplicationRecordRead:
         """Return one application record for route-level ownership checks."""
         return ApplicationRecordRead.model_validate(self._require_record(application_record_id))
+
+    def candidate_has_job_record(
+        self,
+        candidate_profile_id: UUID,
+        job_description_id: UUID,
+    ) -> bool:
+        """Return whether a candidate tracker record links to the selected saved job."""
+        return bool(
+            self.applications.list(
+                filters={
+                    "candidate_profile_id": candidate_profile_id,
+                    "job_description_id": job_description_id,
+                },
+                limit=1,
+            )
+        )
 
     def list_applied_applications(
         self, candidate_profile_id: UUID | None = None
@@ -212,10 +241,22 @@ class ApplicationTrackerService:
 
     @staticmethod
     def _applied_at(status: ApplicationStatus, applied_at: datetime | None) -> datetime | None:
-        """Keep the applied timestamp aligned with the two-state lifecycle."""
-        if status == ApplicationStatus.NOT_APPLIED:
+        """Initialize a timestamp for newly created applied records only."""
+        if status in {ApplicationStatus.NOT_APPLIED, ApplicationStatus.SAVED}:
             return None
         return applied_at or datetime.now(UTC)
+
+    @staticmethod
+    def _transition_applied_at(
+        status: ApplicationStatus,
+        applied_at: datetime | None,
+    ) -> datetime | None:
+        """Preserve the real application date across later lifecycle transitions."""
+        if status in {ApplicationStatus.NOT_APPLIED, ApplicationStatus.SAVED}:
+            return None
+        if status == ApplicationStatus.APPLIED:
+            return applied_at or datetime.now(UTC)
+        return applied_at
 
     @staticmethod
     def _read_many(records: list[ApplicationRecord]) -> list[ApplicationRecordRead]:

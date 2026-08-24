@@ -8,6 +8,8 @@ from decimal import Decimal
 from pathlib import Path
 from uuid import uuid4
 
+from pypdf import PdfReader
+
 from app.features.document_generation import DocumentGenerationService
 from app.features.document_generation.exporters import DocumentExporter
 from app.features.document_generation.templates import RenderedResume
@@ -55,6 +57,8 @@ class DocumentGenerationServiceTests(unittest.TestCase):
             full_name="Grace Hopper",
             email="grace@example.com",
             location="New York",
+            linkedin_url="https://www.linkedin.com/in/grace-hopper",
+            portfolio_url="https://github.com/grace-hopper",
         )
         description = JobDescription(raw_title="Backend Engineer", description_text="Build APIs.")
         self.job_analysis = JobAnalysis(
@@ -101,6 +105,7 @@ class DocumentGenerationServiceTests(unittest.TestCase):
                     "technologies": ["Python", "FastAPI"],
                     "description": "Built a commerce API.",
                     "outcomes": ["Improved reliability"],
+                    "github_url": "https://github.com/example/commerce-api",
                 }
             ],
             omitted_keywords=["Kubernetes"],
@@ -142,12 +147,74 @@ class DocumentGenerationServiceTests(unittest.TestCase):
 
         self.assertEqual(result.document.output_format, DocumentFormat.DOCX)
         self.assertTrue(zipfile.is_zipfile(result.document.file_path))
+        with zipfile.ZipFile(result.document.file_path) as archive:
+            document_xml = archive.read("word/document.xml")
+            relationships_xml = archive.read("word/_rels/document.xml.rels")
+        self.assertIn(b"GitHub", document_xml)
+        self.assertIn(b"LinkedIn", document_xml)
+        self.assertNotIn(b"https://github.com/example/commerce-api", document_xml)
+        self.assertIn(b"https://www.linkedin.com/in/grace-hopper", relationships_xml)
 
     def test_generate_pdf_creates_selectable_text_pdf(self) -> None:
         result = self.service.generate_pdf(self.draft.id)
 
         self.assertEqual(result.document.output_format, DocumentFormat.PDF)
-        self.assertTrue(Path(result.document.file_path).read_bytes().startswith(b"%PDF"))
+        pdf_bytes = Path(result.document.file_path).read_bytes()
+        reader = PdfReader(result.document.file_path)
+        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
+        self.assertIn(b"/FontFile2", pdf_bytes)
+        self.assertEqual(len(reader.pages), 1)
+        self.assertNotIn(b"/Helvetica", pdf_bytes)
+        extracted_text = reader.pages[0].extract_text()
+        self.assertIn("Grace Hopper", extracted_text)
+        self.assertIn("LinkedIn", extracted_text)
+        self.assertIn("GitHub", extracted_text)
+        self.assertNotIn("G r a c e", extracted_text)
+
+    def test_realistic_resume_pdf_remains_one_page(self) -> None:
+        self.draft.summary = (
+            "Early-career applied AI engineer with evidence-backed FastAPI, retrieval, "
+            "automation, and database project experience."
+        )
+        self.draft.skills_section = [
+            {"category": "Languages", "skills": ["Python"]},
+            {"category": "Backend", "skills": ["FastAPI", "APIs"]},
+            {"category": "AI / Machine Learning", "skills": ["RAG", "LangGraph"]},
+            {"category": "Databases", "skills": ["SQL", "PostgreSQL"]},
+            {"category": "Developer Tools", "skills": ["Git", "GitHub", "Docker"]},
+        ]
+        self.draft.experience_section = self.draft.experience_section * 2
+        self.draft.projects_section = [
+            {
+                "title": f"Applied AI Project {index}",
+                "technologies": ["Python", "FastAPI", "PostgreSQL", "LangGraph"],
+                "description": "Built a bounded evidence-grounded workflow with local validation.",
+                "outcomes": [
+                    "Implemented typed API contracts and deterministic checks.",
+                    "Preserved human review before document generation.",
+                    "Documented failures and added automated regression coverage.",
+                ],
+                "github_url": f"https://github.com/example/project-{index}",
+            }
+            for index in range(1, 4)
+        ]
+        self.draft.education_section = [
+            {
+                "degree": "Bachelor of Science",
+                "field_of_study": "Computer Science",
+                "institution": "Example University",
+            }
+        ]
+        self.draft.certifications_section = [
+            {"name": "API Fundamentals", "issuing_organization": "Example Academy"}
+        ]
+        self.session.commit()
+
+        result = self.service.generate_pdf(self.draft.id)
+        reader = PdfReader(result.document.file_path)
+
+        self.assertEqual(len(reader.pages), 1)
+        self.assertNotIn(b"/Helvetica", Path(result.document.file_path).read_bytes())
 
     def test_rejects_missing_and_unapproved_drafts(self) -> None:
         with self.assertRaises(ResumeDraftNotFoundError):

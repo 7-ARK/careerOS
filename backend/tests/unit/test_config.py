@@ -43,6 +43,24 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(settings.jwt_algorithm, "HS256")
         self.assertEqual(settings.jwt_access_token_expire_minutes, 1440)
 
+    def test_preview_mode_forces_provider_free_settings(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "CAREEROS_PREVIEW_MODE": "true",
+                "OPENAI_API_KEY": "must-not-be-used",
+                "USE_LLM_RESUME_INTELLIGENCE": "true",
+                "RAG_EMBEDDING_PROVIDER": "openai",
+            },
+            clear=True,
+        ):
+            settings = Settings.from_env()
+
+        self.assertTrue(settings.preview_mode)
+        self.assertIsNone(settings.openai_api_key)
+        self.assertFalse(settings.use_llm_resume_intelligence)
+        self.assertEqual(settings.rag_embedding_provider, "deterministic")
+
 
 if __name__ == "__main__":
     unittest.main()

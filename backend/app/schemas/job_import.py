@@ -33,7 +33,7 @@ class ManualJobImportRequest(SchemaBase):
     location: str | None = Field(default=None, max_length=250)
     source_platform: SourcePlatform = SourcePlatform.UNKNOWN
     job_url: str | None = Field(default=None, max_length=1000)
-    description_text: str = Field(min_length=1)
+    description_text: str = Field(min_length=1, max_length=50000)
     salary_min: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
     salary_max: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
     currency: str | None = Field(default=None, min_length=3, max_length=3)

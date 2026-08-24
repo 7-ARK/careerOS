@@ -1,5 +1,6 @@
-const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8000';
+const DEFAULT_API_BASE_URL = '/api';
 const TOKEN_STORAGE_KEY = 'careeros_access_token';
+const ACTIVE_CANDIDATE_STORAGE_KEY = 'careeros_active_candidate_id';
 export const AUTH_EXPIRED_EVENT = 'careeros:auth-expired';
 
 export interface User {
@@ -138,6 +139,14 @@ export interface CandidateExperienceInput {
   description?: string | null;
 }
 
+export interface ResumeImportPreview {
+  file_name: string;
+  profile: CandidateProfileInput;
+  extracted_sections: string[];
+  warnings: string[];
+  requires_review: true;
+}
+
 export interface JobUrlPipelineRequest {
   candidate_profile_id: string;
   job_url: string;
@@ -205,6 +214,171 @@ export interface JobUrlPipelineResult {
   pipeline: ManualJobPipelineResult | null;
 }
 
+export type ApplicationStatus =
+  | 'not_applied'
+  | 'saved'
+  | 'applied'
+  | 'interviewing'
+  | 'offer'
+  | 'accepted'
+  | 'rejected'
+  | 'withdrawn'
+  | 'archived';
+export type RequirementMatchStatus = 'matched' | 'partially_matched' | 'not_evidenced' | 'not_applicable';
+export type CareerAnalysisStatus = 'running' | 'awaiting_review' | 'completed' | 'rejected' | 'failed';
+
+export interface ApplicationRecord {
+  id: string;
+  candidate_profile_id: string;
+  job_description_id: string | null;
+  job_analysis_id: string | null;
+  generated_document_id: string | null;
+  company_name: string;
+  role_title: string;
+  company_email: string | null;
+  job_url: string | null;
+  status: ApplicationStatus;
+  notes: string | null;
+  evidence_coverage_score: string | null;
+  applied_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CandidateEvidence {
+  evidence_id: string;
+  source_id: string;
+  category: string;
+  source: 'candidate_profile';
+  text: string;
+  verified: true;
+  retrieval_score: string;
+  why_retrieved: string;
+}
+
+export interface JobRequirement {
+  requirement_id: string;
+  text: string;
+  kind: 'skill' | 'technology' | 'responsibility' | 'experience' | 'education';
+  priority: 'required' | 'preferred' | 'context';
+  logic: 'all' | 'any';
+  alternatives: string[];
+}
+
+export interface RequirementEvidenceMatch {
+  requirement: JobRequirement;
+  status: RequirementMatchStatus;
+  supporting_evidence: CandidateEvidence[];
+  explanation: string;
+  recommendation: string | null;
+}
+
+export interface MatchExplanation {
+  requirements: {
+    job_title: string;
+    company: string | null;
+    location: string | null;
+    seniority: string;
+  };
+  requirement_matches: RequirementEvidenceMatch[];
+  evidence_coverage: {
+    score: string;
+    formula: string;
+    matched_count: number;
+    partially_matched_count: number;
+    not_evidenced_count: number;
+    not_applicable_count: number;
+  };
+  overall_fit_summary: string;
+  strongest_matches: string[];
+  partial_matches: string[];
+  missing_requirements: string[];
+  supported_ats_keywords: string[];
+  unsupported_ats_keywords: string[];
+  learning_priorities: string[];
+  interview_preparation_topics: string[];
+  retrieval_provider: string;
+  embedding_model: string;
+}
+
+export interface ResumeDraft {
+  id: string;
+  title: string;
+  target_role: string;
+  summary: string;
+  skills_section: Record<string, unknown>[];
+  experience_section: Record<string, unknown>[];
+  projects_section: Record<string, unknown>[];
+  education_section: Record<string, unknown>[];
+  certifications_section: Record<string, unknown>[];
+  ats_keywords_used: string[];
+  omitted_keywords: string[];
+  truthfulness_notes: string[];
+  grounding_manifest: {claim_type: string; text: string; evidence_ids: string[]}[];
+  status: string;
+}
+
+export interface GeneratedDocument {
+  id: string;
+  output_format: DocumentFormat;
+  file_name: string;
+  file_size_bytes: number | null;
+  generation_status: string;
+}
+
+export interface CareerAnalysisStage {
+  stage: string;
+  status: 'completed' | 'failed' | 'awaiting_review';
+  latency_ms: number | null;
+  provider: string;
+  model: string | null;
+  summary: string | null;
+  error: string | null;
+}
+
+export interface GoldenCareerAnalysis {
+  id: string;
+  candidate_profile_id: string;
+  job_description_id: string | null;
+  application_record_id: string | null;
+  status: CareerAnalysisStatus;
+  current_stage: string;
+  provider: string;
+  model_name: string | null;
+  token_usage: Record<string, number>;
+  estimated_cost_usd: string;
+  started_at: string;
+  finished_at: string | null;
+  structured_requirements: MatchExplanation['requirements'] | null;
+  evidence_coverage_score: string | null;
+  stages: CareerAnalysisStage[];
+  match_explanation: MatchExplanation | null;
+  resume_draft: ResumeDraft | null;
+  application_record: ApplicationRecord | null;
+  generated_documents: GeneratedDocument[];
+  grounding_validation: {
+    valid: boolean;
+    checked_claims: number;
+    cited_claims: number;
+    citation_coverage: string;
+    unsupported_claims: string[];
+  } | null;
+  review_notes: string | null;
+}
+
+export interface GoldenCareerAnalysisRequest {
+  candidate_profile_id: string;
+  raw_title: string;
+  company_name: string;
+  location?: string;
+  source_platform?: SourcePlatform;
+  job_url?: string;
+  description_text: string;
+  resume_template_name?: ResumeTemplateName;
+  top_k?: number;
+  mode?: 'mock' | 'live';
+}
+
 interface ApiErrorEnvelope {
   error?: {
     code?: string;
@@ -233,6 +407,18 @@ export function getAccessToken(): string | null {
 
 export function clearAccessToken(): void {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
+
+export function getActiveCandidateId(): string {
+  return localStorage.getItem(ACTIVE_CANDIDATE_STORAGE_KEY) ?? '';
+}
+
+export function setActiveCandidateId(candidateId: string): void {
+  if (candidateId) {
+    localStorage.setItem(ACTIVE_CANDIDATE_STORAGE_KEY, candidateId);
+  } else {
+    localStorage.removeItem(ACTIVE_CANDIDATE_STORAGE_KEY);
+  }
 }
 
 export async function registerUser(request: {
@@ -321,11 +507,75 @@ export async function deleteCandidateProfile(candidateId: string): Promise<void>
   await apiFetch(`/api/v1/candidates/${encodeURIComponent(candidateId)}`, {method: 'DELETE'});
 }
 
+export async function importResumePreview(file: File): Promise<ResumeImportPreview> {
+  const form = new FormData();
+  form.append('resume', file);
+  return requestJson<ResumeImportPreview>('/api/v1/candidates/import-preview', {
+    method: 'POST',
+    body: form,
+  });
+}
+
 export async function runManualPipeline(request: ManualJobPipelineRequest): Promise<ManualJobPipelineResult> {
   return requestJson<ManualJobPipelineResult>('/api/v1/pipeline/manual', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(removeEmptyValues(request)),
+  });
+}
+
+export async function startGoldenCareerAnalysis(
+  request: GoldenCareerAnalysisRequest,
+): Promise<GoldenCareerAnalysis> {
+  return requestJson<GoldenCareerAnalysis>('/api/v1/career-analyses', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(removeEmptyValues(request)),
+  });
+}
+
+export async function reviewGoldenCareerAnalysis(
+  runId: string,
+  decision: 'approve' | 'reject',
+  reviewNotes: string,
+): Promise<GoldenCareerAnalysis> {
+  return requestJson<GoldenCareerAnalysis>(`/api/v1/career-analyses/${encodeURIComponent(runId)}/review`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      decision,
+      review_notes: reviewNotes || undefined,
+      export_formats: ['docx', 'pdf'],
+    }),
+  });
+}
+
+export async function listCandidateCareerAnalyses(
+  candidateId: string,
+): Promise<GoldenCareerAnalysis[]> {
+  return requestJson<GoldenCareerAnalysis[]>(
+    `/api/v1/career-analyses/candidate/${encodeURIComponent(candidateId)}`,
+  );
+}
+
+export async function getGoldenCareerAnalysis(runId: string): Promise<GoldenCareerAnalysis> {
+  return requestJson<GoldenCareerAnalysis>(
+    `/api/v1/career-analyses/${encodeURIComponent(runId)}`,
+  );
+}
+
+export async function listCandidateApplications(candidateId: string): Promise<ApplicationRecord[]> {
+  return requestJson<ApplicationRecord[]>(`/api/v1/applications/${encodeURIComponent(candidateId)}`);
+}
+
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: ApplicationStatus,
+): Promise<ApplicationRecord> {
+  return requestJson<ApplicationRecord>(`/api/v1/applications/${encodeURIComponent(applicationId)}/status`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({status}),
   });
 }
 
@@ -353,7 +603,7 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const token = getAccessToken();
   if (token) headers.set('Authorization', `Bearer ${token}`);
   try {
-    response = await fetch(`${getApiBaseUrl()}${path}`, {...init, headers});
+    response = await fetch(resolveApiUrl(path), {...init, headers});
   } catch {
     throw new ApiError('Unable to reach the careerOS API. Confirm that the backend is running.', {
       code: 'network_error',
@@ -381,6 +631,14 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
     status: response.status,
     details: payload.error?.details,
   });
+}
+
+function resolveApiUrl(path: string): string {
+  const baseUrl = getApiBaseUrl();
+  if (baseUrl === '/api' && path.startsWith('/api/')) {
+    return `${baseUrl}${path.slice('/api'.length)}`;
+  }
+  return `${baseUrl}${path}`;
 }
 
 function getDownloadFilename(contentDisposition: string | null): string {

@@ -1,0 +1,27 @@
+{
+  "name": "Applied AI Engineer",
+  "job": {
+    "title": "Applied AI Engineer",
+    "company": "Evidence Labs",
+    "description": "Responsibilities:\nBuild generative AI and retrieval-augmented generation services with Python and FastAPI.\nRequirements:\nMachine learning, generative AI, RAG, Python, FastAPI, PostgreSQL, OpenAI, and AWS are required."
+  },
+  "evidence": [
+    {
+      "evidence_id": "project-careeros-001",
+      "category": "project",
+      "text": "Implemented Python and FastAPI endpoints, PostgreSQL persistence, deterministic matching, and application tracking."
+    },
+    {
+      "evidence_id": "project-ai-workflow-001",
+      "category": "project",
+      "text": "Built a retrieval-augmented generation workflow using OpenAI with a human review checkpoint."
+    }
+  ],
+  "expected_extracted_terms": ["Machine Learning", "Generative AI", "Retrieval-Augmented Generation", "Python", "FastAPI", "PostgreSQL", "OpenAI", "AWS"],
+  "expected_retrieval": {
+    "FastAPI API": "project-careeros-001",
+    "retrieval-augmented generation OpenAI": "project-ai-workflow-001"
+  },
+  "expected_missing_requirements": ["AWS"],
+  "unsupported_claims_to_reject": ["Managed production AWS infrastructure at scale."]
+}

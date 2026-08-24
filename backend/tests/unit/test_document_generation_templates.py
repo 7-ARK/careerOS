@@ -67,6 +67,7 @@ class DocumentGenerationTemplateTests(unittest.TestCase):
         self.assertIn("# Ada Lovelace", markdown)
         self.assertIn("Languages: Python, SQL", markdown)
         self.assertIn("Backend: FastAPI, PostgreSQL", markdown)
+        self.assertIn("Jan 2022 - Present", markdown)
         self.assertNotIn("Languages: Python, SQL, Backend", markdown)
         self.assertNotIn("Kubernetes", markdown)
         self.assertNotIn("truthfulness", markdown.lower())

@@ -10,7 +10,7 @@ from app.schemas import ApplicationRecordCreate, ApplicationRecordUpdate
 
 
 class ApplicationTrackingSchemaTests(unittest.TestCase):
-    """Verify strict two-state tracker validation."""
+    """Verify application tracker validation."""
 
     def test_defaults_to_not_applied(self) -> None:
         record = ApplicationRecordCreate(
@@ -46,16 +46,31 @@ class ApplicationTrackingSchemaTests(unittest.TestCase):
                 company_email="not-an-email",
             )
 
-    def test_rejects_legacy_pipeline_statuses(self) -> None:
-        with self.assertRaises(ValidationError):
-            ApplicationRecordCreate(
+    def test_accepts_user_facing_tracker_statuses(self) -> None:
+        for status in (
+            ApplicationStatus.SAVED,
+            ApplicationStatus.APPLIED,
+            ApplicationStatus.INTERVIEWING,
+            ApplicationStatus.OFFER,
+            ApplicationStatus.ACCEPTED,
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.WITHDRAWN,
+            ApplicationStatus.ARCHIVED,
+        ):
+            record = ApplicationRecordCreate(
                 candidate_profile_id=uuid4(),
                 company_name="Example Corp",
                 role_title="Backend Engineer",
-                status=ApplicationStatus.INTERVIEWING,
+                status=status,
             )
+            self.assertEqual(record.status, status)
+
+        update = ApplicationRecordUpdate(status=ApplicationStatus.REJECTED)
+        self.assertEqual(update.status, ApplicationStatus.REJECTED)
+
+    def test_rejects_unknown_tracker_statuses(self) -> None:
         with self.assertRaises(ValidationError):
-            ApplicationRecordUpdate(status=ApplicationStatus.REJECTED)
+            ApplicationRecordUpdate(status="paused")
 
 
 if __name__ == "__main__":

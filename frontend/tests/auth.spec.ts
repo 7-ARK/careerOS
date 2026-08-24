@@ -8,7 +8,7 @@ import {test, expect} from './fixtures';
  *   - login state is preserved in localStorage and survives a page reload;
  *   - authenticated navigation reaches the resume workspace.
  *
- * The backend must be running at VITE_API_BASE_URL (default http://127.0.0.1:8000).
+ * Same-origin `/api` requests reach the test backend through Vite's loopback proxy.
  */
 
 test('isolated user can register and land on the workspace', async ({authenticatedPage, isolatedUser}) => {

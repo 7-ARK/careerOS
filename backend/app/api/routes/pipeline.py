@@ -2,13 +2,14 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import (
     CurrentUser,
     get_application_pipeline_service,
     get_knowledge_base_service,
 )
+from app.core.config import Settings
 from app.schemas import ManualJobPipelineRequest, ManualJobPipelineResult
 from app.services import ApplicationPipelineService, KnowledgeBaseService
 
@@ -28,5 +29,14 @@ def run_manual_pipeline(
     current_user: CurrentUser,
 ) -> ManualJobPipelineResult:
     """Run the existing manual job application pipeline."""
+    _reject_external_preview_auto_export()
     candidates.get_profile(request.candidate_profile_id, user_id=current_user.id)
     return service.run_manual_job_pipeline(request)
+
+
+def _reject_external_preview_auto_export() -> None:
+    if Settings.from_env().preview_mode:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="legacy auto-export pipeline is disabled in external preview mode",
+        )

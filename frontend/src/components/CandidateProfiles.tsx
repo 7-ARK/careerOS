@@ -1,7 +1,8 @@
-import {FormEvent, ReactNode, useEffect, useState} from 'react';
+import {ChangeEvent, FormEvent, ReactNode, useEffect, useState} from 'react';
 import {
   BriefcaseBusiness,
   ExternalLink,
+  FileUp,
   GraduationCap,
   LoaderCircle,
   Pencil,
@@ -19,9 +20,12 @@ import {
   createCandidateProfile,
   deleteCandidateProfile,
   getCandidateProfile,
+  importResumePreview,
   listCandidates,
   updateCandidateProfile,
 } from '../lib/api';
+
+const IS_EXTERNAL_PREVIEW = import.meta.env.VITE_PREVIEW_MODE === 'true';
 
 interface CandidateProfilesProps {
   selectedCandidateId: string;
@@ -38,7 +42,7 @@ interface ProfileFormState {
   portfolioUrl: string;
   headline: string;
   summary: string;
-  skills: {name: string}[];
+  skills: {name: string; category: string}[];
   certifications: {name: string; organization: string; year: string}[];
   projects: {name: string; description: string; technologies: string}[];
   experiences: {
@@ -80,9 +84,11 @@ export function CandidateProfiles({
   const [mode, setMode] = useState<'view' | 'create' | 'edit'>('view');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -92,7 +98,8 @@ export function CandidateProfiles({
         const items = await listCandidates();
         if (!active) return;
         setCandidates(items);
-        onSelectionChange(selectedCandidateId || items[0]?.id || '');
+        const selectedExists = items.some((item) => item.id === selectedCandidateId);
+        onSelectionChange(selectedExists ? selectedCandidateId : items[0]?.id || '');
       } catch (error) {
         if (active) setErrorMessage(getErrorMessage(error, 'Candidate profiles could not be loaded.'));
       } finally {
@@ -135,6 +142,7 @@ export function CandidateProfiles({
     setErrorMessage('');
     setSuccessMessage('');
     setFieldErrors({});
+    setImportWarnings([]);
   }
 
   function beginEdit() {
@@ -144,6 +152,28 @@ export function CandidateProfiles({
     setErrorMessage('');
     setSuccessMessage('');
     setFieldErrors({});
+    setImportWarnings([]);
+  }
+
+  async function handleResumeImport(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setIsImporting(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setFieldErrors({});
+    try {
+      const preview = await importResumePreview(file);
+      setForm(profileInputToForm(preview.profile));
+      setMode('create');
+      setImportWarnings(preview.warnings);
+      setSuccessMessage(`Imported ${preview.file_name}. Review every field before saving.`);
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error, 'The resume could not be imported.'));
+    } finally {
+      setIsImporting(false);
+    }
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -168,6 +198,7 @@ export function CandidateProfiles({
       setProfile(saved);
       onSelectionChange(saved.id);
       setMode('view');
+      setImportWarnings([]);
       setSuccessMessage(mode === 'create' ? 'Profile created successfully.' : 'Profile saved successfully.');
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'The candidate profile could not be saved.'));
@@ -219,30 +250,62 @@ export function CandidateProfiles({
             >
               {!candidates.length && <option value="">No profiles yet</option>}
               {candidates.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>{candidate.full_name}</option>
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.full_name} · {candidate.email ?? 'Candidate profile'}
+                </option>
               ))}
             </select>
           </div>
         </label>
-        <button
-          type="button"
-          aria-label="New candidate profile"
-          onClick={beginCreate}
-          disabled={isSaving}
-          className="cozy-button inline-flex min-h-11 items-center gap-2 rounded-lg px-5 text-sm font-semibold transition disabled:opacity-60"
-        >
-          <Plus className="size-4" />
-          Add profile
-        </button>
+        {IS_EXTERNAL_PREVIEW ? (
+          <button
+            className="cozy-button-secondary inline-flex min-h-11 cursor-not-allowed items-center gap-2 rounded-lg px-4 text-sm font-semibold opacity-60"
+            disabled
+            title="Resume import is available in private workspaces; uploads are disabled in this shared demo."
+            type="button"
+          >
+            <FileUp className="size-4" />
+            Import resume
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <label className="cozy-button-secondary inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-4 text-sm font-semibold">
+              {isImporting ? <LoaderCircle className="size-4 animate-spin" /> : <FileUp className="size-4" />}
+              Import resume
+              <input accept=".pdf,.docx" className="sr-only" disabled={isImporting || isSaving} onChange={handleResumeImport} type="file" />
+            </label>
+            <button
+              type="button"
+              aria-label="New candidate profile"
+              onClick={beginCreate}
+              disabled={isSaving || isImporting}
+              className="cozy-button inline-flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition disabled:opacity-60"
+            >
+              <Plus className="size-4" />
+              Add profile
+            </button>
+          </div>
+        )}
       </div>
 
       {errorMessage && <p className="mt-3 text-xs leading-relaxed text-destructive">{errorMessage}</p>}
       {successMessage && <p className="mt-3 text-xs leading-relaxed text-primary">{successMessage}</p>}
+      {IS_EXTERNAL_PREVIEW && (
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          Resume uploads and profile changes are disabled in this shared demo. Private workspaces can import PDF or DOCX data into the editable profile form before saving.
+        </p>
+      )}
+      {importWarnings.length > 0 && (
+        <div className="mt-3 rounded-md border border-brand-amber/35 bg-brand-amber/5 px-3 py-2 text-xs text-muted-foreground" role="status">
+          {importWarnings.map((warning) => <p key={warning}>{warning}</p>)}
+        </div>
+      )}
 
       {mode === 'view' ? (
         <ProfileView
           profile={profile}
           isLoading={isLoading}
+          readOnly={IS_EXTERNAL_PREVIEW}
           onEdit={beginEdit}
           onDelete={handleDelete}
         />
@@ -253,7 +316,7 @@ export function CandidateProfiles({
           fieldErrors={fieldErrors}
           isSaving={isSaving}
           onChange={setForm}
-          onCancel={() => setMode('view')}
+          onCancel={() => { setMode('view'); setImportWarnings([]); }}
           onSubmit={handleSave}
         />
       )}
@@ -264,11 +327,13 @@ export function CandidateProfiles({
 function ProfileView({
   profile,
   isLoading,
+  readOnly,
   onEdit,
   onDelete,
 }: {
   profile: CandidateProfile | null;
   isLoading: boolean;
+  readOnly: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -295,10 +360,12 @@ function ProfileView({
             {[profile.email, profile.phone, profile.location].filter(Boolean).join(' / ')}
           </p>
         </div>
-        <div className="flex gap-2">
-          <IconButton label="Edit profile" onClick={onEdit}><Pencil className="size-4" /></IconButton>
-          <IconButton label="Delete profile" onClick={onDelete} destructive><Trash2 className="size-4" /></IconButton>
-        </div>
+        {!readOnly && (
+          <div className="flex gap-2">
+            <IconButton label="Edit profile" onClick={onEdit}><Pencil className="size-4" /></IconButton>
+            <IconButton label="Delete profile" onClick={onDelete} destructive><Trash2 className="size-4" /></IconButton>
+          </div>
+        )}
       </div>
       {links.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-3">
@@ -309,23 +376,28 @@ function ProfileView({
           ))}
         </div>
       )}
-      {profile.summary && <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{profile.summary}</p>}
+      {profile.summary && <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{profile.summary}</p>}
 
-      <ProfileSection title="Skills">
-        {profile.skills.length ? <div className="flex flex-wrap gap-2">{profile.skills.map((skill) => <Tag key={skill.id}>{skill.name}</Tag>)}</div> : <EmptyValue />}
-      </ProfileSection>
-      <ProfileSection title="Experience" icon={<BriefcaseBusiness className="size-4" />}>
-        {profile.work_experiences.length ? profile.work_experiences.map((item) => <RecordLine key={item.id} title={item.job_title} meta={`${item.company} / ${formatDateRange(item.start_date, item.end_date)}`} description={item.description} />) : <EmptyValue />}
-      </ProfileSection>
-      <ProfileSection title="Projects">
-        {profile.projects.length ? profile.projects.map((item) => <RecordLine key={item.id} title={item.title} meta={item.technologies.join(', ')} description={item.description} />) : <EmptyValue />}
-      </ProfileSection>
-      <ProfileSection title="Certifications">
-        {profile.certifications.length ? profile.certifications.map((item) => <RecordLine key={item.id} title={item.name} meta={`${item.issuing_organization}${item.issue_date ? ` / ${item.issue_date.slice(0, 4)}` : ''}`} />) : <EmptyValue />}
-      </ProfileSection>
-      <ProfileSection title="Education" icon={<GraduationCap className="size-4" />}>
-        {profile.education.length ? profile.education.map((item) => <RecordLine key={item.id} title={item.degree} meta={`${item.institution}${item.end_date ? ` / ${item.end_date.slice(0, 4)}` : ''}`} />) : <EmptyValue />}
-      </ProfileSection>
+      <details className="mt-4 border-t border-border pt-3">
+        <summary className="cursor-pointer text-sm font-medium text-primary">
+          View full candidate evidence
+        </summary>
+        <ProfileSection title="Skills">
+          {profile.skills.length ? <div className="flex flex-wrap gap-2">{profile.skills.map((skill) => <Tag key={skill.id}>{skill.name}</Tag>)}</div> : <EmptyValue />}
+        </ProfileSection>
+        <ProfileSection title="Experience" icon={<BriefcaseBusiness className="size-4" />}>
+          {profile.work_experiences.length ? profile.work_experiences.map((item) => <RecordLine key={item.id} title={item.job_title} meta={`${item.company} / ${formatDateRange(item.start_date, item.end_date)}`} description={item.description} />) : <EmptyValue />}
+        </ProfileSection>
+        <ProfileSection title="Projects">
+          {profile.projects.length ? profile.projects.map((item) => <RecordLine key={item.id} title={item.title} meta={item.technologies.join(', ')} description={item.description} />) : <EmptyValue />}
+        </ProfileSection>
+        <ProfileSection title="Certifications">
+          {profile.certifications.length ? profile.certifications.map((item) => <RecordLine key={item.id} title={item.name} meta={`${item.issuing_organization}${item.issue_date ? ` / ${item.issue_date.slice(0, 4)}` : ''}`} />) : <EmptyValue />}
+        </ProfileSection>
+        <ProfileSection title="Education" icon={<GraduationCap className="size-4" />}>
+          {profile.education.length ? profile.education.map((item) => <RecordLine key={item.id} title={item.degree} meta={`${item.institution}${item.end_date ? ` / ${item.end_date.slice(0, 4)}` : ''}`} />) : <EmptyValue />}
+        </ProfileSection>
+      </details>
     </div>
   );
 }
@@ -368,10 +440,13 @@ function ProfileForm({
         <FormTextArea label="Professional summary" value={form.summary} onChange={(value) => setField('summary', value)} />
       </FormSection>
 
-      <DynamicSection title="Skills" onAdd={() => setField('skills', [...form.skills, {name: ''}])}>
+      <DynamicSection title="Skills" onAdd={() => setField('skills', [...form.skills, {name: '', category: 'General'}])}>
         {form.skills.map((skill, index) => (
           <DynamicRow key={`skill-${index}`} onRemove={() => setField('skills', removeAt(form.skills, index))}>
-            <FormField label="Skill" value={skill.name} onChange={(value) => setField('skills', replaceAt(form.skills, index, {...skill, name: value}))} error={fieldErrors[`skills.${index}.name`]} required />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField label="Skill" value={skill.name} onChange={(value) => setField('skills', replaceAt(form.skills, index, {...skill, name: value}))} error={fieldErrors[`skills.${index}.name`]} required />
+              <FormField label="Category" value={skill.category} onChange={(value) => setField('skills', replaceAt(form.skills, index, {...skill, category: value}))} required />
+            </div>
           </DynamicRow>
         ))}
       </DynamicSection>
@@ -501,7 +576,7 @@ function formToPayload(form: ProfileFormState): CandidateProfileInput {
     portfolio_url: nullable(form.portfolioUrl),
     headline: nullable(form.headline),
     summary: nullable(form.summary),
-    skills: form.skills.filter((item) => item.name.trim()).map((item) => ({name: item.name.trim(), category: 'General', self_rating: 3, years_of_experience: 0})),
+    skills: form.skills.filter((item) => item.name.trim()).map((item) => ({name: item.name.trim(), category: item.category.trim() || 'General', self_rating: 3, years_of_experience: 0})),
     certifications: form.certifications.map((item) => ({name: item.name.trim(), issuing_organization: item.organization.trim(), ...(item.year ? {issue_date: `${item.year}-01-01`} : {})})),
     projects: form.projects.map((item) => ({title: item.name.trim(), description: item.description.trim(), technologies: splitValues(item.technologies)})),
     work_experiences: form.experiences.map((item) => ({job_title: item.jobTitle.trim(), company: item.company.trim(), start_date: item.startDate, ...(item.endDate ? {end_date: item.endDate} : {}), is_current: !item.endDate, description: nullable(item.description)})),
@@ -520,11 +595,30 @@ function profileToForm(profile: CandidateProfile): ProfileFormState {
     portfolioUrl: profile.portfolio_url ?? '',
     headline: profile.headline ?? '',
     summary: profile.summary ?? '',
-    skills: profile.skills.map((item) => ({name: item.name})),
+    skills: profile.skills.map((item) => ({name: item.name, category: item.category})),
     certifications: profile.certifications.map((item) => ({name: item.name, organization: item.issuing_organization, year: item.issue_date?.slice(0, 4) ?? ''})),
     projects: profile.projects.map((item) => ({name: item.title, description: item.description, technologies: item.technologies.join(', ')})),
     experiences: profile.work_experiences.map((item) => ({jobTitle: item.job_title, company: item.company, startDate: item.start_date, endDate: item.end_date ?? '', description: item.description ?? ''})),
     education: profile.education.map((item) => ({degree: item.degree, institution: item.institution, year: (item.end_date ?? item.start_date)?.slice(0, 4) ?? ''})),
+  };
+}
+
+function profileInputToForm(profile: CandidateProfileInput): ProfileFormState {
+  return {
+    fullName: profile.full_name,
+    email: profile.email ?? '',
+    phone: profile.phone ?? '',
+    location: profile.location ?? '',
+    linkedinUrl: profile.linkedin_url ?? '',
+    githubUrl: profile.github_url ?? '',
+    portfolioUrl: profile.portfolio_url ?? '',
+    headline: profile.headline ?? '',
+    summary: profile.summary ?? '',
+    skills: profile.skills.map((item) => ({name: item.name, category: item.category})),
+    certifications: profile.certifications.map((item) => ({name: item.name, organization: item.issuing_organization, year: item.issue_date?.slice(0, 4) ?? ''})),
+    projects: profile.projects.map((item) => ({name: item.title, description: item.description, technologies: item.technologies.join(', ')})),
+    experiences: profile.work_experiences.map((item) => ({jobTitle: item.job_title, company: item.company, startDate: item.start_date, endDate: item.end_date ?? '', description: item.description ?? ''})),
+    education: profile.education.map((item) => ({degree: item.degree, institution: item.institution, year: item.end_date?.slice(0, 4) ?? ''})),
   };
 }
 

@@ -1,0 +1,27 @@
+{
+  "name": "Junior Machine Learning Engineer",
+  "job": {
+    "title": "Junior Machine Learning Engineer",
+    "company": "Model Works",
+    "description": "Responsibilities:\nDevelop and test machine learning models and data workflows.\nRequirements:\nPython, SQL, scikit-learn, and PyTorch are required.\nPreferred skills:\nDocker is nice to have."
+  },
+  "evidence": [
+    {
+      "evidence_id": "project-ml-evaluation-001",
+      "category": "project",
+      "text": "Built and evaluated a scikit-learn classification model in Python and documented test results."
+    },
+    {
+      "evidence_id": "skill-sql-001",
+      "category": "skill",
+      "text": "Used SQL for validated analytics queries."
+    }
+  ],
+  "expected_extracted_terms": ["Machine Learning", "Python", "SQL", "scikit-learn", "PyTorch", "Docker"],
+  "expected_retrieval": {
+    "scikit-learn Python": "project-ml-evaluation-001",
+    "SQL": "skill-sql-001"
+  },
+  "expected_missing_requirements": ["PyTorch", "Docker"],
+  "unsupported_claims_to_reject": ["Built production PyTorch training infrastructure."]
+}

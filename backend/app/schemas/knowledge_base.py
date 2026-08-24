@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Self
+from typing import Any, Literal, Self
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -488,6 +488,16 @@ class CandidateProfileRead(EntityRead):
     preferences: PreferenceRead | None = None
     resume_versions: list[ResumeVersionRead] = Field(default_factory=list)
     applications: list[ApplicationHistoryRead] = Field(default_factory=list)
+
+
+class ResumeImportPreview(SchemaBase):
+    """Locally extracted candidate fields that require review before persistence."""
+
+    file_name: str
+    profile: CandidateProfileDetailsCreate
+    extracted_sections: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    requires_review: Literal[True] = True
 
 
 def _validate_optional_url(value: str | None) -> str | None:
