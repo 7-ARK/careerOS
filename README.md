@@ -15,21 +15,26 @@ CareerOS compares typed job requirements with verified candidate evidence, calcu
 transparent coverage score, blocks unsupported resume claims, and requires human approval
 before DOCX or PDF export. Its deterministic demo path runs without a paid provider.
 
-## Demo media
+## Product Demo
+
+[![Watch the CareerOS v1.0 product demo](docs/images/career-analysis-overview.png)](https://youtu.be/4OYOZlyqrLA)
+
+[Watch the CareerOS v1.0 product demo on YouTube](https://youtu.be/4OYOZlyqrLA). This concise
+walkthrough covers the evidence-analysis pipeline, requirement-level citations, grounding
+validation, human approval, resume export, and application tracking.
+
+## Product Screenshots
 
 These captures use the production frontend build, deterministic analysis, and the fictional Amina
 Rahman demo profile.
 
-| Analysis workspace | Requirement evidence |
+| Requirement evidence | Grounded resume |
 | --- | --- |
-| ![CareerOS analysis workspace with three persisted analysis states](docs/images/career-analysis-overview.png) | ![Requirement-to-evidence map with code-calculated coverage and citations](docs/images/requirement-evidence-map.png) |
-| Grounded resume | Application tracking |
-| ![Grounded resume preview with evidence-backed skills and missing requirements](docs/images/grounded-resume-preview.png) | ![Read-only synthetic application tracker with evidence coverage](docs/images/application-tracker.png) |
+| ![Requirement-to-evidence map with code-calculated coverage and citations](docs/images/requirement-evidence-map.png) | ![Grounded resume preview with evidence-backed skills and missing requirements](docs/images/grounded-resume-preview.png) |
 
-A 90-120 second demo recording is still required; capture guidance lives in
-[`docs/images/README.md`](docs/images/README.md).
+### Application tracking
 
-Temporary `trycloudflare.com` addresses are never used as permanent demo links.
+![Read-only synthetic application tracker with evidence coverage](docs/images/application-tracker.png)
 
 ## Why this project
 
