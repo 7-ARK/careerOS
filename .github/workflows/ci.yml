@@ -22,11 +22,11 @@ jobs:
       - run: python -m alembic upgrade head
         working-directory: backend
         env:
-          DATABASE_URL: sqlite+pysqlite:///./ci-migrations.db
+          DATABASE_URL: sqlite+pysqlite:///${{ runner.temp }}/careeros-ci-migrations.db
       - run: python -m alembic check
         working-directory: backend
         env:
-          DATABASE_URL: sqlite+pysqlite:///./ci-migrations.db
+          DATABASE_URL: sqlite+pysqlite:///${{ runner.temp }}/careeros-ci-migrations.db
       - run: pytest -q
         working-directory: backend
 

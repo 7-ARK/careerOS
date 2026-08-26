@@ -11,7 +11,6 @@ Do not add blank placeholders or broken image links.
 | `requirement-evidence-map.png` | A citation-backed match and a truthful not-evidenced requirement |
 | `grounded-resume-preview.png` | Grounded draft plus explicit review/export state |
 | `application-tracker.png` | Synthetic saved application with evidence coverage and read-only status |
-| `careeros-demo.gif` | Optional 90-120 second golden-flow recording |
 
 ## Capture rules
 
@@ -23,4 +22,5 @@ Do not add blank placeholders or broken image links.
 - Inspect every image at full size before adding its README link.
 
 The four PNG captures were produced from the deterministic production preview and visually checked
-at 1440x810. The optional demo recording remains outstanding.
+at 1440x810. The final product walkthrough is linked from the root README; no raw video is stored in
+this repository.

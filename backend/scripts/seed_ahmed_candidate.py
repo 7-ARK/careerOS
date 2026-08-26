@@ -74,7 +74,7 @@ def seed_ahmed_candidate(session: Session) -> CandidateProfileRead:
                 "certifications, and early-career engineering practice."
             ),
             location="Islamabad, Pakistan",
-            linkedin_url="https://www.linkedin.com/in/ahmed-raza-kahoot/",
+            linkedin_url="https://www.linkedin.com/in/ahmed-raza-applied-ai/",
             portfolio_url="https://github.com/7-ARK",
         ),
         user_id=demo_user.id,

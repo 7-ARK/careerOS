@@ -284,6 +284,8 @@ class FastApiEndpointTests(unittest.TestCase):
         self.assertEqual(response.json()["detected_platform"], "company_site")
 
     def test_job_url_extraction_endpoint_rejects_empty_url(self) -> None:
+        app.dependency_overrides[get_job_url_pipeline_service] = lambda: object()
+
         response = self.client.post(
             "/api/v1/pipeline/extract",
             json={

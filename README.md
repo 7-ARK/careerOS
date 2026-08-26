@@ -248,7 +248,7 @@ The full list is maintained in [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATI
 Applied AI / AI Agent Engineer
 
 - [GitHub](https://github.com/7-ARK)
-- [LinkedIn](https://www.linkedin.com/in/ahmed-raza-kahoot/)
+- [LinkedIn](https://www.linkedin.com/in/ahmed-raza-applied-ai/)
 
 No repository license file has been added; package metadata currently marks the project as
 proprietary. Ahmed should choose a license before inviting third-party reuse.

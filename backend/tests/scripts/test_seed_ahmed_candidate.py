@@ -29,6 +29,10 @@ class AhmedSeedCandidateTests(unittest.TestCase):
         self.assertEqual(profile.email, DEVELOPER_EMAIL)
         self.assertEqual(profile.phone, DEVELOPER_PHONE)
         self.assertEqual(profile.location, "Islamabad, Pakistan")
+        self.assertEqual(
+            str(profile.linkedin_url),
+            "https://www.linkedin.com/in/ahmed-raza-applied-ai/",
+        )
         self.assertEqual(len(profile.education), 1)
         self.assertEqual(len(profile.work_experiences), 1)
         self.assertEqual(len(profile.projects), 4)
