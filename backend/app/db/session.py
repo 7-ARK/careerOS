@@ -9,7 +9,16 @@ from sqlalchemy.orm import Session, sessionmaker
 
 def create_database_engine(database_url: str, *, echo: bool = False) -> Engine:
     """Create a SQLAlchemy engine for the configured database."""
-    return create_engine(database_url, echo=echo)
+    engine = create_engine(database_url, echo=echo)
+    if engine.dialect.name == "postgresql":
+        from pgvector.psycopg import register_vector
+        from sqlalchemy import event
+
+        @event.listens_for(engine, "connect")
+        def _register_pgvector(dbapi_connection: object, _connection_record: object) -> None:
+            register_vector(dbapi_connection)
+
+    return engine
 
 
 def create_session_factory(engine: Engine) -> sessionmaker[Session]:

@@ -23,6 +23,7 @@ from app.models.enums import (
     SourcePlatform,
     WorkplaceType,
 )
+from app.models.evidence_embedding import EvidenceEmbedding
 from app.models.job_analysis import JobAnalysis, JobDescription
 from app.models.knowledge_base import (
     ApplicationHistory,
@@ -51,6 +52,7 @@ __all__ = [
     "Certification",
     "Education",
     "EmploymentType",
+    "EvidenceEmbedding",
     "DocumentFormat",
     "DocumentGenerationStatus",
     "GeneratedDocument",

@@ -8,6 +8,7 @@ import re
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Protocol
+from uuid import UUID
 
 from app.core.config import Settings
 from app.models import CandidateProfile
@@ -134,6 +135,21 @@ class VectorRecord:
     vector: list[float]
 
 
+class EvidenceVectorIndex(Protocol):
+    """Candidate-scoped vector source used before hybrid ranking.
+
+    ``search`` is intentionally not part of this contract. ``PgVectorStore.search``
+    is cosine-only; requirement ranking stays in ``rank_evidence``.
+    """
+
+    def sync(
+        self,
+        candidate_profile_id: UUID,
+        evidence: list[CandidateEvidence],
+    ) -> list[VectorRecord]:
+        """Return this candidate's current evidence vectors in input order."""
+
+
 class LocalVectorStore:
     """Single-process vector index rebuilt from the durable candidate source of truth."""
 
@@ -150,6 +166,17 @@ class LocalVectorStore:
             for item, vector in zip(evidence, vectors, strict=True)
         ]
 
+    def sync(
+        self,
+        candidate_profile_id: UUID,
+        evidence: list[CandidateEvidence],
+    ) -> list[VectorRecord]:
+        """Rebuild the in-memory index for one candidate and return its vectors."""
+        if not isinstance(candidate_profile_id, UUID):
+            raise TypeError("candidate_profile_id is required")
+        self.index(evidence)
+        return list(self._records)
+
     def search(
         self,
         query: str,
@@ -157,48 +184,96 @@ class LocalVectorStore:
         top_k: int,
         categories: set[str] | None = None,
     ) -> list[RetrievedCandidateEvidence]:
-        query_vector = self.provider.embed([query])[0]
-        query_tokens = set(normalize_text(query).split())
-        matches: list[tuple[Decimal, RetrievedCandidateEvidence]] = []
-        for record in self._records:
-            if categories and record.evidence.category not in categories:
-                continue
-            evidence_tokens = set(normalize_text(record.evidence.text).split())
-            lexical = (
-                Decimal(len(query_tokens & evidence_tokens)) / Decimal(len(query_tokens))
-                if query_tokens
-                else Decimal("0")
-            )
-            cosine = max(0.0, _cosine_similarity(query_vector, record.vector))
-            vector = Decimal(str(cosine))
-            combined = min(Decimal("1"), lexical * Decimal("0.7") + vector * Decimal("0.3"))
-            retrieved = RetrievedCandidateEvidence(
-                **record.evidence.model_dump(),
-                retrieval_score=_score(combined),
-                lexical_score=_score(lexical),
-                vector_score=_score(vector),
-                why_retrieved=(
-                    "Exact or overlapping requirement terms were found in verified evidence."
-                    if lexical > 0
-                    else "The deterministic embedding ranked this verified evidence as related."
-                ),
-            )
-            matches.append((combined, retrieved))
-        matches.sort(
-            key=lambda item: (
-                -item[0],
-                -item[1].lexical_score,
-                item[1].evidence_id,
-            )
+        return rank_evidence(
+            self.provider,
+            self._records,
+            query,
+            top_k=top_k,
+            categories=categories,
         )
-        return [item for _, item in matches[:top_k]]
+
+
+def rank_evidence(
+    provider: EmbeddingProvider,
+    records: list[VectorRecord],
+    query: str,
+    *,
+    top_k: int,
+    categories: set[str] | None = None,
+) -> list[RetrievedCandidateEvidence]:
+    """Rank evidence with the existing lexical gate and 0.7/0.3 hybrid score."""
+    query_vector = provider.embed([query])[0]
+    query_tokens = set(normalize_text(query).split())
+    matches: list[tuple[Decimal, RetrievedCandidateEvidence]] = []
+    for record in records:
+        if categories and record.evidence.category not in categories:
+            continue
+        evidence_tokens = set(normalize_text(record.evidence.text).split())
+        lexical = (
+            Decimal(len(query_tokens & evidence_tokens)) / Decimal(len(query_tokens))
+            if query_tokens
+            else Decimal("0")
+        )
+        cosine = max(0.0, _cosine_similarity(query_vector, record.vector))
+        vector = Decimal(str(cosine))
+        combined = min(Decimal("1"), lexical * Decimal("0.7") + vector * Decimal("0.3"))
+        retrieved = RetrievedCandidateEvidence(
+            **record.evidence.model_dump(),
+            retrieval_score=_score(combined),
+            lexical_score=_score(lexical),
+            vector_score=_score(vector),
+            why_retrieved=(
+                "Exact or overlapping requirement terms were found in verified evidence."
+                if lexical > 0
+                else "The deterministic embedding ranked this verified evidence as related."
+            ),
+        )
+        matches.append((combined, retrieved))
+    matches.sort(
+        key=lambda item: (
+            -item[0],
+            -item[1].lexical_score,
+            item[1].evidence_id,
+        )
+    )
+    return [item for _, item in matches[:top_k]]
+
+
+def build_candidate_evidence_retriever(
+    session: object | None = None,
+    *,
+    settings: Settings | None = None,
+    provider: EmbeddingProvider | None = None,
+) -> CandidateEvidenceRetriever:
+    """Select the configured vector index and keep hybrid ranking in the retriever."""
+    settings = settings or Settings.from_env()
+    provider = provider or build_embedding_provider(settings)
+    choice = settings.rag_vector_store
+    if choice == "local":
+        return CandidateEvidenceRetriever(provider)
+    if choice == "pgvector":
+        if session is None:
+            raise RuntimeError("RAG_VECTOR_STORE=pgvector requires a database session")
+        from sqlalchemy.orm import Session
+
+        from app.features.resume_intelligence.pgvector_store import PgVectorStore
+
+        if not isinstance(session, Session):
+            raise TypeError("RAG_VECTOR_STORE=pgvector requires a SQLAlchemy session")
+        return CandidateEvidenceRetriever(provider, vector_index=PgVectorStore(session, provider))
+    raise ValueError("RAG_VECTOR_STORE must be 'local' or 'pgvector'")
 
 
 class CandidateEvidenceRetriever:
     """Build and query stable verified evidence chunks for one candidate profile."""
 
-    def __init__(self, provider: EmbeddingProvider | None = None) -> None:
+    def __init__(
+        self,
+        provider: EmbeddingProvider | None = None,
+        vector_index: EvidenceVectorIndex | None = None,
+    ) -> None:
         self.provider = provider or build_embedding_provider()
+        self.vector_index = vector_index or LocalVectorStore(self.provider)
 
     def collect(self, candidate: CandidateProfile) -> list[CandidateEvidence]:
         """Convert durable candidate rows into stable, privacy-conscious evidence chunks."""
@@ -320,9 +395,14 @@ class CandidateEvidenceRetriever:
         categories: set[str] | None = None,
     ) -> list[RetrievedCandidateEvidence]:
         """Retrieve top-k evidence while preserving transparent score components."""
-        store = LocalVectorStore(self.provider)
-        store.index(self.collect(candidate))
-        return store.search(query, top_k=top_k, categories=categories)
+        records = self.vector_index.sync(candidate.id, self.collect(candidate))
+        return rank_evidence(
+            self.provider,
+            records,
+            query,
+            top_k=top_k,
+            categories=categories,
+        )
 
 
 def _cosine_similarity(left: list[float], right: list[float]) -> float:
