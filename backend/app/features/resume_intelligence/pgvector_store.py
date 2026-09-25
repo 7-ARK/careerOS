@@ -1,11 +1,11 @@
 """PostgreSQL pgvector store for candidate evidence embeddings.
 
-Search uses exact cosine distance (``<=>``) with no ANN index. Every search
-statement filters ``candidate_profile_id``, so one candidate cannot retrieve
-another candidate's rows. Cache identity is
+``search`` uses exact cosine distance (``<=>``) with no ANN index. The CareerOS
+retriever does not rank with that method. It calls ``sync`` for candidate-scoped
+vectors and keeps lexical gates plus hybrid scoring in ``rank_evidence``.
+Every read and write filters ``candidate_profile_id``. Cache identity is
 ``(evidence_id, embedding_model, content_hash)``: unchanged text is not
-re-embedded. ``LocalVectorStore`` remains the in-memory path used by tests
-and the golden analysis flow.
+re-embedded.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from sqlalchemy import or_, select, text
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import literal_column
 
-from app.features.resume_intelligence.retrieval import EmbeddingProvider, _score
+from app.features.resume_intelligence.retrieval import EmbeddingProvider, VectorRecord, _score
 from app.models.evidence_embedding import EvidenceEmbedding
 from app.schemas import CandidateEvidence, RetrievedCandidateEvidence
 
@@ -154,6 +154,46 @@ class PgVectorStore:
         if prepared:
             self.session.flush()
         return EmbeddingIndexResult(embedded=len(prepared), reused=reused)
+
+    def sync(
+        self,
+        candidate_profile_id: UUID,
+        evidence: list[CandidateEvidence],
+    ) -> list[VectorRecord]:
+        """Index one candidate's current evidence and return those stored vectors."""
+        self.index(candidate_profile_id, evidence)
+        return self.load_vectors(candidate_profile_id, evidence)
+
+    def load_vectors(
+        self,
+        candidate_profile_id: UUID,
+        evidence: list[CandidateEvidence],
+    ) -> list[VectorRecord]:
+        """Read stored vectors for one candidate without ranking them."""
+        if not isinstance(candidate_profile_id, UUID):
+            raise TypeError("candidate_profile_id is required")
+        if not evidence:
+            return []
+        wanted = {item.evidence_id: evidence_content_hash(item.text) for item in evidence}
+        rows = list(
+            self.session.scalars(
+                select(EvidenceEmbedding).where(
+                    EvidenceEmbedding.candidate_profile_id == candidate_profile_id,
+                    EvidenceEmbedding.embedding_model == self.provider.model_name,
+                    EvidenceEmbedding.evidence_id.in_(list(wanted)),
+                )
+            )
+        )
+        by_key = {(row.evidence_id, row.content_hash): row for row in rows}
+        loaded: list[VectorRecord] = []
+        for item in evidence:
+            row = by_key.get((item.evidence_id, wanted[item.evidence_id]))
+            if row is None:
+                raise RuntimeError(
+                    f"evidence_id {item.evidence_id!r} has no embedding for this candidate"
+                )
+            loaded.append(VectorRecord(evidence=item, vector=list(row.embedding)))
+        return loaded
 
     def search(
         self,

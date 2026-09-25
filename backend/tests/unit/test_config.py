@@ -33,6 +33,7 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(settings.jwt_secret_key, "test-secret")
         self.assertEqual(settings.jwt_algorithm, "HS256")
         self.assertEqual(settings.jwt_access_token_expire_minutes, 60)
+        self.assertEqual(settings.rag_vector_store, "local")
 
     def test_from_env_defaults_llm_resume_intelligence_to_false(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
@@ -42,6 +43,7 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(settings.openai_model, "gpt-4.1-mini")
         self.assertEqual(settings.jwt_algorithm, "HS256")
         self.assertEqual(settings.jwt_access_token_expire_minutes, 1440)
+        self.assertEqual(settings.rag_vector_store, "local")
 
     def test_preview_mode_forces_provider_free_settings(self) -> None:
         with patch.dict(
@@ -51,6 +53,7 @@ class SettingsTests(unittest.TestCase):
                 "OPENAI_API_KEY": "must-not-be-used",
                 "USE_LLM_RESUME_INTELLIGENCE": "true",
                 "RAG_EMBEDDING_PROVIDER": "openai",
+                "RAG_VECTOR_STORE": "pgvector",
             },
             clear=True,
         ):
@@ -60,6 +63,16 @@ class SettingsTests(unittest.TestCase):
         self.assertIsNone(settings.openai_api_key)
         self.assertFalse(settings.use_llm_resume_intelligence)
         self.assertEqual(settings.rag_embedding_provider, "deterministic")
+        self.assertEqual(settings.rag_vector_store, "local")
+
+    def test_vector_store_accepts_pgvector_and_rejects_unknown_backends(self) -> None:
+        with patch.dict(os.environ, {"RAG_VECTOR_STORE": "pgvector"}, clear=True):
+            settings = Settings.from_env()
+        self.assertEqual(settings.rag_vector_store, "pgvector")
+
+        with patch.dict(os.environ, {"RAG_VECTOR_STORE": "chroma"}, clear=True):
+            with self.assertRaises(ValueError):
+                Settings.from_env()
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ class Settings:
     openai_model: str
     rag_embedding_provider: str
     rag_embedding_model: str
+    rag_vector_store: str
     provider_timeout_seconds: int
     cors_origins: tuple[str, ...]
     jwt_secret_key: str
@@ -52,6 +53,7 @@ class Settings:
             rag_embedding_model=environ.get(
                 "RAG_EMBEDDING_MODEL", "text-embedding-3-small"
             ),
+            rag_vector_store="local" if preview_mode else _vector_store(),
             provider_timeout_seconds=int(environ.get("PROVIDER_TIMEOUT_SECONDS", "30")),
             cors_origins=tuple(
                 origin.strip()
@@ -70,6 +72,14 @@ class Settings:
                 environ.get("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "1440")
             ),
         )
+
+
+def _vector_store() -> str:
+    """Read the evidence-vector backend. The default keeps the in-memory index."""
+    value = environ.get("RAG_VECTOR_STORE", "local").strip().casefold()
+    if value not in {"local", "pgvector"}:
+        raise ValueError("RAG_VECTOR_STORE must be 'local' or 'pgvector'")
+    return value
 
 
 def _env_bool(name: str) -> bool:

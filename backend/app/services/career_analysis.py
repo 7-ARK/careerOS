@@ -18,6 +18,7 @@ from app.features.resume_intelligence.quality import DeterministicResumeQualityE
 from app.features.resume_intelligence.retrieval import (
     CandidateEvidenceRetriever,
     DeterministicHashEmbeddingProvider,
+    build_candidate_evidence_retriever,
 )
 from app.models import CandidateProfile, CareerAnalysisRun, JobAnalysis, ResumeDraft
 from app.models.enums import (
@@ -320,7 +321,10 @@ class GoldenCareerAnalysisService:
         mode: str,
     ) -> tuple[EvidenceMatchService, ResumeIntelligenceService]:
         if mode == "mock":
-            retriever = CandidateEvidenceRetriever(DeterministicHashEmbeddingProvider())
+            retriever = build_candidate_evidence_retriever(
+                self.session,
+                provider=DeterministicHashEmbeddingProvider(),
+            )
             return (
                 EvidenceMatchService(self.session, retriever=retriever),
                 ResumeIntelligenceService(

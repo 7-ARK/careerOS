@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.features.resume_intelligence.retrieval import (
     CandidateEvidenceRetriever,
+    build_candidate_evidence_retriever,
     normalize_text,
 )
 from app.models import CandidateProfile, JobAnalysis, JobDescription
@@ -130,7 +131,7 @@ class EvidenceMatchService:
         self.profiles = CandidateProfileRepository(session)
         self.job_descriptions = JobDescriptionRepository(session)
         self.job_analyses = JobAnalysisRepository(session)
-        self.retriever = retriever or CandidateEvidenceRetriever()
+        self.retriever = retriever or build_candidate_evidence_retriever(session)
 
     def explain(
         self,
