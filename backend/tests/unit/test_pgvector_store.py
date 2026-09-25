@@ -24,10 +24,18 @@ from app.features.resume_intelligence.pgvector_store import (
 from app.features.resume_intelligence.retrieval import (
     DeterministicHashEmbeddingProvider,
     LocalVectorStore,
+    rank_evidence,
 )
 from app.models import EvidenceEmbedding, User
 from app.models.knowledge_base import CandidateProfile
 from app.schemas import CandidateEvidence
+from tests.semantic_embeddings import (
+    FASTAPI_EVIDENCE,
+    FASTAPI_VECTOR,
+    PYTHON_BACKEND_QUERY,
+    SemanticMockEmbeddingProvider,
+    expected_hybrid_score,
+)
 from tests.support import create_test_engine, create_test_session
 
 DEFAULT_PGVECTOR_URL = (
@@ -342,6 +350,45 @@ def test_content_hash_cache_skips_unchanged_text(db: Session) -> None:
     assert changed_row.evidence_metadata == {"label": "Database"}
     assert removed.embedded == 0 and removed.reused == 1
     assert [row.evidence_id for row in remaining] == ["project-cache"]
+
+
+def test_model_change_does_not_reuse_incompatible_vectors(db: Session) -> None:
+    profile = _profile(db, "pgvector-phase2-model@example.com")
+    evidence = _evidence("project-model", FASTAPI_EVIDENCE)
+    hash_provider = DeterministicHashEmbeddingProvider()
+    semantic = SemanticMockEmbeddingProvider()
+    hash_store = PgVectorStore(db, hash_provider)
+    semantic_store = PgVectorStore(db, semantic)
+
+    hashed = hash_store.index(profile.id, [evidence])
+    embedded = semantic_store.index(profile.id, [evidence])
+    reused = semantic_store.index(profile.id, [evidence])
+    rows = list(db.scalars(_embeddings_for(profile.id)))
+    by_model = {row.embedding_model: row for row in rows}
+    loaded = semantic_store.load_vectors(profile.id, [evidence])
+    hash_loaded = hash_store.load_vectors(profile.id, [evidence])
+
+    assert hashed.embedded == 1 and hashed.reused == 0
+    assert embedded.embedded == 1 and embedded.reused == 0
+    assert reused.embedded == 0 and reused.reused == 1
+    assert semantic.calls == [[FASTAPI_EVIDENCE]]
+
+    ranked = rank_evidence(semantic, loaded, PYTHON_BACKEND_QUERY, top_k=1)
+    assert set(by_model) == {"feature-hash-v1", "semantic-mock-v1"}
+    assert by_model["feature-hash-v1"].content_hash == by_model["semantic-mock-v1"].content_hash
+    assert by_model["feature-hash-v1"].embedding_dimensions == 256
+    assert by_model["semantic-mock-v1"].embedding_dimensions == 4
+    assert by_model["semantic-mock-v1"].embedding_model == "semantic-mock-v1"
+    assert list(by_model["semantic-mock-v1"].embedding) == FASTAPI_VECTOR
+    assert list(by_model["feature-hash-v1"].embedding) != FASTAPI_VECTOR
+    assert loaded[0].vector == FASTAPI_VECTOR
+    assert len(hash_loaded[0].vector) == 256
+    assert ranked[0].lexical_score == Decimal("0.0000")
+    assert ranked[0].vector_score >= Decimal("0.9000")
+    assert ranked[0].retrieval_score == expected_hybrid_score(
+        ranked[0].lexical_score,
+        ranked[0].vector_score,
+    )
 
 
 def test_metadata_only_update_keeps_embedding(db: Session) -> None:

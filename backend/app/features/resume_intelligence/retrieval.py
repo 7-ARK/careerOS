@@ -1,4 +1,9 @@
-"""Transparent candidate-evidence chunking, embeddings, and local vector retrieval."""
+"""Transparent candidate-evidence chunking, embeddings, and hybrid retrieval.
+
+Tests and CI use ``DeterministicHashEmbeddingProvider``. Live mode can select
+``OpenAIEmbeddingProvider`` with ``RAG_EMBEDDING_PROVIDER=openai``. Hybrid
+ranking stays lexical 0.7 / vector 0.3 and does not rerank.
+"""
 
 from __future__ import annotations
 
@@ -16,6 +21,13 @@ from app.schemas import CandidateEvidence, RetrievedCandidateEvidence
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9+#.]+")
 DEFAULT_EMBEDDING_DIMENSIONS = 256
+DEFAULT_OPENAI_EMBEDDING_BATCH_SIZE = 64
+OPENAI_EMBEDDING_MAX_BATCH_SIZE = 2048
+OPENAI_EMBEDDING_DIMENSIONS = {
+    "text-embedding-3-small": 1536,
+    "text-embedding-3-large": 3072,
+    "text-embedding-ada-002": 1536,
+}
 
 
 def normalize_text(value: str) -> str:
@@ -44,6 +56,18 @@ def normalize_text(value: str) -> str:
     }
     expanded = [token for value in tokens for token in (value, *aliases.get(value, ()))]
     return " ".join(expanded)
+
+
+class EmbeddingProviderError(RuntimeError):
+    """The embedding provider failed or returned a response that cannot be stored."""
+
+
+@dataclass(frozen=True, slots=True)
+class EmbeddingUsage:
+    """Token accounting for one provider instance. Cost is computed by the caller."""
+
+    prompt_tokens: int = 0
+    requests: int = 0
 
 
 class EmbeddingProvider(Protocol):
@@ -95,36 +119,184 @@ class DeterministicHashEmbeddingProvider:
 
 
 class OpenAIEmbeddingProvider:
-    """Optional real embedding provider enabled only by explicit environment configuration."""
+    """Live semantic embeddings. Constructing the provider does not call the network."""
 
     provider_name = "openai"
 
-    def __init__(self, *, api_key: str, model_name: str, timeout_seconds: int) -> None:
-        if not api_key:
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        model_name: str,
+        timeout_seconds: int,
+        dimensions: int | None = None,
+        batch_size: int = DEFAULT_OPENAI_EMBEDDING_BATCH_SIZE,
+    ) -> None:
+        if not api_key or not api_key.strip():
             raise ValueError("OpenAI embedding provider requires an API key")
-        self.api_key = api_key
-        self.model_name = model_name
+        if timeout_seconds < 1:
+            raise ValueError("OpenAI embedding timeout must be at least 1 second")
+        if not model_name.strip():
+            raise ValueError("OpenAI embedding model name must not be empty")
+        if batch_size < 1 or batch_size > OPENAI_EMBEDDING_MAX_BATCH_SIZE:
+            raise ValueError(
+                "OpenAI embedding batch size must be between 1 and "
+                f"{OPENAI_EMBEDDING_MAX_BATCH_SIZE}"
+            )
+        if dimensions is not None and dimensions < 1:
+            raise ValueError("OpenAI embedding dimensions must be a positive integer")
+        self._api_key = api_key.strip()
+        self.model_name = model_name.strip()
         self.timeout_seconds = timeout_seconds
+        self.batch_size = batch_size
+        self._dimensions_override = dimensions
+        self.dimensions = (
+            dimensions
+            if dimensions is not None
+            else OPENAI_EMBEDDING_DIMENSIONS.get(self.model_name)
+        )
+        self.usage = EmbeddingUsage()
+
+    def __repr__(self) -> str:
+        return (
+            "OpenAIEmbeddingProvider("
+            f"model_name={self.model_name!r}, dimensions={self.dimensions})"
+        )
+
+    def contains_secret(self, value: str) -> bool:
+        """Return whether a stored or logged value includes the API key."""
+        return bool(self._api_key) and self._api_key in value
 
     def embed(self, texts: list[str]) -> list[list[float]]:
+        """Embed texts in source order, in batches, without logging the API key."""
+        if not texts:
+            return []
+        client = self._client()
+        vectors: list[list[float]] = []
+        for start in range(0, len(texts), self.batch_size):
+            vectors.extend(self._embed_batch(client, texts[start : start + self.batch_size]))
+        if len(vectors) != len(texts):
+            raise EmbeddingProviderError(
+                f"OpenAI embeddings returned {len(vectors)} vectors for {len(texts)} inputs"
+            )
+        return vectors
+
+    def _client(self) -> object:
         from openai import OpenAI
 
-        client = OpenAI(api_key=self.api_key, timeout=float(self.timeout_seconds), max_retries=1)
-        response = client.embeddings.create(model=self.model_name, input=texts)
-        ordered = sorted(response.data, key=lambda item: item.index)
-        return [list(item.embedding) for item in ordered]
+        return OpenAI(
+            api_key=self._api_key,
+            timeout=float(self.timeout_seconds),
+            max_retries=1,
+        )
+
+    def _embed_batch(self, client: object, texts: list[str]) -> list[list[float]]:
+        kwargs: dict[str, object] = {
+            "model": self.model_name,
+            "input": texts,
+            "timeout": float(self.timeout_seconds),
+        }
+        if self._dimensions_override is not None:
+            kwargs["dimensions"] = self._dimensions_override
+        try:
+            response = client.embeddings.create(**kwargs)  # type: ignore[attr-defined]
+        except Exception as exc:
+            detail = _redact_secret(f"{type(exc).__name__}: {exc}", self._api_key)
+            raise EmbeddingProviderError(
+                f"OpenAI embeddings request failed for model {self.model_name!r}: {detail}"
+            ) from None
+        vectors = self._vectors_from_response(response, expected_count=len(texts))
+        self._record_usage(response)
+        return vectors
+
+    def _vectors_from_response(
+        self,
+        response: object,
+        *,
+        expected_count: int,
+    ) -> list[list[float]]:
+        data = getattr(response, "data", None)
+        if not data:
+            raise EmbeddingProviderError(
+                f"OpenAI embeddings returned no vectors for model {self.model_name!r}"
+            )
+        if len(data) != expected_count:
+            raise EmbeddingProviderError(
+                f"OpenAI embeddings returned {len(data)} vectors for {expected_count} inputs"
+            )
+        try:
+            ordered = sorted(data, key=lambda item: item.index)
+            indexes = [item.index for item in ordered]
+        except (AttributeError, TypeError):
+            raise EmbeddingProviderError(
+                "OpenAI embeddings response did not include vector indexes"
+            ) from None
+        if indexes != list(range(expected_count)):
+            raise EmbeddingProviderError(
+                "OpenAI embeddings response did not include every input index"
+            )
+        return [self._validate_vector(item.embedding) for item in ordered]
+
+    def _validate_vector(self, values: object) -> list[float]:
+        try:
+            raw = list(values)  # type: ignore[arg-type]
+        except TypeError:
+            raise EmbeddingProviderError(
+                "OpenAI embeddings returned a non-iterable vector"
+            ) from None
+        cleaned: list[float] = []
+        for value in raw:
+            try:
+                number = float(value)
+            except (TypeError, ValueError):
+                raise EmbeddingProviderError(
+                    "OpenAI embeddings returned a non-numeric value"
+                ) from None
+            if not math.isfinite(number):
+                raise EmbeddingProviderError("OpenAI embeddings returned a non-finite value")
+            cleaned.append(number)
+        if not cleaned:
+            raise EmbeddingProviderError("OpenAI embeddings returned an empty vector")
+        if self.dimensions is None:
+            self.dimensions = len(cleaned)
+        elif len(cleaned) != self.dimensions:
+            raise EmbeddingProviderError(
+                f"OpenAI embeddings returned {len(cleaned)} dimensions for model "
+                f"{self.model_name!r}; expected {self.dimensions}"
+            )
+        return cleaned
+
+    def _record_usage(self, response: object) -> None:
+        usage = getattr(response, "usage", None)
+        tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+        self.usage = EmbeddingUsage(
+            prompt_tokens=self.usage.prompt_tokens + tokens,
+            requests=self.usage.requests + 1,
+        )
+
+
+def _redact_secret(message: str, secret: str) -> str:
+    """Remove an API key from a provider error before it can reach logs."""
+    if secret and secret in message:
+        return message.replace(secret, "[redacted]")
+    return message
 
 
 def build_embedding_provider(settings: Settings | None = None) -> EmbeddingProvider:
-    """Resolve the configured provider and fall back locally when credentials are absent."""
+    """Select the configured provider. A missing OpenAI key stays on local embeddings."""
     settings = settings or Settings.from_env()
-    if settings.rag_embedding_provider == "openai" and settings.openai_api_key:
-        return OpenAIEmbeddingProvider(
-            api_key=settings.openai_api_key,
-            model_name=settings.rag_embedding_model,
-            timeout_seconds=settings.provider_timeout_seconds,
-        )
-    return DeterministicHashEmbeddingProvider()
+    if settings.rag_embedding_provider not in {"deterministic", "openai"}:
+        raise ValueError("RAG_EMBEDDING_PROVIDER must be 'deterministic' or 'openai'")
+    if settings.rag_embedding_provider == "deterministic":
+        return DeterministicHashEmbeddingProvider()
+    if not settings.openai_api_key:
+        return DeterministicHashEmbeddingProvider()
+    return OpenAIEmbeddingProvider(
+        api_key=settings.openai_api_key,
+        model_name=settings.rag_embedding_model,
+        timeout_seconds=settings.provider_timeout_seconds,
+        dimensions=settings.rag_embedding_dimensions,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,7 +397,11 @@ def rank_evidence(
             why_retrieved=(
                 "Exact or overlapping requirement terms were found in verified evidence."
                 if lexical > 0
-                else "The deterministic embedding ranked this verified evidence as related."
+                else (
+                    "The deterministic embedding ranked this verified evidence as related."
+                    if provider.provider_name == "deterministic_local"
+                    else "The embedding ranked this verified evidence as related."
+                )
             ),
         )
         matches.append((combined, retrieved))

@@ -1,6 +1,6 @@
 # Known Limitations
 
-- The guaranteed path uses deterministic rule extraction and feature-hash embeddings. These are reproducible and inspectable, but less semantically capable than a production embedding model.
+- Tests, CI, and the default local mode use deterministic feature-hash embeddings. Live mode can use OpenAI embeddings (`RAG_EMBEDDING_PROVIDER=openai`) with the same 0.7/0.3 hybrid score and lexical safeguards. There is no reranker, and those weights are not tuned.
 - The local vector index is rebuilt per retrieval from PostgreSQL source rows and is not designed for large multi-tenant corpora.
 - Job URL extraction is optional and depends on public page structure; manual job text is the supported demonstration path, and URL extraction is disabled in shared preview mode.
 - Candidate facts are candidate-entered and marked verified within this personal workspace; careerOS does not independently verify employers, credentials, dates, or project outcomes.

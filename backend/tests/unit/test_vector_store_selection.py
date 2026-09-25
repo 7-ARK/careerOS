@@ -114,13 +114,24 @@ def test_hybrid_score_keeps_lexical_weight_when_vectors_are_identical() -> None:
     assert found[0].lexical_score == Decimal("0.0000")
     assert found[0].vector_score == Decimal("1.0000")
     assert found[0].retrieval_score == Decimal("0.3000")
-    assert found[0].why_retrieved.startswith("The deterministic embedding")
+    assert found[0].why_retrieved == "The embedding ranked this verified evidence as related."
     match = service._match_requirement(candidate, _requirement("AWS experience"), top_k=3)
     assert match.status == RequirementMatchStatus.NOT_EVIDENCED
     assert match.supporting_evidence == []
     unrelated = service._match_requirement(candidate, _requirement("Redis caching"), top_k=3)
     assert unrelated.status == RequirementMatchStatus.NOT_EVIDENCED
     assert unrelated.supporting_evidence == []
+
+
+def test_deterministic_provider_names_its_zero_lexical_reason() -> None:
+    found = CandidateEvidenceRetriever(DeterministicHashEmbeddingProvider()).retrieve(
+        _google_cloud_candidate(),
+        "AWS experience",
+        top_k=1,
+    )
+
+    assert found[0].lexical_score == Decimal("0.0000")
+    assert found[0].why_retrieved.startswith("The deterministic embedding")
 
 
 def test_existing_match_statuses_survive_the_shared_ranker() -> None:

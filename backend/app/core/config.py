@@ -26,6 +26,7 @@ class Settings:
     openai_model: str
     rag_embedding_provider: str
     rag_embedding_model: str
+    rag_embedding_dimensions: int | None
     rag_vector_store: str
     provider_timeout_seconds: int
     cors_origins: tuple[str, ...]
@@ -46,13 +47,10 @@ class Settings:
             ),
             openai_model=environ.get("OPENAI_MODEL", "gpt-4.1-mini"),
             rag_embedding_provider=(
-                "deterministic"
-                if preview_mode
-                else environ.get("RAG_EMBEDDING_PROVIDER", "deterministic").strip().casefold()
+                "deterministic" if preview_mode else _embedding_provider()
             ),
-            rag_embedding_model=environ.get(
-                "RAG_EMBEDDING_MODEL", "text-embedding-3-small"
-            ),
+            rag_embedding_model=_embedding_model(),
+            rag_embedding_dimensions=_optional_positive_int("RAG_EMBEDDING_DIMENSIONS"),
             rag_vector_store="local" if preview_mode else _vector_store(),
             provider_timeout_seconds=int(environ.get("PROVIDER_TIMEOUT_SECONDS", "30")),
             cors_origins=tuple(
@@ -72,6 +70,36 @@ class Settings:
                 environ.get("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "1440")
             ),
         )
+
+
+def _embedding_provider() -> str:
+    """Read the embedding provider. Tests and CI stay on the deterministic default."""
+    value = environ.get("RAG_EMBEDDING_PROVIDER", "deterministic").strip().casefold()
+    if value not in {"deterministic", "openai"}:
+        raise ValueError("RAG_EMBEDDING_PROVIDER must be 'deterministic' or 'openai'")
+    return value
+
+
+def _embedding_model() -> str:
+    """Read the live embedding model name. It is stored with each cached vector."""
+    value = environ.get("RAG_EMBEDDING_MODEL", "text-embedding-3-small").strip()
+    if not value:
+        raise ValueError("RAG_EMBEDDING_MODEL must not be empty")
+    return value
+
+
+def _optional_positive_int(name: str) -> int | None:
+    """Read an optional positive integer. Blank means the provider default."""
+    raw = environ.get(name, "").strip()
+    if not raw:
+        return None
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a positive integer") from exc
+    if value < 1:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
 
 
 def _vector_store() -> str:

@@ -6,6 +6,7 @@ CareerOS uses one GitHub Actions workflow with three independent jobs.
 
 The backend job installs Python 3.12 dependencies, runs Ruff, compiles the application, and executes
 the full pytest suite. Tests use local deterministic providers and must not require an API key.
+`python -m scripts.semantic_embedding_smoke` is an optional live OpenAI check and is not part of CI.
 
 ```powershell
 cd backend
