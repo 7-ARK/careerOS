@@ -141,7 +141,52 @@ Labeled neighbor at rank 1: para-containers, para-python-web-framework, para-hum
 
 ### OpenAI semantic hybrid
 
-OPENAI_API_KEY is not set, so the semantic arm was not run. No OpenAI score was invented. Re-run `python -m scripts.retrieval_eval` from backend/ with OPENAI_API_KEY set. The default model is text-embedding-3-small. RAG_EMBEDDING_MODEL overrides it. Leave RAG_EMBEDDING_DIMENSIONS unset unless you intend to request a shortened vector.
+Provider `openai`, model `text-embedding-3-small`.
+Ranking: rank_evidence order (lexical 0.7 / vector 0.3).
+
+| Slice | Recall@1 | Recall@3 | MRR | Status accuracy | Unsupported FP | Near-miss FP | Neighbor at rank 1 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Overall | 13/14 | 14/14 | 0.9643 (n=14) | 19/24 | 0/5 | 0/5 | 1/10 |
+| exact | 8/8 | 8/8 | 1.0000 (n=8) | 8/8 | n/a | n/a | n/a |
+| paraphrase | 5/6 | 6/6 | 0.9167 (n=6) | 1/6 | n/a | n/a | 1/5 |
+| near-miss | n/a | n/a | n/a | 5/5 | n/a | 0/5 | 0/5 |
+| unsupported | n/a | n/a | n/a | 5/5 | 0/5 | n/a | n/a |
+
+
+OpenAI model `text-embedding-3-small` made 25 embedding request(s) and reported 961 prompt tokens.
+Cache hits 598, cache misses 50. Approximate list-price cost: 0.00001922 USD.
+Approximate list-price estimate from the published per-million-token table used by scripts.semantic_embedding_smoke. It is not an invoice.
+
+| Case | Category | Top 1 | Relevant rank | Status | FP | Neighbor |
+| --- | --- | --- | --- | --- | --- | --- |
+| exact-postman | exact | certification:Postman | 1 | matched (correct) | no | no |
+| exact-civic-tech | exact | experience:Civic Tech Lab | 1 | matched (correct) | no | no |
+| exact-northstar | exact | experience:Northstar Digital Studio | 1 | matched (correct) | no | no |
+| exact-legal-title | exact | project:Legal Document OCR and Extraction System | 1 | matched (correct) | no | no |
+| exact-job-tool-title | exact | project:Web Scraping and Job Data Extraction Tool | 1 | matched (correct) | no | no |
+| exact-rag-outcome | exact | project:AI Workflow Automation System | 1 | matched (correct) | no | no |
+| exact-education | exact | education:Metro Institute of Technology | 1 | matched (correct) | no | no |
+| exact-zapier | exact | skill:Zapier | 1 | matched (correct) | no | no |
+| para-ocr | paraphrase | project:Legal Document OCR and Extraction System | 1 | not_evidenced (incorrect) | no | no |
+| para-sql-expansion | paraphrase | experience:Civic Tech Lab | 1 | partially_matched (incorrect) | no | no |
+| para-containers | paraphrase | project:Legal Document OCR and Extraction System | 1 | partially_matched (incorrect) | no | no |
+| para-python-web-framework | paraphrase | project:Web Scraping and Job Data Extraction Tool | 2 | matched (correct) | no | yes |
+| para-human-approval | paraphrase | project:AI Workflow Automation System | 1 | partially_matched (incorrect) | no | no |
+| para-relational-databases | paraphrase | skill:SQL | 1 | partially_matched (incorrect) | no | no |
+| near-kubernetes | near-miss | skill:Docker | n/a | not_evidenced (correct) | no | no |
+| near-cicd | near-miss | skill:Docker | n/a | not_evidenced (correct) | no | no |
+| near-django | near-miss | experience:Northstar Digital Studio | n/a | not_evidenced (correct) | no | no |
+| near-spring | near-miss | project:AI Resume Automation / careerOS | n/a | not_evidenced (correct) | no | no |
+| near-attorney | near-miss | skill:LangGraph | n/a | not_evidenced (correct) | no | no |
+| unsup-aws | unsupported | profile | n/a | not_evidenced (correct) | no | no |
+| unsup-terraform | unsupported | skill:GitHub | n/a | not_evidenced (correct) | no | no |
+| unsup-salesforce | unsupported | experience:Northstar Digital Studio | n/a | not_evidenced (correct) | no | no |
+| unsup-swiftui | unsupported | skill:FastAPI | n/a | not_evidenced (correct) | no | no |
+| unsup-rust | unsupported | skill:GitHub | n/a | not_evidenced (correct) | no | no |
+
+Unsupported false positives: none.
+Near-miss false positives: none.
+Labeled neighbor at rank 1: para-python-web-framework.
 
 ## Cases helped or hurt
 
@@ -156,13 +201,37 @@ Hurt: para-ocr, para-python-web-framework.
 | para-sql-expansion | paraphrase | helped | unchanged | helped | relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False |
 | para-python-web-framework | paraphrase | hurt | unchanged | unchanged | relevant rank 2 -> 3; status matched -> matched; neighbor_ranked_first True -> True |
 
-OpenAI comparisons are omitted because the semantic arm did not run.
+### OpenAI semantic hybrid compared with lexical only
+
+Helped: para-ocr, para-sql-expansion, para-containers, para-human-approval, para-relational-databases.
+Hurt: none.
+
+| Case | Category | Retrieval | Status | Neighbor | Detail |
+| --- | --- | --- | --- | --- | --- |
+| para-ocr | paraphrase | helped | unchanged | unchanged | relevant rank 4 -> 1; status not_evidenced -> not_evidenced; neighbor_ranked_first False -> False |
+| para-sql-expansion | paraphrase | helped | unchanged | helped | relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False |
+| para-containers | paraphrase | helped | unchanged | helped | relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False |
+| para-human-approval | paraphrase | helped | unchanged | helped | relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False |
+| para-relational-databases | paraphrase | helped | unchanged | helped | relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False |
+
+### OpenAI semantic hybrid compared with feature-hash hybrid
+
+Helped: para-ocr, para-containers, para-python-web-framework, para-human-approval, para-relational-databases.
+Hurt: none.
+
+| Case | Category | Retrieval | Status | Neighbor | Detail |
+| --- | --- | --- | --- | --- | --- |
+| para-ocr | paraphrase | helped | unchanged | unchanged | relevant rank 5 -> 1; status not_evidenced -> not_evidenced; neighbor_ranked_first False -> False |
+| para-containers | paraphrase | helped | unchanged | helped | relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False |
+| para-python-web-framework | paraphrase | helped | unchanged | unchanged | relevant rank 3 -> 2; status matched -> matched; neighbor_ranked_first True -> True |
+| para-human-approval | paraphrase | helped | unchanged | helped | relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False |
+| para-relational-databases | paraphrase | helped | unchanged | helped | relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False |
 
 ## Recommendation
 
 Choice: **investigate**.
 
-Investigate the lexical status gate. Leave the 0.7 / 0.3 weights in place. Exact Recall@1 is 8/8 lexical and 8/8 feature-hash, with status 8/8 and 8/8. Unsupported false positives are 0/5 lexical and 0/5 feature-hash. Near-miss false positives are 0/5 lexical and 0/5 feature-hash. On the lexical arm, `unsup-aws` tops out at lexical 0.3333 on education:Metro Institute of Technology and stays `not_evidenced` under the explicit AWS phrase rule. Paraphrase Recall@1 is 0/6 lexical and 1/6 feature-hash. Paraphrase Recall@3 is 5/6 lexical and 5/6 feature-hash. `para-ocr` is outside the top 3 at rank 4 lexical and rank 5 feature-hash, with status `not_evidenced` and a top-hit lexical score of 0.0000. Paraphrase status accuracy is 1/6 lexical and 1/6 feature-hash. Paraphrase cases with a correct feature-hash status: `para-python-web-framework`. `para-python-web-framework` has feature-hash top hit project:Web Scraping and Job Data Extraction Tool at lexical 0.7500, a labeled distractor. Feature-hash versus lexical helped: para-sql-expansion. Hurt: para-ocr, para-python-web-framework. Status labels on those changed cases stayed the same. Overall Recall@1 is 8/14 lexical and 9/14 feature-hash. The OpenAI arm did not run. This file contains no semantic score. Re-run with OPENAI_API_KEY on this same fixture before treating live embeddings as measured. The measured rank movement is too small to justify a weight change, and a zero-lexical chunk stays below the product's 0.65 lexical bar for `matched`.
+Investigate the lexical status gate. Leave the 0.7 / 0.3 weights in place. Exact Recall@1 is 8/8 lexical and 8/8 feature-hash, with status 8/8 and 8/8. Unsupported false positives are 0/5 lexical and 0/5 feature-hash. Near-miss false positives are 0/5 lexical and 0/5 feature-hash. On the lexical arm, `unsup-aws` tops out at lexical 0.3333 on education:Metro Institute of Technology and stays `not_evidenced` under the explicit AWS phrase rule. Paraphrase Recall@1 is 0/6 lexical and 1/6 feature-hash. Paraphrase Recall@3 is 5/6 lexical and 5/6 feature-hash. `para-ocr` is outside the top 3 at rank 4 lexical and rank 5 feature-hash, with status `not_evidenced` and a top-hit lexical score of 0.0000. Paraphrase status accuracy is 1/6 lexical and 1/6 feature-hash. Paraphrase cases with a correct feature-hash status: `para-python-web-framework`. `para-python-web-framework` has feature-hash top hit project:Web Scraping and Job Data Extraction Tool at lexical 0.7500, a labeled distractor. Feature-hash versus lexical helped: para-sql-expansion. Hurt: para-ocr, para-python-web-framework. Status labels on those changed cases stayed the same. Overall Recall@1 is 8/14 lexical and 9/14 feature-hash. The OpenAI arm was measured. Quote its paraphrase recall and false-positive counts from this file before any weight edit. The measured rank movement is too small to justify a weight change, and a zero-lexical chunk stays below the product's 0.65 lexical bar for `matched`.
 
 This recommendation is not implemented.
 
