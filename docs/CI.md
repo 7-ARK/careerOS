@@ -6,7 +6,7 @@ CareerOS uses one GitHub Actions workflow with three independent jobs.
 
 The backend job installs Python 3.12 dependencies, runs Ruff, compiles the application, and executes
 the full pytest suite. Tests use local deterministic providers and must not require an API key.
-`python -m scripts.semantic_embedding_smoke` is an optional live OpenAI check and is not part of CI. It needs `OPENAI_API_KEY`, a PostgreSQL `DATABASE_URL` with pgvector, and defaults to `RAG_EMBEDDING_MODEL=text-embedding-3-small`.
+`python -m scripts.semantic_embedding_smoke` is an optional live OpenAI check and is not part of CI. It needs `OPENAI_API_KEY`, a PostgreSQL `DATABASE_URL` with pgvector, and defaults to `RAG_EMBEDDING_MODEL=text-embedding-3-small`. `python -m scripts.retrieval_eval` is also outside CI. Its lexical and feature-hash arms need no API key. The recorded results are summarized in the root [Evidence RAG / retrieval](../README.md#evidence-rag--retrieval) section.
 
 ```powershell
 cd backend
