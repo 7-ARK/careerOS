@@ -39,3 +39,19 @@ The command prints the query, retrieved evidence, lexical score, vector score,
 combined retrieval score, observed dimensions, persistence result, API request
 count, and an approximate list-price cost, then deletes the temporary smoke
 candidate.
+
+## Retrieval evaluation
+
+Curated 24-case comparison of lexical-only, feature-hash hybrid, and OpenAI
+semantic hybrid ranking. It calls the existing ranker and match-status rules.
+It does not change product weights or retrieval behavior.
+
+```powershell
+cd backend
+python -m scripts.retrieval_eval
+```
+
+Artifacts: `evals/results/results.json` and `evals/results/retrieval_report.md`.
+Lexical and feature-hash arms always run. The OpenAI arm runs only when
+`OPENAI_API_KEY` is set, caches vectors under `evals/cache/`, and never prints
+the key. `RAG_EMBEDDING_MODEL` defaults to `text-embedding-3-small`.

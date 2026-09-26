@@ -1,0 +1,3703 @@
+{
+  "benchmark": {
+    "name": "CareerOS curated retrieval benchmark",
+    "version": 1,
+    "fixture": "evals/fixtures/retrieval/retrieval_benchmark.json",
+    "corpus": "amina_rahman_demo_seed",
+    "corpus_source": "scripts.seed_candidate Amina Rahman demo profile, collected by CandidateEvidenceRetriever.collect",
+    "case_count": 24,
+    "category_counts": {
+      "exact": 8,
+      "paraphrase": 6,
+      "near_miss": 5,
+      "unsupported": 5
+    },
+    "corpus_chunks": [
+      {
+        "key": "profile",
+        "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+        "category": "profile",
+        "content_hash": "04108fa57181fd55fb964067ad55329b320930cfc06a059926d2d1552d1425c6",
+        "text": "AI Automation and Backend Developer Early-career backend developer focused on Python, FastAPI, AI-assisted workflow automation, structured-data extraction, and practical browser automation. Builds maintainable API services and evidence-backed automation tools for document and job workflows. Remote"
+      },
+      {
+        "key": "skill:Python",
+        "evidence_id": "skill-dae8c339-b05a-598c-aefa-15fcb46c7e38",
+        "category": "skill",
+        "content_hash": "31cf74a19cf45eb2f1a6d698a5fda47161b0ca3faf36ec0d3a28e37d4c4ef175",
+        "text": "Python. Category: Programming Languages. Candidate-reported experience: 2.50 years."
+      },
+      {
+        "key": "skill:FastAPI",
+        "evidence_id": "skill-b0af0c44-42a7-505d-8372-34d1e24f995b",
+        "category": "skill",
+        "content_hash": "8c12f2577e8a131fa2479d863ad954e358eb2812192864355fc15e163fce4edc",
+        "text": "FastAPI. Category: Backend Development. Candidate-reported experience: 1.75 years."
+      },
+      {
+        "key": "skill:SQL",
+        "evidence_id": "skill-1358a456-efa7-5456-84ef-4b0c004a8dd5",
+        "category": "skill",
+        "content_hash": "bca22f276d55bc8f29aef8f4e3ea5e2013a7e3995ee14114b0c081e475ded0e8",
+        "text": "SQL. Category: Databases. Candidate-reported experience: 2.00 years."
+      },
+      {
+        "key": "skill:PostgreSQL",
+        "evidence_id": "skill-4c473af2-0247-5222-bef0-17e562e5b2e6",
+        "category": "skill",
+        "content_hash": "624aa24fe6b794d7e882d4657de0a61e9f0e9d1fe6c323d582b355defd2c5ccc",
+        "text": "PostgreSQL. Category: Databases. Candidate-reported experience: 1.75 years."
+      },
+      {
+        "key": "skill:APIs",
+        "evidence_id": "skill-4ef105f1-2137-59cc-9aa7-1453d52f12be",
+        "category": "skill",
+        "content_hash": "157806c8707f803c72d61910f15974dcc902760447256410ce87cbe88c147e38",
+        "text": "APIs. Category: Backend Development. Candidate-reported experience: 2.00 years."
+      },
+      {
+        "key": "skill:Webhooks",
+        "evidence_id": "skill-be2f0883-b7ca-5133-b1d9-e84fb4317419",
+        "category": "skill",
+        "content_hash": "bfc523993beb25d0cb431ab6c4bc5f6449ee4dfcf1f6300ff6d54c03962f9897",
+        "text": "Webhooks. Category: Backend Development. Candidate-reported experience: 1.50 years."
+      },
+      {
+        "key": "skill:Playwright",
+        "evidence_id": "skill-ae34876f-cfb2-5555-b475-b111014c3a7f",
+        "category": "skill",
+        "content_hash": "4afe778a5f0532842a9c97369efb39d8980dcdfc0ce98c56a4c1ab02e6380be9",
+        "text": "Playwright. Category: Browser Automation. Candidate-reported experience: 1.50 years."
+      },
+      {
+        "key": "skill:Selenium",
+        "evidence_id": "skill-f73d623f-82d3-58e4-a69f-578d16340a83",
+        "category": "skill",
+        "content_hash": "674c97b27f86690eb16f774710bab1bba16bf0587154bbd8f46553b9d744852e",
+        "text": "Selenium. Category: Browser Automation. Candidate-reported experience: 1.25 years."
+      },
+      {
+        "key": "skill:OpenAI API",
+        "evidence_id": "skill-fbac0361-b6a3-5154-a5a4-9f58147a92af",
+        "category": "skill",
+        "content_hash": "1a4856994552b4358e592d932f099ad2ce4a8bf8f31512eecfc4f974d89228ed",
+        "text": "OpenAI API. Category: AI Engineering. Candidate-reported experience: 1.75 years."
+      },
+      {
+        "key": "skill:LangGraph",
+        "evidence_id": "skill-b9f0d00a-055c-5de2-944a-1d66cf96c91a",
+        "category": "skill",
+        "content_hash": "6bee312cea9e737434d7b5626bda2944f821c50420a431a930de468ed7b3b87b",
+        "text": "LangGraph. Category: AI Engineering. Candidate-reported experience: 1.00 years."
+      },
+      {
+        "key": "skill:LangChain",
+        "evidence_id": "skill-33963f36-a7cb-5b5b-bd53-565ca0485109",
+        "category": "skill",
+        "content_hash": "1107d797c7c6fcd1079ed30f6b1a665f9e9e333778e2ccd6232bccb0c527da74",
+        "text": "LangChain. Category: AI Engineering. Candidate-reported experience: 1.25 years."
+      },
+      {
+        "key": "skill:RAG",
+        "evidence_id": "skill-34cd7b5e-528f-52af-8c4d-078f3598df46",
+        "category": "skill",
+        "content_hash": "47424ada6a27ca78d9efd646421d11940853fb672d7697bb39a53b8ac85eb978",
+        "text": "RAG. Category: AI Engineering. Candidate-reported experience: 1.25 years."
+      },
+      {
+        "key": "skill:Docker",
+        "evidence_id": "skill-26f03051-92d2-5b52-b69e-b7f693d62e62",
+        "category": "skill",
+        "content_hash": "68bf5e9270c0c941bf1a78a9b16705703fd9bd2b76da5628b654d4d6a021436b",
+        "text": "Docker. Category: Developer Tools. Candidate-reported experience: 1.50 years."
+      },
+      {
+        "key": "skill:GitHub",
+        "evidence_id": "skill-8121e802-b09b-56df-91f6-63b80f95bb16",
+        "category": "skill",
+        "content_hash": "8df410cbb380619815401e1de2d5903971be2280ffead2abc51586b8aba62ced",
+        "text": "GitHub. Category: Developer Tools. Candidate-reported experience: 2.50 years."
+      },
+      {
+        "key": "skill:Automation",
+        "evidence_id": "skill-07e3d68f-de8d-5053-97d9-8a5937e9d895",
+        "category": "skill",
+        "content_hash": "82e1498463f4753363a612972c888277360e2f232a1fe0ac94ec7050f92f1081",
+        "text": "Automation. Category: Workflow Automation. Candidate-reported experience: 2.00 years."
+      },
+      {
+        "key": "skill:n8n",
+        "evidence_id": "skill-8b9fb393-0a0c-5b15-9990-cbb767235dec",
+        "category": "skill",
+        "content_hash": "7059e0b21acc5bc6d92ad3c77bdaf3197a9cf09a27f41c19e8753767d5ab4597",
+        "text": "n8n. Category: Workflow Automation. Candidate-reported experience: 1.00 years."
+      },
+      {
+        "key": "skill:Zapier",
+        "evidence_id": "skill-177ed479-c76c-5dc2-952b-2e2c3777f7d6",
+        "category": "skill",
+        "content_hash": "f0ddf5dee94dfc0e9fab5ed185e8dedf47fa09584a1bbba38cd35939ea422410",
+        "text": "Zapier. Category: Workflow Automation. Candidate-reported experience: 1.25 years."
+      },
+      {
+        "key": "project:AI Resume Automation / careerOS",
+        "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+        "category": "project",
+        "content_hash": "f54e6c1938203fd584a048efbbc04edfebe2b8823a26272a1270b5dd92563a6b",
+        "text": "AI Resume Automation / careerOS Built a Python and FastAPI career workflow backend that stores candidate knowledge, analyzes job descriptions, drafts evidence-backed resumes, generates PDF documents, and tracks application records. Technologies: Python, FastAPI, PostgreSQL, SQL, Playwright, Docker Verified outcomes: Generated resume documents from structured candidate evidence.; Tracked application and job records through API-based backend services.; Integrated browser automation for authorized public job-page extraction."
+      },
+      {
+        "key": "project:Legal Document OCR and Extraction System",
+        "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+        "category": "project",
+        "content_hash": "d1a98b394870731e65e5c28329c5a3e94f7333199e0349466aa72ef4cdc2f94c",
+        "text": "Legal Document OCR and Extraction System Created a document-processing service that converts OCR text into validated structured records and exposes extraction results through FastAPI endpoints. Technologies: Python, FastAPI, PostgreSQL, SQL, Docker Verified outcomes: Extracted structured data from unstructured legal-document text.; Reduced repetitive review work with validation-driven automation.; Built API-based backend services for document records."
+      },
+      {
+        "key": "project:AI Workflow Automation System",
+        "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+        "category": "project",
+        "content_hash": "d3adc9ef589e0892476bd99d6cefe4285baf371f7576a1835c8dc61c649591f1",
+        "text": "AI Workflow Automation System Designed webhook-driven AI workflows for intake, retrieval-augmented generation, human review, and downstream notifications. Technologies: Python, OpenAI API, LangGraph, LangChain, RAG, Webhooks, n8n, Zapier Verified outcomes: Automated repetitive workflows while preserving review checkpoints.; Connected APIs and webhooks across AI-assisted workflow stages.; Used RAG patterns to ground generated responses in retrieved context."
+      },
+      {
+        "key": "project:Web Scraping and Job Data Extraction Tool",
+        "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+        "category": "project",
+        "content_hash": "88c372f96dad3358b58c8e42c686a98b492677f87041b56d018e745115b561e7",
+        "text": "Web Scraping and Job Data Extraction Tool Developed an authorized public-page extraction tool that uses Playwright and Selenium to capture visible job content and normalize posting details. Technologies: Python, Playwright, Selenium, APIs, Docker Verified outcomes: Integrated browser automation for repeatable visible-page extraction.; Extracted structured job data from unstructured posting text.; Added validation and warnings for incomplete extraction results."
+      },
+      {
+        "key": "experience:Northstar Digital Studio",
+        "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+        "category": "experience",
+        "content_hash": "0babf2ac9766bb5d1008db442dbc83354a34cb331c46a7f79a8022f0dcdddfb7",
+        "text": "Junior Backend and Automation Developer at Northstar Digital Studio. Builds Python backend services and workflow automations for internal operations, document processing, and data collection. Verified achievements: Built FastAPI endpoints and PostgreSQL-backed services for structured records.; Automated repetitive workflows with APIs, webhooks, n8n, and Zapier.; Integrated Playwright browser automation for authorized data-collection tasks.; Added Docker-based local environments and GitHub pull-request workflows."
+      },
+      {
+        "key": "experience:Civic Tech Lab",
+        "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+        "category": "experience",
+        "content_hash": "71a2bbd3f7e6386e53281eb1d877ee87204cbdcff68500bacdad86ff442dbe13",
+        "text": "Software Automation Intern at Civic Tech Lab. Supported a small engineering team building Python utilities for document processing and structured-data extraction. Verified achievements: Extracted structured data from unstructured text and OCR output.; Created SQL queries and validation checks for document-processing records.; Wrote maintainable automation scripts and documented repeatable workflows."
+      },
+      {
+        "key": "education:Metro Institute of Technology",
+        "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+        "category": "education",
+        "content_hash": "7ffde01bc2c6618424cd050a7160889e7715a6bf2d3e786d19251297735fea98",
+        "text": "Bachelor of Science Computer Science at Metro Institute of Technology Studied software engineering, databases, web development, and applied machine-learning fundamentals."
+      },
+      {
+        "key": "certification:Postman",
+        "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+        "category": "certification",
+        "content_hash": "7c13f921a1d596dcceb7dba448e3dd084d2baa0a5bb7ab00a91329b59daad919",
+        "text": "Postman API Fundamentals Student Expert issued by Postman."
+      }
+    ],
+    "status_labels": [
+      "matched",
+      "partially_matched",
+      "not_evidenced",
+      "not_applicable"
+    ],
+    "status_top_k": 3,
+    "hybrid_ranking": "rank_evidence lexical 0.7 / vector 0.3; no reranker; no ANN",
+    "recall_scope": "Recall@k and MRR average only cases with relevant evidence (exact and paraphrase). Near-miss and unsupported cases have no relevant chunk, so those metrics are omitted there.",
+    "false_positive_definition": "An unsupported false positive is an unsupported case whose predicted status is matched or partially_matched. Near-miss false positives use the same status rule. neighbor_ranked_first means rank 1 is a labeled distractor with lexical_score > 0, or, for hybrid modes, vector_score >= 0.45."
+  },
+  "modes": {
+    "lexical": {
+      "ran": true,
+      "provider_name": "deterministic_local",
+      "model_name": "feature-hash-v1",
+      "metrics": {
+        "overall": {
+          "cases": 24,
+          "recall_at_1": {
+            "hits": 8,
+            "cases": 14,
+            "mean": 0.571429
+          },
+          "recall_at_3": {
+            "hits": 13,
+            "cases": 14,
+            "mean": 0.928571
+          },
+          "mrr": {
+            "mean": 0.767857,
+            "graded_cases": 14
+          },
+          "status_accuracy": {
+            "hits": 19,
+            "cases": 24,
+            "mean": 0.791667
+          },
+          "unsupported_false_positives": {
+            "count": 0,
+            "cases": 5,
+            "case_ids": []
+          },
+          "near_miss_false_positives": {
+            "count": 0,
+            "cases": 5,
+            "case_ids": []
+          },
+          "neighbor_ranked_first": {
+            "count": 5,
+            "cases": 10,
+            "case_ids": [
+              "para-sql-expansion",
+              "para-containers",
+              "para-python-web-framework",
+              "para-human-approval",
+              "para-relational-databases"
+            ]
+          }
+        },
+        "by_category": {
+          "exact": {
+            "cases": 8,
+            "recall_at_1": {
+              "hits": 8,
+              "cases": 8,
+              "mean": 1.0
+            },
+            "recall_at_3": {
+              "hits": 8,
+              "cases": 8,
+              "mean": 1.0
+            },
+            "mrr": {
+              "mean": 1.0,
+              "graded_cases": 8
+            },
+            "status_accuracy": {
+              "hits": 8,
+              "cases": 8,
+              "mean": 1.0
+            },
+            "unsupported_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "near_miss_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "neighbor_ranked_first": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            }
+          },
+          "paraphrase": {
+            "cases": 6,
+            "recall_at_1": {
+              "hits": 0,
+              "cases": 6,
+              "mean": 0.0
+            },
+            "recall_at_3": {
+              "hits": 5,
+              "cases": 6,
+              "mean": 0.833333
+            },
+            "mrr": {
+              "mean": 0.458333,
+              "graded_cases": 6
+            },
+            "status_accuracy": {
+              "hits": 1,
+              "cases": 6,
+              "mean": 0.166667
+            },
+            "unsupported_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "near_miss_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "neighbor_ranked_first": {
+              "count": 5,
+              "cases": 5,
+              "case_ids": [
+                "para-sql-expansion",
+                "para-containers",
+                "para-python-web-framework",
+                "para-human-approval",
+                "para-relational-databases"
+              ]
+            }
+          },
+          "near_miss": {
+            "cases": 5,
+            "recall_at_1": {
+              "hits": 0,
+              "cases": 0,
+              "mean": null
+            },
+            "recall_at_3": {
+              "hits": 0,
+              "cases": 0,
+              "mean": null
+            },
+            "mrr": {
+              "mean": null,
+              "graded_cases": 0
+            },
+            "status_accuracy": {
+              "hits": 5,
+              "cases": 5,
+              "mean": 1.0
+            },
+            "unsupported_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "near_miss_false_positives": {
+              "count": 0,
+              "cases": 5,
+              "case_ids": []
+            },
+            "neighbor_ranked_first": {
+              "count": 0,
+              "cases": 5,
+              "case_ids": []
+            }
+          },
+          "unsupported": {
+            "cases": 5,
+            "recall_at_1": {
+              "hits": 0,
+              "cases": 0,
+              "mean": null
+            },
+            "recall_at_3": {
+              "hits": 0,
+              "cases": 0,
+              "mean": null
+            },
+            "mrr": {
+              "mean": null,
+              "graded_cases": 0
+            },
+            "status_accuracy": {
+              "hits": 5,
+              "cases": 5,
+              "mean": 1.0
+            },
+            "unsupported_false_positives": {
+              "count": 0,
+              "cases": 5,
+              "case_ids": []
+            },
+            "near_miss_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "neighbor_ranked_first": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            }
+          }
+        }
+      },
+      "cases": [
+        {
+          "id": "exact-postman",
+          "category": "exact",
+          "query": "Postman API Fundamentals Student Expert",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "certification:Postman"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "1.0000",
+              "vector_score": "0.8085",
+              "retrieval_score": "0.9425"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.2000",
+              "vector_score": "0.0934",
+              "retrieval_score": "0.1680"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.2000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.1400"
+            },
+            {
+              "rank": 4,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.2000",
+              "vector_score": "0.0639",
+              "retrieval_score": "0.1592"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.2000",
+              "vector_score": "0.1038",
+              "retrieval_score": "0.1711"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-civic-tech",
+          "category": "exact",
+          "query": "Civic Tech Lab",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "experience:Civic Tech Lab"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "1.0000",
+              "vector_score": "0.2016",
+              "retrieval_score": "0.7605"
+            },
+            {
+              "rank": 2,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0626",
+              "retrieval_score": "0.0188"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-northstar",
+          "category": "exact",
+          "query": "Northstar Digital Studio",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "experience:Northstar Digital Studio"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "1.0000",
+              "vector_score": "0.2853",
+              "retrieval_score": "0.7856"
+            },
+            {
+              "rank": 2,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0403",
+              "retrieval_score": "0.0121"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0857",
+              "retrieval_score": "0.0257"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-legal-title",
+          "category": "exact",
+          "query": "Legal Document OCR and Extraction System",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "project:Legal Document OCR and Extraction System"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "1.0000",
+              "vector_score": "0.4242",
+              "retrieval_score": "0.8273"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.6667",
+              "vector_score": "0.2104",
+              "retrieval_score": "0.5298"
+            },
+            {
+              "rank": 3,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0319",
+              "retrieval_score": "0.3596"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0236",
+              "retrieval_score": "0.2404"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-job-tool-title",
+          "category": "exact",
+          "query": "Web Scraping and Job Data Extraction Tool",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "project:Web Scraping and Job Data Extraction Tool"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "1.0000",
+              "vector_score": "0.4225",
+              "retrieval_score": "0.8268"
+            },
+            {
+              "rank": 2,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.5714",
+              "vector_score": "0.1733",
+              "retrieval_score": "0.4520"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.4286",
+              "vector_score": "0.0816",
+              "retrieval_score": "0.3245"
+            },
+            {
+              "rank": 4,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.4286",
+              "vector_score": "0.0751",
+              "retrieval_score": "0.3225"
+            },
+            {
+              "rank": 5,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.4286",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-rag-outcome",
+          "category": "exact",
+          "query": "Used RAG patterns to ground generated responses in retrieved context.",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "project:AI Workflow Automation System"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "1.0000",
+              "vector_score": "0.4108",
+              "retrieval_score": "0.8232"
+            },
+            {
+              "rank": 2,
+              "key": "skill:RAG",
+              "evidence_id": "skill-34cd7b5e-528f-52af-8c4d-078f3598df46",
+              "lexical_score": "0.1818",
+              "vector_score": "0.2003",
+              "retrieval_score": "0.1873"
+            },
+            {
+              "rank": 3,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.0909",
+              "vector_score": "0.0357",
+              "retrieval_score": "0.0744"
+            },
+            {
+              "rank": 4,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.0909",
+              "vector_score": "0.0381",
+              "retrieval_score": "0.0751"
+            },
+            {
+              "rank": 5,
+              "key": "skill:LangChain",
+              "evidence_id": "skill-33963f36-a7cb-5b5b-bd53-565ca0485109",
+              "lexical_score": "0.0909",
+              "vector_score": "0.1001",
+              "retrieval_score": "0.0937"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-education",
+          "category": "exact",
+          "query": "Bachelor of Science Computer Science at Metro Institute of Technology",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "education:Metro Institute of Technology"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "1.0000",
+              "vector_score": "0.7299",
+              "retrieval_score": "0.9190"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.1250",
+              "vector_score": "0.0887",
+              "retrieval_score": "0.1141"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.1250",
+              "vector_score": "0.1504",
+              "retrieval_score": "0.1326"
+            },
+            {
+              "rank": 4,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.1250",
+              "vector_score": "0.0325",
+              "retrieval_score": "0.0972"
+            },
+            {
+              "rank": 5,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.1250",
+              "vector_score": "0.0487",
+              "retrieval_score": "0.1021"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-zapier",
+          "category": "exact",
+          "query": "Zapier",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "skill:Zapier",
+            "project:AI Workflow Automation System",
+            "experience:Northstar Digital Studio"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "1.0000",
+              "vector_score": "0.0709",
+              "retrieval_score": "0.7213"
+            },
+            {
+              "rank": 2,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "1.0000",
+              "vector_score": "0.1557",
+              "retrieval_score": "0.7467"
+            },
+            {
+              "rank": 3,
+              "key": "skill:Zapier",
+              "evidence_id": "skill-177ed479-c76c-5dc2-952b-2e2c3777f7d6",
+              "lexical_score": "1.0000",
+              "vector_score": "0.2425",
+              "retrieval_score": "0.7728"
+            },
+            {
+              "rank": 4,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "para-ocr",
+          "category": "paraphrase",
+          "query": "optical character recognition",
+          "expected_status": "matched",
+          "predicted_status": "not_evidenced",
+          "status_correct": false,
+          "relevant_keys": [
+            "project:Legal Document OCR and Extraction System",
+            "experience:Civic Tech Lab"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 4,
+          "relevant_found": true,
+          "reciprocal_rank": 0.25,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0626",
+              "retrieval_score": "0.0188"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0317",
+              "retrieval_score": "0.0095"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0857",
+              "retrieval_score": "0.0257"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "para-sql-expansion",
+          "category": "paraphrase",
+          "query": "structured query language",
+          "expected_status": "matched",
+          "predicted_status": "partially_matched",
+          "status_correct": false,
+          "relevant_keys": [
+            "skill:SQL",
+            "project:AI Resume Automation / careerOS",
+            "project:Legal Document OCR and Extraction System",
+            "experience:Civic Tech Lab"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 2,
+          "relevant_found": true,
+          "reciprocal_rank": 0.5,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0951",
+              "retrieval_score": "0.2619"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0806",
+              "retrieval_score": "0.2575"
+            },
+            {
+              "rank": 3,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            },
+            {
+              "rank": 4,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "para-containers",
+          "category": "paraphrase",
+          "query": "operating-system level containers",
+          "expected_status": "matched",
+          "predicted_status": "partially_matched",
+          "status_correct": false,
+          "relevant_keys": [
+            "skill:Docker",
+            "project:AI Resume Automation / careerOS",
+            "project:Legal Document OCR and Extraction System",
+            "project:Web Scraping and Job Data Extraction Tool",
+            "experience:Northstar Digital Studio"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 2,
+          "relevant_found": true,
+          "reciprocal_rank": 0.5,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.2500",
+              "vector_score": "0.0294",
+              "retrieval_score": "0.1838"
+            },
+            {
+              "rank": 2,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.2500",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.1750"
+            },
+            {
+              "rank": 3,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "para-python-web-framework",
+          "category": "paraphrase",
+          "query": "Python web API framework",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "profile",
+            "skill:FastAPI",
+            "project:AI Resume Automation / careerOS",
+            "project:Legal Document OCR and Extraction System",
+            "experience:Northstar Digital Studio"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 2,
+          "relevant_found": true,
+          "reciprocal_rank": 0.5,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.7500",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.5250"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3500"
+            },
+            {
+              "rank": 3,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3500"
+            },
+            {
+              "rank": 4,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0588",
+              "retrieval_score": "0.3677"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0314",
+              "retrieval_score": "0.3594"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "para-human-approval",
+          "category": "paraphrase",
+          "query": "human approval of machine-generated text",
+          "expected_status": "matched",
+          "predicted_status": "partially_matched",
+          "status_correct": false,
+          "relevant_keys": [
+            "project:AI Workflow Automation System"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 2,
+          "relevant_found": true,
+          "reciprocal_rank": 0.5,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.3333",
+              "vector_score": "0.1267",
+              "retrieval_score": "0.2713"
+            },
+            {
+              "rank": 2,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0235",
+              "retrieval_score": "0.2404"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.1667",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.1167"
+            },
+            {
+              "rank": 4,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.1667",
+              "vector_score": "0.0939",
+              "retrieval_score": "0.1448"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.1667",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.1167"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "para-relational-databases",
+          "category": "paraphrase",
+          "query": "relational databases",
+          "expected_status": "matched",
+          "predicted_status": "partially_matched",
+          "status_correct": false,
+          "relevant_keys": [
+            "skill:SQL",
+            "skill:PostgreSQL",
+            "project:AI Resume Automation / careerOS",
+            "project:Legal Document OCR and Extraction System",
+            "experience:Northstar Digital Studio",
+            "experience:Civic Tech Lab"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 2,
+          "relevant_found": true,
+          "reciprocal_rank": 0.5,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.5000",
+              "vector_score": "0.2425",
+              "retrieval_score": "0.4228"
+            },
+            {
+              "rank": 2,
+              "key": "skill:SQL",
+              "evidence_id": "skill-1358a456-efa7-5456-84ef-4b0c004a8dd5",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3500"
+            },
+            {
+              "rank": 3,
+              "key": "skill:PostgreSQL",
+              "evidence_id": "skill-4c473af2-0247-5222-bef0-17e562e5b2e6",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3500"
+            },
+            {
+              "rank": 4,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-kubernetes",
+          "category": "near_miss",
+          "query": "Kubernetes",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-cicd",
+          "category": "near_miss",
+          "query": "CI/CD",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-django",
+          "category": "near_miss",
+          "query": "Django",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-spring",
+          "category": "near_miss",
+          "query": "Java Spring Boot",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0317",
+              "retrieval_score": "0.0095"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0403",
+              "retrieval_score": "0.0121"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-attorney",
+          "category": "near_miss",
+          "query": "licensed attorney",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0409",
+              "retrieval_score": "0.0123"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "unsup-aws",
+          "category": "unsupported",
+          "query": "Amazon Web Services",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0634",
+              "retrieval_score": "0.2524"
+            },
+            {
+              "rank": 3,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0857",
+              "retrieval_score": "0.2590"
+            },
+            {
+              "rank": 4,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "unsup-terraform",
+          "category": "unsupported",
+          "query": "Terraform",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0709",
+              "retrieval_score": "0.0213"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "unsup-salesforce",
+          "category": "unsupported",
+          "query": "Salesforce",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1400",
+              "retrieval_score": "0.0420"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "unsup-swiftui",
+          "category": "unsupported",
+          "query": "SwiftUI",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0902",
+              "retrieval_score": "0.0271"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "unsup-rust",
+          "category": "unsupported",
+          "query": "Rust",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        }
+      ],
+      "mode": "lexical",
+      "ranking": "lexical_score desc, evidence_id asc",
+      "status_vector_policy": "vector_score forced to 0 before status"
+    },
+    "feature_hash_hybrid": {
+      "ran": true,
+      "provider_name": "deterministic_local",
+      "model_name": "feature-hash-v1",
+      "metrics": {
+        "overall": {
+          "cases": 24,
+          "recall_at_1": {
+            "hits": 9,
+            "cases": 14,
+            "mean": 0.642857
+          },
+          "recall_at_3": {
+            "hits": 13,
+            "cases": 14,
+            "mean": 0.928571
+          },
+          "mrr": {
+            "mean": 0.788095,
+            "graded_cases": 14
+          },
+          "status_accuracy": {
+            "hits": 19,
+            "cases": 24,
+            "mean": 0.791667
+          },
+          "unsupported_false_positives": {
+            "count": 0,
+            "cases": 5,
+            "case_ids": []
+          },
+          "near_miss_false_positives": {
+            "count": 0,
+            "cases": 5,
+            "case_ids": []
+          },
+          "neighbor_ranked_first": {
+            "count": 4,
+            "cases": 10,
+            "case_ids": [
+              "para-containers",
+              "para-python-web-framework",
+              "para-human-approval",
+              "para-relational-databases"
+            ]
+          }
+        },
+        "by_category": {
+          "exact": {
+            "cases": 8,
+            "recall_at_1": {
+              "hits": 8,
+              "cases": 8,
+              "mean": 1.0
+            },
+            "recall_at_3": {
+              "hits": 8,
+              "cases": 8,
+              "mean": 1.0
+            },
+            "mrr": {
+              "mean": 1.0,
+              "graded_cases": 8
+            },
+            "status_accuracy": {
+              "hits": 8,
+              "cases": 8,
+              "mean": 1.0
+            },
+            "unsupported_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "near_miss_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "neighbor_ranked_first": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            }
+          },
+          "paraphrase": {
+            "cases": 6,
+            "recall_at_1": {
+              "hits": 1,
+              "cases": 6,
+              "mean": 0.166667
+            },
+            "recall_at_3": {
+              "hits": 5,
+              "cases": 6,
+              "mean": 0.833333
+            },
+            "mrr": {
+              "mean": 0.505556,
+              "graded_cases": 6
+            },
+            "status_accuracy": {
+              "hits": 1,
+              "cases": 6,
+              "mean": 0.166667
+            },
+            "unsupported_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "near_miss_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "neighbor_ranked_first": {
+              "count": 4,
+              "cases": 5,
+              "case_ids": [
+                "para-containers",
+                "para-python-web-framework",
+                "para-human-approval",
+                "para-relational-databases"
+              ]
+            }
+          },
+          "near_miss": {
+            "cases": 5,
+            "recall_at_1": {
+              "hits": 0,
+              "cases": 0,
+              "mean": null
+            },
+            "recall_at_3": {
+              "hits": 0,
+              "cases": 0,
+              "mean": null
+            },
+            "mrr": {
+              "mean": null,
+              "graded_cases": 0
+            },
+            "status_accuracy": {
+              "hits": 5,
+              "cases": 5,
+              "mean": 1.0
+            },
+            "unsupported_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "near_miss_false_positives": {
+              "count": 0,
+              "cases": 5,
+              "case_ids": []
+            },
+            "neighbor_ranked_first": {
+              "count": 0,
+              "cases": 5,
+              "case_ids": []
+            }
+          },
+          "unsupported": {
+            "cases": 5,
+            "recall_at_1": {
+              "hits": 0,
+              "cases": 0,
+              "mean": null
+            },
+            "recall_at_3": {
+              "hits": 0,
+              "cases": 0,
+              "mean": null
+            },
+            "mrr": {
+              "mean": null,
+              "graded_cases": 0
+            },
+            "status_accuracy": {
+              "hits": 5,
+              "cases": 5,
+              "mean": 1.0
+            },
+            "unsupported_false_positives": {
+              "count": 0,
+              "cases": 5,
+              "case_ids": []
+            },
+            "near_miss_false_positives": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            },
+            "neighbor_ranked_first": {
+              "count": 0,
+              "cases": 0,
+              "case_ids": []
+            }
+          }
+        }
+      },
+      "cases": [
+        {
+          "id": "exact-postman",
+          "category": "exact",
+          "query": "Postman API Fundamentals Student Expert",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "certification:Postman"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "1.0000",
+              "vector_score": "0.8085",
+              "retrieval_score": "0.9425"
+            },
+            {
+              "rank": 2,
+              "key": "skill:OpenAI API",
+              "evidence_id": "skill-fbac0361-b6a3-5154-a5a4-9f58147a92af",
+              "lexical_score": "0.2000",
+              "vector_score": "0.1390",
+              "retrieval_score": "0.1817"
+            },
+            {
+              "rank": 3,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.2000",
+              "vector_score": "0.1038",
+              "retrieval_score": "0.1711"
+            },
+            {
+              "rank": 4,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.2000",
+              "vector_score": "0.0934",
+              "retrieval_score": "0.1680"
+            },
+            {
+              "rank": 5,
+              "key": "skill:APIs",
+              "evidence_id": "skill-4ef105f1-2137-59cc-9aa7-1453d52f12be",
+              "lexical_score": "0.2000",
+              "vector_score": "0.0808",
+              "retrieval_score": "0.1643"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-civic-tech",
+          "category": "exact",
+          "query": "Civic Tech Lab",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "experience:Civic Tech Lab"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "1.0000",
+              "vector_score": "0.2016",
+              "retrieval_score": "0.7605"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0626",
+              "retrieval_score": "0.0188"
+            },
+            {
+              "rank": 3,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-northstar",
+          "category": "exact",
+          "query": "Northstar Digital Studio",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "experience:Northstar Digital Studio"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "1.0000",
+              "vector_score": "0.2853",
+              "retrieval_score": "0.7856"
+            },
+            {
+              "rank": 2,
+              "key": "skill:Webhooks",
+              "evidence_id": "skill-be2f0883-b7ca-5133-b1d9-e84fb4317419",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1085",
+              "retrieval_score": "0.0325"
+            },
+            {
+              "rank": 3,
+              "key": "skill:GitHub",
+              "evidence_id": "skill-8121e802-b09b-56df-91f6-63b80f95bb16",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1026",
+              "retrieval_score": "0.0308"
+            },
+            {
+              "rank": 4,
+              "key": "skill:Python",
+              "evidence_id": "skill-dae8c339-b05a-598c-aefa-15fcb46c7e38",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1026",
+              "retrieval_score": "0.0308"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0857",
+              "retrieval_score": "0.0257"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-legal-title",
+          "category": "exact",
+          "query": "Legal Document OCR and Extraction System",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "project:Legal Document OCR and Extraction System"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "1.0000",
+              "vector_score": "0.4242",
+              "retrieval_score": "0.8273"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.6667",
+              "vector_score": "0.2104",
+              "retrieval_score": "0.5298"
+            },
+            {
+              "rank": 3,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0319",
+              "retrieval_score": "0.3596"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0236",
+              "retrieval_score": "0.2404"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-job-tool-title",
+          "category": "exact",
+          "query": "Web Scraping and Job Data Extraction Tool",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "project:Web Scraping and Job Data Extraction Tool"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "1.0000",
+              "vector_score": "0.4225",
+              "retrieval_score": "0.8268"
+            },
+            {
+              "rank": 2,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.5714",
+              "vector_score": "0.1733",
+              "retrieval_score": "0.4520"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.4286",
+              "vector_score": "0.0816",
+              "retrieval_score": "0.3245"
+            },
+            {
+              "rank": 4,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.4286",
+              "vector_score": "0.0751",
+              "retrieval_score": "0.3225"
+            },
+            {
+              "rank": 5,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.4286",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-rag-outcome",
+          "category": "exact",
+          "query": "Used RAG patterns to ground generated responses in retrieved context.",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "project:AI Workflow Automation System"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "1.0000",
+              "vector_score": "0.4108",
+              "retrieval_score": "0.8232"
+            },
+            {
+              "rank": 2,
+              "key": "skill:RAG",
+              "evidence_id": "skill-34cd7b5e-528f-52af-8c4d-078f3598df46",
+              "lexical_score": "0.1818",
+              "vector_score": "0.2003",
+              "retrieval_score": "0.1873"
+            },
+            {
+              "rank": 3,
+              "key": "skill:LangGraph",
+              "evidence_id": "skill-b9f0d00a-055c-5de2-944a-1d66cf96c91a",
+              "lexical_score": "0.0909",
+              "vector_score": "0.1053",
+              "retrieval_score": "0.0952"
+            },
+            {
+              "rank": 4,
+              "key": "skill:LangChain",
+              "evidence_id": "skill-33963f36-a7cb-5b5b-bd53-565ca0485109",
+              "lexical_score": "0.0909",
+              "vector_score": "0.1001",
+              "retrieval_score": "0.0937"
+            },
+            {
+              "rank": 5,
+              "key": "skill:OpenAI API",
+              "evidence_id": "skill-fbac0361-b6a3-5154-a5a4-9f58147a92af",
+              "lexical_score": "0.0909",
+              "vector_score": "0.0957",
+              "retrieval_score": "0.0923"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-education",
+          "category": "exact",
+          "query": "Bachelor of Science Computer Science at Metro Institute of Technology",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "education:Metro Institute of Technology"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "1.0000",
+              "vector_score": "0.7299",
+              "retrieval_score": "0.9190"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.1250",
+              "vector_score": "0.1504",
+              "retrieval_score": "0.1326"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.1250",
+              "vector_score": "0.0887",
+              "retrieval_score": "0.1141"
+            },
+            {
+              "rank": 4,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.1250",
+              "vector_score": "0.0487",
+              "retrieval_score": "0.1021"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.1250",
+              "vector_score": "0.0325",
+              "retrieval_score": "0.0972"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "exact-zapier",
+          "category": "exact",
+          "query": "Zapier",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "skill:Zapier",
+            "project:AI Workflow Automation System",
+            "experience:Northstar Digital Studio"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "skill:Zapier",
+              "evidence_id": "skill-177ed479-c76c-5dc2-952b-2e2c3777f7d6",
+              "lexical_score": "1.0000",
+              "vector_score": "0.2425",
+              "retrieval_score": "0.7728"
+            },
+            {
+              "rank": 2,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "1.0000",
+              "vector_score": "0.1557",
+              "retrieval_score": "0.7467"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "1.0000",
+              "vector_score": "0.0709",
+              "retrieval_score": "0.7213"
+            },
+            {
+              "rank": 4,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0909",
+              "retrieval_score": "0.0273"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0830",
+              "retrieval_score": "0.0249"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "para-ocr",
+          "category": "paraphrase",
+          "query": "optical character recognition",
+          "expected_status": "matched",
+          "predicted_status": "not_evidenced",
+          "status_correct": false,
+          "relevant_keys": [
+            "project:Legal Document OCR and Extraction System",
+            "experience:Civic Tech Lab"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 5,
+          "relevant_found": true,
+          "reciprocal_rank": 0.2,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0857",
+              "retrieval_score": "0.0257"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0626",
+              "retrieval_score": "0.0188"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0317",
+              "retrieval_score": "0.0095"
+            },
+            {
+              "rank": 4,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "para-sql-expansion",
+          "category": "paraphrase",
+          "query": "structured query language",
+          "expected_status": "matched",
+          "predicted_status": "partially_matched",
+          "status_correct": false,
+          "relevant_keys": [
+            "skill:SQL",
+            "project:AI Resume Automation / careerOS",
+            "project:Legal Document OCR and Extraction System",
+            "experience:Civic Tech Lab"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 1,
+          "relevant_found": true,
+          "reciprocal_rank": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.3333",
+              "vector_score": "0.1626",
+              "retrieval_score": "0.2821"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0951",
+              "retrieval_score": "0.2619"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0806",
+              "retrieval_score": "0.2575"
+            },
+            {
+              "rank": 4,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            },
+            {
+              "rank": 5,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "para-containers",
+          "category": "paraphrase",
+          "query": "operating-system level containers",
+          "expected_status": "matched",
+          "predicted_status": "partially_matched",
+          "status_correct": false,
+          "relevant_keys": [
+            "skill:Docker",
+            "project:AI Resume Automation / careerOS",
+            "project:Legal Document OCR and Extraction System",
+            "project:Web Scraping and Job Data Extraction Tool",
+            "experience:Northstar Digital Studio"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 2,
+          "relevant_found": true,
+          "reciprocal_rank": 0.5,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.2500",
+              "vector_score": "0.0294",
+              "retrieval_score": "0.1838"
+            },
+            {
+              "rank": 2,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.2500",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.1750"
+            },
+            {
+              "rank": 3,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0294",
+              "retrieval_score": "0.0088"
+            },
+            {
+              "rank": 4,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "para-python-web-framework",
+          "category": "paraphrase",
+          "query": "Python web API framework",
+          "expected_status": "matched",
+          "predicted_status": "matched",
+          "status_correct": true,
+          "relevant_keys": [
+            "profile",
+            "skill:FastAPI",
+            "project:AI Resume Automation / careerOS",
+            "project:Legal Document OCR and Extraction System",
+            "experience:Northstar Digital Studio"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 3,
+          "relevant_found": true,
+          "reciprocal_rank": 0.3333333333333333,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.7500",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.5250"
+            },
+            {
+              "rank": 2,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0588",
+              "retrieval_score": "0.3677"
+            },
+            {
+              "rank": 3,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0344",
+              "retrieval_score": "0.3603"
+            },
+            {
+              "rank": 4,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0314",
+              "retrieval_score": "0.3594"
+            },
+            {
+              "rank": 5,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3500"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "para-human-approval",
+          "category": "paraphrase",
+          "query": "human approval of machine-generated text",
+          "expected_status": "matched",
+          "predicted_status": "partially_matched",
+          "status_correct": false,
+          "relevant_keys": [
+            "project:AI Workflow Automation System"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 2,
+          "relevant_found": true,
+          "reciprocal_rank": 0.5,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.3333",
+              "vector_score": "0.1267",
+              "retrieval_score": "0.2713"
+            },
+            {
+              "rank": 2,
+              "key": "project:AI Workflow Automation System",
+              "evidence_id": "project-2171f6b8-737d-5b5e-9350-9fcfc5f1cbdf",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0235",
+              "retrieval_score": "0.2404"
+            },
+            {
+              "rank": 3,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.1667",
+              "vector_score": "0.0939",
+              "retrieval_score": "0.1448"
+            },
+            {
+              "rank": 4,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.1667",
+              "vector_score": "0.0548",
+              "retrieval_score": "0.1331"
+            },
+            {
+              "rank": 5,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.1667",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.1167"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "para-relational-databases",
+          "category": "paraphrase",
+          "query": "relational databases",
+          "expected_status": "matched",
+          "predicted_status": "partially_matched",
+          "status_correct": false,
+          "relevant_keys": [
+            "skill:SQL",
+            "skill:PostgreSQL",
+            "project:AI Resume Automation / careerOS",
+            "project:Legal Document OCR and Extraction System",
+            "experience:Northstar Digital Studio",
+            "experience:Civic Tech Lab"
+          ],
+          "graded_for_recall": true,
+          "first_relevant_rank": 2,
+          "relevant_found": true,
+          "reciprocal_rank": 0.5,
+          "recall_at_1": 0.0,
+          "recall_at_3": 1.0,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": true,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.5000",
+              "vector_score": "0.2425",
+              "retrieval_score": "0.4228"
+            },
+            {
+              "rank": 2,
+              "key": "skill:SQL",
+              "evidence_id": "skill-1358a456-efa7-5456-84ef-4b0c004a8dd5",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3500"
+            },
+            {
+              "rank": 3,
+              "key": "skill:PostgreSQL",
+              "evidence_id": "skill-4c473af2-0247-5222-bef0-17e562e5b2e6",
+              "lexical_score": "0.5000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.3500"
+            },
+            {
+              "rank": 4,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1050",
+              "retrieval_score": "0.0315"
+            },
+            {
+              "rank": 5,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-kubernetes",
+          "category": "near_miss",
+          "query": "Kubernetes",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0909",
+              "retrieval_score": "0.0273"
+            },
+            {
+              "rank": 2,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-cicd",
+          "category": "near_miss",
+          "query": "CI/CD",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0449",
+              "retrieval_score": "0.0135"
+            },
+            {
+              "rank": 2,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-django",
+          "category": "near_miss",
+          "query": "Django",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-spring",
+          "category": "near_miss",
+          "query": "Java Spring Boot",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "project:Legal Document OCR and Extraction System",
+              "evidence_id": "project-ab2391a2-f25d-5d24-ab45-8969c08b45ed",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1220",
+              "retrieval_score": "0.0366"
+            },
+            {
+              "rank": 2,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1114",
+              "retrieval_score": "0.0334"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0403",
+              "retrieval_score": "0.0121"
+            },
+            {
+              "rank": 4,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0348",
+              "retrieval_score": "0.0104"
+            },
+            {
+              "rank": 5,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0317",
+              "retrieval_score": "0.0095"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "near-attorney",
+          "category": "near_miss",
+          "query": "licensed attorney",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "skill:Playwright",
+              "evidence_id": "skill-ae34876f-cfb2-5555-b475-b111014c3a7f",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1260",
+              "retrieval_score": "0.0378"
+            },
+            {
+              "rank": 2,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0449",
+              "retrieval_score": "0.0135"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0409",
+              "retrieval_score": "0.0123"
+            },
+            {
+              "rank": 4,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": true
+        },
+        {
+          "id": "unsup-aws",
+          "category": "unsupported",
+          "query": "Amazon Web Services",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0857",
+              "retrieval_score": "0.2590"
+            },
+            {
+              "rank": 2,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0634",
+              "retrieval_score": "0.2524"
+            },
+            {
+              "rank": 3,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            },
+            {
+              "rank": 4,
+              "key": "project:Web Scraping and Job Data Extraction Tool",
+              "evidence_id": "project-2b1ff032-5f83-58e9-ba22-077b425c824a",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            },
+            {
+              "rank": 5,
+              "key": "project:AI Resume Automation / careerOS",
+              "evidence_id": "project-5c42d348-6b5d-528e-ab4c-8131f2f734c0",
+              "lexical_score": "0.3333",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.2333"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "unsup-terraform",
+          "category": "unsupported",
+          "query": "Terraform",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0709",
+              "retrieval_score": "0.0213"
+            },
+            {
+              "rank": 2,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "unsup-salesforce",
+          "category": "unsupported",
+          "query": "Salesforce",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.1400",
+              "retrieval_score": "0.0420"
+            },
+            {
+              "rank": 2,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "unsup-swiftui",
+          "category": "unsupported",
+          "query": "SwiftUI",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0902",
+              "retrieval_score": "0.0271"
+            },
+            {
+              "rank": 2,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        },
+        {
+          "id": "unsup-rust",
+          "category": "unsupported",
+          "query": "Rust",
+          "expected_status": "not_evidenced",
+          "predicted_status": "not_evidenced",
+          "status_correct": true,
+          "relevant_keys": [],
+          "graded_for_recall": false,
+          "first_relevant_rank": null,
+          "relevant_found": null,
+          "reciprocal_rank": null,
+          "recall_at_1": null,
+          "recall_at_3": null,
+          "unsupported_false_positive": false,
+          "near_miss_false_positive": false,
+          "neighbor_ranked_first": false,
+          "top_hits": [
+            {
+              "rank": 1,
+              "key": "certification:Postman",
+              "evidence_id": "certification-4e951f80-d705-5903-9d49-92807f8dde18",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 2,
+              "key": "education:Metro Institute of Technology",
+              "evidence_id": "education-be747281-6008-516e-a4e9-cd51ee450100",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 3,
+              "key": "experience:Northstar Digital Studio",
+              "evidence_id": "experience-0e4e3d0c-0298-5b9b-b19e-2b04277cf388",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 4,
+              "key": "experience:Civic Tech Lab",
+              "evidence_id": "experience-d4e48601-61ec-5ebd-97c9-3e3f2fb1c39e",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            },
+            {
+              "rank": 5,
+              "key": "profile",
+              "evidence_id": "profile-939137d0-3deb-5b5e-8d45-c857e112a4e1-summary",
+              "lexical_score": "0.0000",
+              "vector_score": "0.0000",
+              "retrieval_score": "0.0000"
+            }
+          ],
+          "has_distractors": false
+        }
+      ],
+      "mode": "feature_hash_hybrid",
+      "ranking": "rank_evidence order (lexical 0.7 / vector 0.3)"
+    },
+    "openai_semantic_hybrid": {
+      "ran": false,
+      "provider_name": "openai",
+      "model_name": "text-embedding-3-small",
+      "reason": "OPENAI_API_KEY is not set, so the semantic arm was not run. No OpenAI score was invented. Re-run `python -m scripts.retrieval_eval` from backend/ with OPENAI_API_KEY set. The default model is text-embedding-3-small. RAG_EMBEDDING_MODEL overrides it. Leave RAG_EMBEDDING_DIMENSIONS unset unless you intend to request a shortened vector.",
+      "metrics": null,
+      "cases": null,
+      "usage": null
+    }
+  },
+  "comparisons": {
+    "feature_hash_hybrid_vs_lexical": {
+      "helped_case_ids": [
+        "para-sql-expansion"
+      ],
+      "hurt_case_ids": [
+        "para-ocr",
+        "para-python-web-framework"
+      ],
+      "changes": [
+        {
+          "id": "para-ocr",
+          "category": "paraphrase",
+          "retrieval": "hurt",
+          "status": "unchanged",
+          "neighbor": "unchanged",
+          "detail": "relevant rank 4 -> 5; status not_evidenced -> not_evidenced; neighbor_ranked_first False -> False"
+        },
+        {
+          "id": "para-sql-expansion",
+          "category": "paraphrase",
+          "retrieval": "helped",
+          "status": "unchanged",
+          "neighbor": "helped",
+          "detail": "relevant rank 2 -> 1; status partially_matched -> partially_matched; neighbor_ranked_first True -> False"
+        },
+        {
+          "id": "para-python-web-framework",
+          "category": "paraphrase",
+          "retrieval": "hurt",
+          "status": "unchanged",
+          "neighbor": "unchanged",
+          "detail": "relevant rank 2 -> 3; status matched -> matched; neighbor_ranked_first True -> True"
+        }
+      ]
+    }
+  },
+  "recommendation": {
+    "choice": "investigate",
+    "text": "Investigate the lexical status gate. Leave the 0.7 / 0.3 weights in place. Exact Recall@1 is 8/8 lexical and 8/8 feature-hash, with status 8/8 and 8/8. Unsupported false positives are 0/5 lexical and 0/5 feature-hash. Near-miss false positives are 0/5 lexical and 0/5 feature-hash. On the lexical arm, `unsup-aws` tops out at lexical 0.3333 on education:Metro Institute of Technology and stays `not_evidenced` under the explicit AWS phrase rule. Paraphrase Recall@1 is 0/6 lexical and 1/6 feature-hash. Paraphrase Recall@3 is 5/6 lexical and 5/6 feature-hash. `para-ocr` is outside the top 3 at rank 4 lexical and rank 5 feature-hash, with status `not_evidenced` and a top-hit lexical score of 0.0000. Paraphrase status accuracy is 1/6 lexical and 1/6 feature-hash. Paraphrase cases with a correct feature-hash status: `para-python-web-framework`. `para-python-web-framework` has feature-hash top hit project:Web Scraping and Job Data Extraction Tool at lexical 0.7500, a labeled distractor. Feature-hash versus lexical helped: para-sql-expansion. Hurt: para-ocr, para-python-web-framework. Status labels on those changed cases stayed the same. Overall Recall@1 is 8/14 lexical and 9/14 feature-hash. The OpenAI arm did not run. This file contains no semantic score. Re-run with OPENAI_API_KEY on this same fixture before treating live embeddings as measured. The measured rank movement is too small to justify a weight change, and a zero-lexical chunk stays below the product's 0.65 lexical bar for `matched`."
+  }
+}
