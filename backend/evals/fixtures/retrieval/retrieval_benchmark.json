@@ -1,0 +1,271 @@
+{
+  "name": "CareerOS curated retrieval benchmark",
+  "version": 1,
+  "corpus": "amina_rahman_demo_seed",
+  "status_labels": [
+    "matched",
+    "partially_matched",
+    "not_evidenced",
+    "not_applicable"
+  ],
+  "notes": "Ground truth was fixed from the demo profile text before any mode was scored. Cases are not edited to improve a measured number. This corpus is the Amina Rahman demo seed. It does not include Google Cloud, AWS, Kubernetes, or CI/CD experience.",
+  "cases": [
+    {
+      "id": "exact-postman",
+      "category": "exact",
+      "query": "Postman API Fundamentals Student Expert",
+      "relevant": ["certification:Postman"],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "Only the Postman certification names this credential."
+    },
+    {
+      "id": "exact-civic-tech",
+      "category": "exact",
+      "query": "Civic Tech Lab",
+      "relevant": ["experience:Civic Tech Lab"],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "Only the Civic Tech Lab internship names that employer."
+    },
+    {
+      "id": "exact-northstar",
+      "category": "exact",
+      "query": "Northstar Digital Studio",
+      "relevant": ["experience:Northstar Digital Studio"],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "Only the Northstar Digital Studio role names that employer."
+    },
+    {
+      "id": "exact-legal-title",
+      "category": "exact",
+      "query": "Legal Document OCR and Extraction System",
+      "relevant": ["project:Legal Document OCR and Extraction System"],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "The query is that project title. The internship mentions OCR output and does not use this title."
+    },
+    {
+      "id": "exact-job-tool-title",
+      "category": "exact",
+      "query": "Web Scraping and Job Data Extraction Tool",
+      "relevant": ["project:Web Scraping and Job Data Extraction Tool"],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "Only that project uses this title."
+    },
+    {
+      "id": "exact-rag-outcome",
+      "category": "exact",
+      "query": "Used RAG patterns to ground generated responses in retrieved context.",
+      "relevant": ["project:AI Workflow Automation System"],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "That outcome sentence appears only on the AI Workflow Automation project."
+    },
+    {
+      "id": "exact-education",
+      "category": "exact",
+      "query": "Bachelor of Science Computer Science at Metro Institute of Technology",
+      "relevant": ["education:Metro Institute of Technology"],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "Only the education chunk states this degree and school."
+    },
+    {
+      "id": "exact-zapier",
+      "category": "exact",
+      "query": "Zapier",
+      "relevant": [
+        "skill:Zapier",
+        "project:AI Workflow Automation System",
+        "experience:Northstar Digital Studio"
+      ],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "The skill, the AI workflow project, and the Northstar role each name Zapier. Any of them supports the requirement."
+    },
+    {
+      "id": "para-ocr",
+      "category": "paraphrase",
+      "query": "optical character recognition",
+      "relevant": [
+        "project:Legal Document OCR and Extraction System",
+        "experience:Civic Tech Lab"
+      ],
+      "distractors": [],
+      "expected_status": "matched",
+      "ground_truth": "OCR is the abbreviation for optical character recognition. Those two chunks are the ones that say OCR. No other chunk does."
+    },
+    {
+      "id": "para-sql-expansion",
+      "category": "paraphrase",
+      "query": "structured query language",
+      "relevant": [
+        "skill:SQL",
+        "project:AI Resume Automation / careerOS",
+        "project:Legal Document OCR and Extraction System",
+        "experience:Civic Tech Lab"
+      ],
+      "distractors": [
+        "profile",
+        "project:Web Scraping and Job Data Extraction Tool",
+        "experience:Northstar Digital Studio"
+      ],
+      "expected_status": "matched",
+      "ground_truth": "SQL is structured query language. Relevant chunks are the ones that name SQL. Chunks that only say structured data or structured records do not name SQL. The PostgreSQL skill does not contain the token SQL and is not treated as this requirement."
+    },
+    {
+      "id": "para-containers",
+      "category": "paraphrase",
+      "query": "operating-system level containers",
+      "relevant": [
+        "skill:Docker",
+        "project:AI Resume Automation / careerOS",
+        "project:Legal Document OCR and Extraction System",
+        "project:Web Scraping and Job Data Extraction Tool",
+        "experience:Northstar Digital Studio"
+      ],
+      "distractors": ["project:AI Workflow Automation System"],
+      "expected_status": "matched",
+      "ground_truth": "Docker is the container tool named in the profile. Relevant chunks are the ones that name Docker. The AI workflow project title contains the word System and does not name Docker."
+    },
+    {
+      "id": "para-python-web-framework",
+      "category": "paraphrase",
+      "query": "Python web API framework",
+      "relevant": [
+        "profile",
+        "skill:FastAPI",
+        "project:AI Resume Automation / careerOS",
+        "project:Legal Document OCR and Extraction System",
+        "experience:Northstar Digital Studio"
+      ],
+      "distractors": ["project:Web Scraping and Job Data Extraction Tool"],
+      "expected_status": "matched",
+      "ground_truth": "FastAPI is the Python web API framework in this profile. Relevant chunks are the ones that name FastAPI. The job-extraction project names Python, APIs, and the web, and does not name FastAPI."
+    },
+    {
+      "id": "para-human-approval",
+      "category": "paraphrase",
+      "query": "human approval of machine-generated text",
+      "relevant": ["project:AI Workflow Automation System"],
+      "distractors": ["education:Metro Institute of Technology"],
+      "expected_status": "matched",
+      "ground_truth": "The AI workflow project states human review and review checkpoints for generated responses. Coursework that says machine-learning is not approval of generated text."
+    },
+    {
+      "id": "para-relational-databases",
+      "category": "paraphrase",
+      "query": "relational databases",
+      "relevant": [
+        "skill:SQL",
+        "skill:PostgreSQL",
+        "project:AI Resume Automation / careerOS",
+        "project:Legal Document OCR and Extraction System",
+        "experience:Northstar Digital Studio",
+        "experience:Civic Tech Lab"
+      ],
+      "distractors": ["education:Metro Institute of Technology"],
+      "expected_status": "matched",
+      "ground_truth": "Chunks that name SQL or PostgreSQL support relational-database work. The education chunk says the candidate studied databases and does not name SQL or PostgreSQL."
+    },
+    {
+      "id": "near-kubernetes",
+      "category": "near_miss",
+      "query": "Kubernetes",
+      "relevant": [],
+      "distractors": [
+        "skill:Docker",
+        "project:AI Resume Automation / careerOS",
+        "project:Legal Document OCR and Extraction System",
+        "project:Web Scraping and Job Data Extraction Tool",
+        "experience:Northstar Digital Studio"
+      ],
+      "expected_status": "not_evidenced",
+      "ground_truth": "The profile names Docker and does not name Kubernetes. Docker is a different tool. The product also keeps an explicit Kubernetes phrase rule."
+    },
+    {
+      "id": "near-cicd",
+      "category": "near_miss",
+      "query": "CI/CD",
+      "relevant": [],
+      "distractors": ["skill:GitHub", "experience:Northstar Digital Studio"],
+      "expected_status": "not_evidenced",
+      "ground_truth": "GitHub and GitHub pull-request workflows are not CI/CD. No chunk says continuous integration, continuous delivery, or CI/CD. The product keeps an explicit CI/CD phrase rule."
+    },
+    {
+      "id": "near-django",
+      "category": "near_miss",
+      "query": "Django",
+      "relevant": [],
+      "distractors": ["skill:FastAPI"],
+      "expected_status": "not_evidenced",
+      "ground_truth": "FastAPI is a different Python web framework. No chunk names Django."
+    },
+    {
+      "id": "near-spring",
+      "category": "near_miss",
+      "query": "Java Spring Boot",
+      "relevant": [],
+      "distractors": ["skill:Python", "skill:FastAPI"],
+      "expected_status": "not_evidenced",
+      "ground_truth": "Python and FastAPI evidence is not Java Spring Boot. No chunk names Java or Spring."
+    },
+    {
+      "id": "near-attorney",
+      "category": "near_miss",
+      "query": "licensed attorney",
+      "relevant": [],
+      "distractors": ["project:Legal Document OCR and Extraction System"],
+      "expected_status": "not_evidenced",
+      "ground_truth": "A legal-document OCR project is not a law license. No chunk says attorney or bar admission."
+    },
+    {
+      "id": "unsup-aws",
+      "category": "unsupported",
+      "query": "Amazon Web Services",
+      "relevant": [],
+      "distractors": [],
+      "expected_status": "not_evidenced",
+      "ground_truth": "No chunk names AWS or Amazon Web Services. This demo profile also has no Google Cloud evidence, so this case is unsupported rather than a cloud-provider near miss. The product keeps an explicit AWS phrase rule. Incidental words such as services or web in unrelated chunks are not AWS evidence."
+    },
+    {
+      "id": "unsup-terraform",
+      "category": "unsupported",
+      "query": "Terraform",
+      "relevant": [],
+      "distractors": [],
+      "expected_status": "not_evidenced",
+      "ground_truth": "No chunk names Terraform."
+    },
+    {
+      "id": "unsup-salesforce",
+      "category": "unsupported",
+      "query": "Salesforce",
+      "relevant": [],
+      "distractors": [],
+      "expected_status": "not_evidenced",
+      "ground_truth": "No chunk names Salesforce."
+    },
+    {
+      "id": "unsup-swiftui",
+      "category": "unsupported",
+      "query": "SwiftUI",
+      "relevant": [],
+      "distractors": [],
+      "expected_status": "not_evidenced",
+      "ground_truth": "No chunk names SwiftUI or iOS development."
+    },
+    {
+      "id": "unsup-rust",
+      "category": "unsupported",
+      "query": "Rust",
+      "relevant": [],
+      "distractors": [],
+      "expected_status": "not_evidenced",
+      "ground_truth": "No chunk names Rust."
+    }
+  ]
+}
