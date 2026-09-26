@@ -27,7 +27,7 @@ The tests execute the real `RuleBasedJobAnalyzer`, deterministic embedding provi
 - **Unsupported-claim acceptance:** tampered unsupported claim groups that incorrectly pass approval.
 - **Golden-flow completion:** integration flows that reach reviewed export and tracking.
 
-The checked-in expectations are deliberately small and deterministic. Final measured counts are reported from the verification run; they are not benchmark claims and should not be compared with production embedding systems.
+The checked-in fixture expectations above are deliberately small and deterministic. Those fixture counts are regression checks, not the retrieval benchmark. The frozen 24-case comparison of lexical, feature-hash hybrid, and OpenAI semantic hybrid ranking is summarized in the root [Evidence RAG / retrieval](../README.md#evidence-rag--retrieval) section. Case-level tables are in `backend/evals/results/retrieval_report.md`. After that measurement, status-gate diagnosis left the product match rules unchanged. See `backend/evals/results/status_gate_diagnosis.md`.
 
 ## Measured local result
 
@@ -51,6 +51,18 @@ the verified timeline falls outside the requested range.
 These are small regression-fixture counts, not statistical model-quality claims. The verified full
 backend run containing these checks passed `228` tests with one optional browser-extraction test
 skipped; the separate frontend browser suite passed `7` journeys.
+
+## Curated retrieval benchmark
+
+From `backend/`:
+
+```powershell
+python -m scripts.retrieval_eval
+```
+
+Lexical and feature-hash arms always run. The OpenAI arm runs only when `OPENAI_API_KEY` is set and does not print the key. Results are written to `evals/results/results.json` and `evals/results/retrieval_report.md`. `python -m scripts.status_gate_diagnosis` rewrites the diagnosis report from that JSON and does not call OpenAI. Neither command changes product ranking or match rules.
+
+On the recorded run, semantic retrieval improved paraphrase ranking. Paraphrase Recall@1 moved from 0/6 lexical to 5/6 with OpenAI `text-embedding-3-small`, and from 1/6 with feature-hash hybrid. Overall Recall@1 on the 14 graded cases moved from 8/14 lexical to 9/14 feature-hash to 13/14 OpenAI. MRR on those 14 cases was 0.7679, 0.7881, and 0.9643. Overall status accuracy stayed 19/24 in every mode. Unsupported false positives stayed 0/5 and near-miss false positives stayed 0/5. The OpenAI arm made 25 embedding requests, reported 961 prompt tokens, and estimated a list-price cost of 0.00001922 USD. That cost is not an invoice. The product status gate was left unchanged.
 
 ## Failure policy
 

@@ -55,3 +55,11 @@ Artifacts: `evals/results/results.json` and `evals/results/retrieval_report.md`.
 Lexical and feature-hash arms always run. The OpenAI arm runs only when
 `OPENAI_API_KEY` is set, caches vectors under `evals/cache/`, and never prints
 the key. `RAG_EMBEDDING_MODEL` defaults to `text-embedding-3-small`.
+
+The recorded numbers, and the decision to leave the product status gate
+unchanged, are summarized in the root
+[Evidence RAG / retrieval](../../README.md#evidence-rag--retrieval) section.
+
+`python -m scripts.status_gate_diagnosis` rewrites
+`evals/results/status_gate_diagnosis.md` from the recorded `results.json`. It
+does not call OpenAI, and it does not change product ranking or match rules.

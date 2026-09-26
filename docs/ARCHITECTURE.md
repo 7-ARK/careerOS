@@ -39,8 +39,8 @@ flowchart TB
   end
   subgraph Retrieval
     CHUNKS[Stable candidate evidence]
-    EMBED[Deterministic feature-hash embedding]
-    VECTOR[LocalVectorStore]
+    EMBED[Deterministic or OpenAI embeddings]
+    VECTOR[LocalVectorStore or pgvector]
   end
   DB[(PostgreSQL)]
 
@@ -62,6 +62,8 @@ flowchart TB
 Candidate tables remain the source of truth. `RAG_VECTOR_STORE=local` (the default, and the CI path) rebuilds an in-memory index from those rows. `RAG_VECTOR_STORE=pgvector` persists embeddings in `evidence_embeddings`, cached by evidence id, embedding model, and content hash. Hybrid ranking still loads those vectors and scores them in Python at 0.7 lexical / 0.3 vector. It does not narrow with pgvector `<=>`.
 
 `RAG_EMBEDDING_PROVIDER=deterministic` (the default) is the free local mode. It uses `feature-hash-v1` 256-d vectors and never calls the network. Tests and CI stay on that provider. `RAG_EMBEDDING_PROVIDER=openai` uses `OpenAIEmbeddingProvider` and fails if `OPENAI_API_KEY` is missing. Preview mode forces the deterministic provider and the local store. The optional live check is `python -m scripts.semantic_embedding_smoke` and is not part of CI.
+
+Measured retrieval quality is the frozen 24-case benchmark in the root [Evidence RAG / retrieval](../README.md#evidence-rag--retrieval) section. Run it with `python -m scripts.retrieval_eval` from `backend/`. After status-gate diagnosis, the product status gate was left unchanged: lexical rules and the explicit AWS, Kubernetes, and CI/CD phrase checks still decide `matched`, `partially_matched`, and `not_evidenced`. Hybrid rank does not override them. AWS is not inferred from Google Cloud evidence.
 
 AI suggestions are never written into candidate evidence. Match citations include evidence ID, category, text, verification state, and retrieval scores. A draft's `grounding_manifest` lists the evidence IDs for every summary, skill, experience, project, education, and certification claim group. Approval fails if a claim is unsupported or cites unknown evidence.
 
