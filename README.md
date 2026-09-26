@@ -221,7 +221,7 @@ explained in [`docs/CI.md`](docs/CI.md).
 
 ## Known limitations
 
-- Deterministic feature-hash embeddings are simpler than production embedding systems.
+- Default and CI retrieval uses deterministic feature-hash embeddings. Live OpenAI embeddings require `RAG_EMBEDDING_PROVIDER=openai` and `OPENAI_API_KEY`; a missing key fails. Hybrid weights stay 0.7 / 0.3.
 - Resume import is heuristic, review-first, and disabled in the shared demo.
 - URL extraction is best-effort; manual job text is the supported demo path.
 - Shared preview mode disables profile editing and tracker mutation.

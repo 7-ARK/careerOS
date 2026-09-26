@@ -54,4 +54,4 @@ skipped; the separate frontend browser suite passed `7` journeys.
 
 ## Failure policy
 
-Malformed provider output is validated and falls back to deterministic resume quality. Missing credentials select local retrieval. Unknown evidence IDs or uncited claims block approval and create no document. A failed fixture is a failing test, not a silently adjusted expected result.
+Malformed provider output is validated and falls back to deterministic resume quality. `RAG_EMBEDDING_PROVIDER=deterministic` and preview mode use local retrieval. `RAG_EMBEDDING_PROVIDER=openai` without `OPENAI_API_KEY` fails instead of silently selecting local embeddings. Unknown evidence IDs or uncited claims block approval and create no document. A failed fixture is a failing test, not a silently adjusted expected result.

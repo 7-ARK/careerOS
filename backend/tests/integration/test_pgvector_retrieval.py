@@ -29,6 +29,16 @@ from app.repositories import CandidateProfileRepository
 from app.schemas import GoldenCareerAnalysisRequest, JobRequirement
 from app.services.career_analysis import GoldenCareerAnalysisService
 from tests.integration.test_golden_career_flow import _golden_request
+from tests.semantic_embeddings import (
+    AWS_QUERY,
+    FASTAPI_EVIDENCE,
+    GCP_EVIDENCE,
+    POSTGRES_EVIDENCE,
+    PYTHON_BACKEND_QUERY,
+    RELATIONAL_QUERY,
+    SemanticMockEmbeddingProvider,
+    expected_hybrid_score,
+)
 from tests.unit.test_pgvector_store import CountingProvider
 from tests.unit.test_vector_store_selection import IdenticalEmbeddingProvider
 
@@ -166,7 +176,81 @@ def test_pgvector_hybrid_score_rejects_identical_vectors_without_lexical_overlap
     assert found[0].lexical_score == Decimal("0.0000")
     assert found[0].vector_score == Decimal("1.0000")
     assert found[0].retrieval_score == Decimal("0.3000")
-    assert found[0].why_retrieved.startswith("The deterministic embedding")
+    assert found[0].why_retrieved == "The embedding ranked this verified evidence as related."
+    assert match.status == RequirementMatchStatus.NOT_EVIDENCED
+    assert match.supporting_evidence == []
+
+
+def test_persisted_semantic_vectors_rank_without_lexical_overlap(db: Session) -> None:
+    profile = _profile(
+        db,
+        "pgvector-phase2-semantic@example.com",
+        skills=[],
+        projects=[
+            ("REST services", FASTAPI_EVIDENCE, []),
+            ("Schema design", POSTGRES_EVIDENCE, []),
+            ("Cloud deployment", GCP_EVIDENCE, []),
+        ],
+        education=[],
+    )
+    candidate = _load(db, profile.id)
+    local_provider = SemanticMockEmbeddingProvider()
+    persisted_provider = SemanticMockEmbeddingProvider()
+    local = CandidateEvidenceRetriever(local_provider)
+    persisted = CandidateEvidenceRetriever(
+        persisted_provider,
+        vector_index=PgVectorStore(db, persisted_provider),
+    )
+
+    for query in (PYTHON_BACKEND_QUERY, RELATIONAL_QUERY, AWS_QUERY):
+        local_hits = local.retrieve(candidate, query, top_k=3)
+        persisted_hits = persisted.retrieve(candidate, query, top_k=3)
+        assert [item.evidence_id for item in local_hits] == [
+            item.evidence_id for item in persisted_hits
+        ]
+        for left, right in zip(local_hits, persisted_hits, strict=True):
+            assert left.lexical_score == right.lexical_score
+            assert left.vector_score == right.vector_score
+            assert left.retrieval_score == right.retrieval_score
+
+    fastapi_hit = persisted.retrieve(candidate, PYTHON_BACKEND_QUERY, top_k=1)[0]
+    postgres_hit = persisted.retrieve(candidate, RELATIONAL_QUERY, top_k=1)[0]
+    aws_hits = persisted.retrieve(candidate, AWS_QUERY, top_k=1)
+    rows = list(
+        db.scalars(
+            select(EvidenceEmbedding).where(
+                EvidenceEmbedding.candidate_profile_id == profile.id
+            )
+        )
+    )
+    service = EvidenceMatchService(db, retriever=persisted)
+    match = service._match_requirement(
+        candidate,
+        JobRequirement(
+            requirement_id="req-aws-experience",
+            text=AWS_QUERY,
+            kind="technology",
+            priority="required",
+        ),
+        top_k=3,
+    )
+
+    assert FASTAPI_EVIDENCE in fastapi_hit.text
+    assert fastapi_hit.lexical_score == Decimal("0.0000")
+    assert fastapi_hit.vector_score >= Decimal("0.9000")
+    assert fastapi_hit.retrieval_score == expected_hybrid_score(
+        fastapi_hit.lexical_score,
+        fastapi_hit.vector_score,
+    )
+    assert POSTGRES_EVIDENCE in postgres_hit.text
+    assert postgres_hit.lexical_score == Decimal("0.0000")
+    assert postgres_hit.vector_score >= Decimal("0.7000")
+    assert GCP_EVIDENCE in aws_hits[0].text
+    assert aws_hits[0].lexical_score == Decimal("0.0000")
+    assert aws_hits[0].vector_score == Decimal("1.0000")
+    assert aws_hits[0].retrieval_score == Decimal("0.3000")
+    assert {row.embedding_model for row in rows} == {"semantic-mock-v1"}
+    assert {row.embedding_dimensions for row in rows} == {4}
     assert match.status == RequirementMatchStatus.NOT_EVIDENCED
     assert match.supporting_evidence == []
 

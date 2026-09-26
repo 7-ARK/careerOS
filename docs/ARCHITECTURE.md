@@ -59,7 +59,9 @@ flowchart TB
 
 ## Retrieval and grounding
 
-Candidate tables remain the source of truth. The vector index is ephemeral and rebuilt from those rows, avoiding a second mutable knowledge store. The default `feature-hash-v1` provider creates stable local vectors; `RAG_EMBEDDING_PROVIDER=openai` enables the one optional remote adapter when a key is present. Missing credentials fall back to deterministic retrieval.
+Candidate tables remain the source of truth. `RAG_VECTOR_STORE=local` (the default, and the CI path) rebuilds an in-memory index from those rows. `RAG_VECTOR_STORE=pgvector` persists embeddings in `evidence_embeddings`, cached by evidence id, embedding model, and content hash. Hybrid ranking still loads those vectors and scores them in Python at 0.7 lexical / 0.3 vector. It does not narrow with pgvector `<=>`.
+
+`RAG_EMBEDDING_PROVIDER=deterministic` (the default) is the free local mode. It uses `feature-hash-v1` 256-d vectors and never calls the network. Tests and CI stay on that provider. `RAG_EMBEDDING_PROVIDER=openai` uses `OpenAIEmbeddingProvider` and fails if `OPENAI_API_KEY` is missing. Preview mode forces the deterministic provider and the local store. The optional live check is `python -m scripts.semantic_embedding_smoke` and is not part of CI.
 
 AI suggestions are never written into candidate evidence. Match citations include evidence ID, category, text, verification state, and retrieval scores. A draft's `grounding_manifest` lists the evidence IDs for every summary, skill, experience, project, education, and certification claim group. Approval fails if a claim is unsupported or cites unknown evidence.
 
