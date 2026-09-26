@@ -12,10 +12,7 @@ from starlette.testclient import TestClient
 
 from app.api.dependencies import get_db, get_golden_career_analysis_service
 from app.features.document_generation import DocumentGenerationService
-from app.features.resume_intelligence.retrieval import (
-    DeterministicHashEmbeddingProvider,
-    build_embedding_provider,
-)
+from app.features.resume_intelligence.retrieval import build_embedding_provider
 from app.main import app
 from app.models import CareerAnalysisRun, ResumeDraft
 from app.models.enums import CareerAnalysisStatus
@@ -212,14 +209,15 @@ def test_golden_flow_failure_reports_stage_run_and_request_ids(
     assert run.error_details["stage"] == "job_import"
 
 
-def test_missing_openai_key_uses_deterministic_embedding_fallback(
+def test_missing_openai_key_fails_when_openai_embeddings_are_selected(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("RAG_EMBEDDING_PROVIDER", "openai")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    provider = build_embedding_provider()
-    assert isinstance(provider, DeterministicHashEmbeddingProvider)
-    assert provider.provider_name == "deterministic_local"
+    monkeypatch.delenv("CAREEROS_PREVIEW_MODE", raising=False)
+
+    with pytest.raises(ValueError, match="requires OPENAI_API_KEY"):
+        build_embedding_provider()
 
 
 def _authenticated_candidate(

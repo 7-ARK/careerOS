@@ -283,16 +283,25 @@ def _redact_secret(message: str, secret: str) -> str:
 
 
 def build_embedding_provider(settings: Settings | None = None) -> EmbeddingProvider:
-    """Select the configured provider. A missing OpenAI key stays on local embeddings."""
+    """Select the configured provider.
+
+    ``deterministic`` is the free local mode. ``openai`` requires ``OPENAI_API_KEY``
+    and does not silently switch back to local embeddings. Preview mode sets the
+    provider to deterministic before this function runs.
+    """
     settings = settings or Settings.from_env()
     if settings.rag_embedding_provider not in {"deterministic", "openai"}:
         raise ValueError("RAG_EMBEDDING_PROVIDER must be 'deterministic' or 'openai'")
     if settings.rag_embedding_provider == "deterministic":
         return DeterministicHashEmbeddingProvider()
-    if not settings.openai_api_key:
-        return DeterministicHashEmbeddingProvider()
+    api_key = (settings.openai_api_key or "").strip()
+    if not api_key:
+        raise ValueError(
+            "RAG_EMBEDDING_PROVIDER=openai requires OPENAI_API_KEY. "
+            "Set the key, or use RAG_EMBEDDING_PROVIDER=deterministic for local embeddings."
+        )
     return OpenAIEmbeddingProvider(
-        api_key=settings.openai_api_key,
+        api_key=api_key,
         model_name=settings.rag_embedding_model,
         timeout_seconds=settings.provider_timeout_seconds,
         dimensions=settings.rag_embedding_dimensions,

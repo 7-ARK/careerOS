@@ -27,8 +27,10 @@ def test_report_includes_query_evidence_and_score_components() -> None:
         SmokeReport(
             model_name="text-embedding-3-small",
             dimensions=1536,
-            embedded=3,
-            reused=3,
+            persisted="yes",
+            embedded=1,
+            reused=1,
+            api_requests=2,
             prompt_tokens=42,
             estimated_cost_usd="0.00000084",
             hits=(
@@ -40,8 +42,6 @@ def test_report_includes_query_evidence_and_score_components() -> None:
                     retrieval_score="0.2460",
                 ),
             ),
-            aws_match_status="not_evidenced",
-            aws_supporting_evidence=0,
         )
     )
 
@@ -51,7 +51,8 @@ def test_report_includes_query_evidence_and_score_components() -> None:
     assert "vector_score: 0.8200" in report
     assert "retrieval_score: 0.2460" in report
     assert "dimensions: 1536" in report
-    assert "aws_match_status: not_evidenced" in report
+    assert "persisted: yes" in report
+    assert "api_requests: 2" in report
 
 
 def test_redaction_removes_the_key_and_database_url() -> None:

@@ -1,6 +1,6 @@
 # Known Limitations
 
-- Tests, CI, and the default local mode use deterministic feature-hash embeddings. Live mode can use OpenAI embeddings (`RAG_EMBEDDING_PROVIDER=openai`) with the same 0.7/0.3 hybrid score and lexical safeguards. There is no reranker, and those weights are not tuned.
+- Tests, CI, and `RAG_EMBEDDING_PROVIDER=deterministic` use feature-hash embeddings. Live mode uses OpenAI embeddings only when `RAG_EMBEDDING_PROVIDER=openai` and `OPENAI_API_KEY` is set; a missing key fails. Hybrid scoring stays 0.7 lexical / 0.3 vector. There is no reranker, and those weights are not tuned.
 - The local vector index is rebuilt per retrieval from PostgreSQL source rows and is not designed for large multi-tenant corpora.
 - Job URL extraction is optional and depends on public page structure; manual job text is the supported demonstration path, and URL extraction is disabled in shared preview mode.
 - Candidate facts are candidate-entered and marked verified within this personal workspace; careerOS does not independently verify employers, credentials, dates, or project outcomes.

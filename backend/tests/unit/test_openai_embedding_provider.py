@@ -280,16 +280,57 @@ def test_empty_input_does_not_call_the_client(fake_openai: dict[str, FakeClient]
     assert provider.usage.requests == 0
 
 
+def test_deterministic_mode_stays_local_when_a_key_exists(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RAG_EMBEDDING_PROVIDER", "deterministic")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-secret-value")
+    monkeypatch.delenv("CAREEROS_PREVIEW_MODE", raising=False)
+
+    provider = build_embedding_provider()
+
+    assert isinstance(provider, DeterministicHashEmbeddingProvider)
+    assert provider.model_name == "feature-hash-v1"
+
+
+def test_openai_without_a_key_fails_instead_of_falling_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("RAG_EMBEDDING_PROVIDER", "openai")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("CAREEROS_PREVIEW_MODE", raising=False)
+
+    with pytest.raises(ValueError, match="requires OPENAI_API_KEY") as caught:
+        build_embedding_provider()
+
+    message = str(caught.value)
+    assert "RAG_EMBEDDING_PROVIDER=deterministic" in message
+    assert "sk-" not in message
+
+
+def test_blank_openai_key_fails_instead_of_falling_back(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RAG_EMBEDDING_PROVIDER", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "   ")
+    monkeypatch.delenv("CAREEROS_PREVIEW_MODE", raising=False)
+
+    with pytest.raises(ValueError, match="requires OPENAI_API_KEY"):
+        build_embedding_provider()
+
+
+def test_preview_mode_stays_deterministic_without_a_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CAREEROS_PREVIEW_MODE", "true")
+    monkeypatch.setenv("RAG_EMBEDDING_PROVIDER", "openai")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    provider = build_embedding_provider()
+
+    assert isinstance(provider, DeterministicHashEmbeddingProvider)
+
+
 def test_provider_selection(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("RAG_EMBEDDING_PROVIDER", "deterministic")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-secret-value")
     assert isinstance(build_embedding_provider(), DeterministicHashEmbeddingProvider)
 
     monkeypatch.setenv("RAG_EMBEDDING_PROVIDER", "openai")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.delenv("RAG_EMBEDDING_DIMENSIONS", raising=False)
-    assert isinstance(build_embedding_provider(), DeterministicHashEmbeddingProvider)
-
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-secret-value")
     monkeypatch.setenv("RAG_EMBEDDING_MODEL", "text-embedding-3-large")
     monkeypatch.setenv("RAG_EMBEDDING_DIMENSIONS", "256")

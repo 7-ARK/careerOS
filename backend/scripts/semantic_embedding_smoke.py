@@ -1,12 +1,29 @@
-"""Live OpenAI embedding smoke test. Not part of CI or the pytest suite.
+"""One live OpenAI embedding smoke test. Not part of CI or the pytest suite.
 
-From ``backend/``, with ``OPENAI_API_KEY`` and a PostgreSQL ``DATABASE_URL``:
+From ``backend/``:
 
+    OPENAI_API_KEY=... \\
+    DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:5432/DB \\
+    RAG_EMBEDDING_MODEL=text-embedding-3-small \\
     python -m scripts.semantic_embedding_smoke
 
-The command embeds three evidence sentences, stores them in ``evidence_embeddings``,
-reads those rows back, and prints CareerOS hybrid scores. It then deletes the
-temporary smoke candidate. A missing key or database exits before any API call.
+Required environment:
+
+- ``OPENAI_API_KEY``: live key. The command exits before any API call when it is missing.
+- ``DATABASE_URL``: PostgreSQL URL. The database must have pgvector and the
+  ``evidence_embeddings`` table (``python -m alembic upgrade head``).
+
+Optional environment:
+
+- ``RAG_EMBEDDING_MODEL``: defaults to ``text-embedding-3-small``. Leave
+  ``RAG_EMBEDDING_DIMENSIONS`` unset so the API returns that model's default width.
+- ``PROVIDER_TIMEOUT_SECONDS``: defaults to 30.
+
+``CAREEROS_PREVIEW_MODE=true`` disables the command. The script does not read
+``RAG_EMBEDDING_PROVIDER``; the app itself still requires
+``RAG_EMBEDDING_PROVIDER=openai`` plus the key, and fails if the key is missing.
+The command embeds one evidence sentence, stores it, reads the row back, prints
+the hybrid scores, and deletes the temporary candidate. It never prints the key.
 """
 
 from __future__ import annotations
@@ -22,7 +39,6 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.db.session import create_database_engine, create_session_factory
-from app.features.resume_intelligence.matching import EvidenceMatchService
 from app.features.resume_intelligence.pgvector_store import PgVectorStore
 from app.features.resume_intelligence.retrieval import (
     CandidateEvidenceRetriever,
@@ -30,17 +46,12 @@ from app.features.resume_intelligence.retrieval import (
 )
 from app.models import CandidateProfile, EvidenceEmbedding, Project, User
 from app.repositories import CandidateProfileRepository
-from app.schemas import JobRequirement
 
 PYTHON_BACKEND_QUERY = "Python backend development"
-RELATIONAL_QUERY = "relational database experience"
-AWS_QUERY = "AWS experience"
-SMOKE_PROJECTS = (
-    ("REST services", "Built REST services using FastAPI."),
-    ("Schema design", "Designed PostgreSQL schemas and queries."),
-    ("Cloud deployment", "Deployed applications to Google Cloud."),
-)
-QUERIES = (PYTHON_BACKEND_QUERY, RELATIONAL_QUERY, AWS_QUERY)
+FASTAPI_EVIDENCE = "Built REST services using FastAPI."
+SMOKE_PROJECTS = (("REST services", FASTAPI_EVIDENCE),)
+QUERIES = (PYTHON_BACKEND_QUERY,)
+DEFAULT_SMOKE_MODEL = "text-embedding-3-small"
 _USD_PER_MILLION_TOKENS = {
     "text-embedding-3-small": Decimal("0.02"),
     "text-embedding-3-large": Decimal("0.13"),
@@ -65,13 +76,13 @@ class SmokeReport:
 
     model_name: str
     dimensions: int
+    persisted: str
     embedded: int
     reused: int
+    api_requests: int
     prompt_tokens: int
     estimated_cost_usd: str
     hits: tuple[SmokeHit, ...]
-    aws_match_status: str
-    aws_supporting_evidence: int
 
 
 def estimate_embedding_cost_usd(model_name: str, prompt_tokens: int) -> Decimal | None:
@@ -88,8 +99,10 @@ def format_smoke_report(report: SmokeReport) -> str:
         "CareerOS semantic embedding smoke",
         f"model: {report.model_name}",
         f"dimensions: {report.dimensions}",
+        f"persisted: {report.persisted}",
         f"cache_embedded: {report.embedded}",
         f"cache_reused: {report.reused}",
+        f"api_requests: {report.api_requests}",
         f"prompt_tokens: {report.prompt_tokens}",
         f"estimated_cost_usd: {report.estimated_cost_usd}",
         "",
@@ -105,13 +118,7 @@ def format_smoke_report(report: SmokeReport) -> str:
                 "",
             ]
         )
-    lines.extend(
-        [
-            f"aws_match_status: {report.aws_match_status}",
-            f"aws_supporting_evidence: {report.aws_supporting_evidence}",
-        ]
-    )
-    return "\n".join(lines)
+    return "\n".join(lines).rstrip("\n")
 
 
 def redact_sensitive(message: str, secrets: tuple[str, ...]) -> str:
@@ -147,6 +154,7 @@ def run_smoke(session: Session, provider: OpenAIEmbeddingProvider) -> SmokeRepor
         first = store.index(candidate.id, evidence)
         second = store.index(candidate.id, evidence)
         session.commit()
+        session.expire_all()
         _assert_persisted_rows(session, candidate.id, provider)
         hits: list[SmokeHit] = []
         for query in QUERIES:
@@ -163,28 +171,18 @@ def run_smoke(session: Session, provider: OpenAIEmbeddingProvider) -> SmokeRepor
                     retrieval_score=str(top.retrieval_score),
                 )
             )
-        match = EvidenceMatchService(session, retriever=retriever)._match_requirement(
-            candidate,
-            JobRequirement(
-                requirement_id="req-aws-experience",
-                text=AWS_QUERY,
-                kind="technology",
-                priority="required",
-            ),
-            top_k=3,
-        )
         rows = _rows(session, candidate.id)
         cost = estimate_embedding_cost_usd(provider.model_name, provider.usage.prompt_tokens)
         return SmokeReport(
             model_name=rows[0].embedding_model,
             dimensions=rows[0].embedding_dimensions,
+            persisted="yes",
             embedded=first.embedded,
             reused=second.reused,
+            api_requests=provider.usage.requests,
             prompt_tokens=provider.usage.prompt_tokens,
             estimated_cost_usd="unknown" if cost is None else f"{cost:.8f}",
             hits=tuple(hits),
-            aws_match_status=match.status.value,
-            aws_supporting_evidence=len(match.supporting_evidence),
         )
     finally:
         session.rollback()
@@ -212,7 +210,7 @@ def main() -> int:
     if not database_url.startswith("postgresql"):
         print("The smoke test requires PostgreSQL with pgvector.", file=sys.stderr)
         return 2
-    model_name = os.environ.get("RAG_EMBEDDING_MODEL", "text-embedding-3-small").strip()
+    model_name = os.environ.get("RAG_EMBEDDING_MODEL", DEFAULT_SMOKE_MODEL).strip()
     if not model_name:
         print("RAG_EMBEDDING_MODEL must not be empty.", file=sys.stderr)
         return 2
