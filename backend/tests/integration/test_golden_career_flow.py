@@ -16,6 +16,8 @@ from app.features.resume_intelligence.retrieval import build_embedding_provider
 from app.main import app
 from app.models import CareerAnalysisRun, ResumeDraft
 from app.models.enums import CareerAnalysisStatus
+from app.schemas import GroundingValidationResult
+from app.services import career_analysis as career_analysis_module
 from app.services.career_analysis import GoldenCareerAnalysisService
 from app.services.job_import import ManualJobImportService
 from tests.support import create_test_engine, create_test_session
@@ -209,6 +211,131 @@ def test_golden_flow_failure_reports_stage_run_and_request_ids(
     assert run.error_details["stage"] == "job_import"
 
 
+@pytest.mark.parametrize("vendor", ["OpenAI", "Anthropic"])
+def test_unsupported_vendor_api_requirement_completes_as_not_evidenced(
+    golden_client: tuple[TestClient, Session, Path],
+    vendor: str,
+) -> None:
+    """A JD vendor/tool with no candidate evidence must not hard-fail analysis."""
+    client, _session, _output_directory = golden_client
+    headers, candidate_id = _authenticated_candidate(
+        client,
+        email=f"{vendor.casefold()}@example.com",
+    )
+
+    started = client.post(
+        "/api/v1/career-analyses",
+        headers=headers,
+        json=_vendor_request(candidate_id, vendor),
+    )
+
+    assert started.status_code == 201, started.text
+    run = started.json()
+    assert run["status"] == "awaiting_review"
+    assert run["current_stage"] == "human_review"
+    assert run["match_explanation"] is not None
+    assert run["evidence_coverage_score"] is not None
+    assert any(stage["stage"] == "human_review" for stage in run["stages"])
+    vendor_matches = [
+        match
+        for match in run["match_explanation"]["requirement_matches"]
+        if vendor.casefold() in match["requirement"]["text"].casefold()
+    ]
+    assert vendor_matches
+    assert {match["status"] for match in vendor_matches} == {"not_evidenced"}
+    assert run["grounding_validation"]["valid"] is True
+    assert run["grounding_validation"]["unsupported_claims"] == []
+    assert all(claim["evidence_ids"] for claim in run["resume_draft"]["grounding_manifest"])
+    skill_names = [
+        skill
+        for group in run["resume_draft"]["skills_section"]
+        for skill in group.get("skills", [])
+    ]
+    assert vendor not in skill_names
+
+    reviewed = client.post(
+        f"/api/v1/career-analyses/{run['id']}/review",
+        headers=headers,
+        json={"decision": "approve", "export_formats": ["pdf"]},
+    )
+    assert reviewed.status_code == 200, reviewed.text
+    assert reviewed.json()["status"] == "completed"
+
+
+def test_missing_citation_does_not_fail_career_analysis(
+    golden_client: tuple[TestClient, Session, Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An uncited claim is unsupported and recoverable; it must not become HTTP 500."""
+
+    def missing_citation(*_args: object, **_kwargs: object) -> GroundingValidationResult:
+        return GroundingValidationResult(
+            valid=False,
+            checked_claims=1,
+            cited_claims=0,
+            citation_coverage=Decimal("0.00"),
+            unsupported_claims=["OpenAI: no evidence citation"],
+        )
+
+    monkeypatch.setattr(
+        career_analysis_module,
+        "validate_resume_grounding",
+        missing_citation,
+    )
+    client, _session, _output_directory = golden_client
+    headers, candidate_id = _authenticated_candidate(client, email="uncited@example.com")
+    response = client.post(
+        "/api/v1/career-analyses",
+        headers=headers,
+        json=_golden_request(candidate_id),
+    )
+
+    assert response.status_code == 201, response.text
+    run = response.json()
+    assert run["status"] == "awaiting_review"
+    assert run["match_explanation"] is not None
+    assert run["grounding_validation"]["unsupported_claims"] == [
+        "OpenAI: no evidence citation"
+    ]
+
+
+def test_unknown_evidence_citation_still_fails_career_analysis(
+    golden_client: tuple[TestClient, Session, Path],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A citation that names unknown evidence is corruption and must still hard-fail."""
+
+    def corrupted(*_args: object, **_kwargs: object) -> GroundingValidationResult:
+        return GroundingValidationResult(
+            valid=False,
+            checked_claims=2,
+            cited_claims=0,
+            citation_coverage=Decimal("0.00"),
+            unsupported_claims=[
+                "OpenAI: no evidence citation",
+                "Kubernetes: unknown evidence: project-missing",
+            ],
+        )
+
+    monkeypatch.setattr(
+        career_analysis_module,
+        "validate_resume_grounding",
+        corrupted,
+    )
+    client, _session, _output_directory = golden_client
+    headers, candidate_id = _authenticated_candidate(client, email="corrupt@example.com")
+    response = client.post(
+        "/api/v1/career-analyses",
+        headers=headers,
+        json=_golden_request(candidate_id),
+    )
+
+    assert response.status_code == 500
+    error = response.json()["error"]
+    assert error["code"] == "career_analysis_execution_error"
+    assert error["details"]["stage"] == "grounding_validation"
+
+
 def test_missing_openai_key_fails_when_openai_embeddings_are_selected(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -280,6 +407,26 @@ def _authenticated_candidate(
     )
     assert created.status_code == 201, created.text
     return headers, created.json()["id"]
+
+
+def _vendor_request(candidate_id: str, vendor: str) -> dict[str, object]:
+    return {
+        "candidate_profile_id": candidate_id,
+        "raw_title": "Applied AI Engineer",
+        "company_name": "Northwind Applied Systems",
+        "location": "Remote",
+        "source_platform": "company_site",
+        "description_text": (
+            "Required qualifications:\n"
+            "- Python services using FastAPI.\n"
+            f"- {vendor} API access for proprietary assistant hosting.\n"
+            "- PostgreSQL storage for application records.\n"
+            "\n"
+            "Preferred qualifications:\n"
+            "- Docker packaging is nice to have for local runs.\n"
+        ),
+        "mode": "mock",
+    }
 
 
 def _golden_request(candidate_id: str) -> dict[str, object]:

@@ -12,7 +12,10 @@ from sqlalchemy.orm import Session
 
 from app.core.observability import log_analysis_stage
 from app.features.document_generation import DocumentGenerationService
-from app.features.resume_intelligence.grounding import validate_resume_grounding
+from app.features.resume_intelligence.grounding import (
+    unsupported_claims_are_recoverable,
+    validate_resume_grounding,
+)
 from app.features.resume_intelligence.matching import EvidenceMatchService
 from app.features.resume_intelligence.quality import DeterministicResumeQualityEngine
 from app.features.resume_intelligence.retrieval import (
@@ -531,7 +534,7 @@ class GoldenCareerAnalysisService:
         retriever: CandidateEvidenceRetriever,
     ) -> GroundingValidationResult:
         result = validate_resume_grounding(candidate, draft, retriever=retriever)
-        if not result.valid:
+        if not result.valid and not unsupported_claims_are_recoverable(result):
             raise ResumeGroundingError(
                 "resume draft contains unsupported claims: "
                 + "; ".join(result.unsupported_claims[:3])
