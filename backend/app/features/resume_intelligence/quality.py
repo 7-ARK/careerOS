@@ -379,8 +379,12 @@ class DeterministicResumeQualityEngine:
         supported_values: dict[str, tuple[str, str]] = {
             _normalize(skill.name): (skill.name, skill.category) for skill in candidate.skills
         }
+        # Only candidate-owned technology names are citable here. Job terms that
+        # merely occur inside project prose (for example "OpenAI" inside
+        # "OpenAI API", or "APIs" inside "FastAPI") are unsupported claims and
+        # stay on the evidence map as not_evidenced.
         for score in selection.selected:
-            for term in [*score.project.technologies, *score.matched_terms]:
+            for term in score.project.technologies:
                 key = _normalize(term)
                 if key and key not in supported_values:
                     supported_values[key] = (term, "Project Evidence")

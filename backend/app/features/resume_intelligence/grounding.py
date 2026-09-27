@@ -6,6 +6,21 @@ from app.features.resume_intelligence.retrieval import CandidateEvidenceRetrieve
 from app.models import CandidateProfile, ResumeDraft
 from app.schemas import GroundingValidationResult
 
+_MISSING_CITATION = "no evidence citation"
+
+
+def unsupported_claims_are_recoverable(result: GroundingValidationResult) -> bool:
+    """Return whether every failure is an uncited claim rather than corrupt evidence.
+
+    A claim with no citation is an unsupported requirement and can finish as
+    ``not_evidenced``. A claim that cites an unknown evidence ID violates the
+    grounding invariant and must still fail hard.
+    """
+    if result.valid or not result.unsupported_claims:
+        return False
+    missing_citation = f": {_MISSING_CITATION}"
+    return all(claim.endswith(missing_citation) for claim in result.unsupported_claims)
+
 
 def validate_resume_grounding(
     candidate: CandidateProfile,
@@ -26,7 +41,7 @@ def validate_resume_grounding(
             continue
         text = str(claim.get("text", "Unnamed resume claim"))
         reason = (
-            "no evidence citation"
+            _MISSING_CITATION
             if not evidence_ids
             else f"unknown evidence: {', '.join(unknown)}"
         )
