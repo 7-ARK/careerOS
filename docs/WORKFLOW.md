@@ -1,4 +1,4 @@
-# Recruiter ready CareerOS
+# CareerOS workflow and scope
 
 This note matches the workflow in the current code. An earlier sprint plan listed gaps for retrieval, coverage scoring, human approval, Alembic, CI, and the analysis screen. Those items are implemented. They are not repeated here as open work.
 
