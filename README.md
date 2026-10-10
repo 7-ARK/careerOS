@@ -36,6 +36,28 @@ Rahman demo profile.
 
 ![Read-only synthetic application tracker with evidence coverage](docs/images/application-tracker.png)
 
+## Screenshots
+
+![Job analysis workspace](docs/screenshots/01-job-analysis.png)
+
+The analysis page shows Amina Rahman's profile, saved runs, and the manual job form.
+
+![Requirement to evidence map](docs/screenshots/02-evidence-map.png)
+
+The map scores this posting at 77.78 percent. Python, PostgreSQL, FastAPI, and Docker are matched. AWS is not evidenced.
+
+![Saved coverage result](docs/screenshots/03-coverage-results.png)
+
+The saved Junior Applied AI Engineer run for Atlas Systems shows 77.8 percent coverage and validated grounding.
+
+![Grounded resume preview](docs/screenshots/04-grounded-citations.png)
+
+The resume preview lists skills, experience, and projects. Each claim group shows how many evidence IDs support it.
+
+![Frozen retrieval benchmark](docs/screenshots/05-retrieval-benchmark.png)
+
+The frozen 24 case chart compares the lexical baseline with the OpenAI semantic hybrid.
+
 ## Why this project
 
 Many resume generators optimize language without showing whether the candidate can support the
