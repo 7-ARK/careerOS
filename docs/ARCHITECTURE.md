@@ -82,7 +82,7 @@ The LLM cannot set this score.
 
 ## Persistence
 
-Alembic revision `e18c8cbf35a5` establishes the recruiter-ready schema. Follow-up revisions deduplicate candidate owner/email identities and expand the tracker lifecycle. Each run stores stage status, latency, provider/model, token usage, estimated cost, failures, requirements, matches, and review notes.
+Alembic revision `e18c8cbf35a5` creates the initial schema for users, candidate profiles, jobs, analyses, resume drafts, generated documents, applications, and analysis runs. Follow-up revisions deduplicate candidate owner/email identities and expand the tracker lifecycle. Each run stores stage status, latency, provider/model, token usage, estimated cost, failures, requirements, matches, and review notes.
 
 Resume import is intentionally outside persistence until review. An authenticated PDF/DOCX upload is bounded to 5 MB, parsed in memory, and returned as a structured preview. The source file is not written to disk and the user must submit the normal candidate form before any candidate evidence changes.
 
