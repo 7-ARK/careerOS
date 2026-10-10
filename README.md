@@ -80,6 +80,10 @@ rewritten as experience.
 - Review-first PDF/DOCX resume import
 - Safe shared-demo mode with profile and tracker mutations disabled
 
+## Related work
+
+A separate experiment fine tunes Qwen2.5 1.5B Instruct with QLoRA to do the same job requirement extraction and compares it against this rule based analyzer: https://github.com/7-ARK/careeros-qlora-jd-extractor.
+
 ## Architecture
 
 ```mermaid
