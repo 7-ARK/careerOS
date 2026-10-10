@@ -246,7 +246,10 @@ class JobUrlPipelineServiceTests(unittest.TestCase):
             ),
             self._extraction(
                 outcome=JobUrlExtractionOutcome.EXTRACTION_FAILURE,
-                message="We could not read a complete job posting. Paste the job description manually.",
+                message=(
+                    "We could not read a complete job posting. "
+                    "Paste the job description manually."
+                ),
                 pipeline_ready=True,
             ),
         )

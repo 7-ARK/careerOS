@@ -1,7 +1,9 @@
 import {expect, test} from './fixtures';
 import {
+  approveCurrentDraft,
   authenticatedRequestContext,
   createPrivateProfile,
+  downloadApprovedPdf,
   login,
   register,
   submitManualJob,
@@ -31,34 +33,32 @@ async function generateResume(page: import('@playwright/test').Page, title: stri
     description: 'Build private React and TypeScript resume workflows with clear communication.',
   });
   await expect(page.getByRole('heading', {name: title, exact: true})).toBeVisible();
-  const documentId = await page
-    .getByRole('complementary')
-    .getByText('Document ID')
-    .locator('..')
-    .locator('span')
-    .last()
-    .textContent();
-  if (!documentId) {
-    throw new Error('The generated document identifier was not rendered.');
-  }
+  await approveCurrentDraft(page);
+  const documentId = await page.evaluate(async (roleTitle) => {
+    const token = localStorage.getItem('careeros_access_token');
+    const candidateId = localStorage.getItem('careeros_active_candidate_id');
+    const response = await fetch(`http://127.0.0.1:8000/api/v1/career-analyses/candidate/${candidateId}`, {
+      headers: token ? {Authorization: `Bearer ${token}`} : {},
+    });
+    if (!response.ok) {
+      throw new Error(`Could not read career analyses: ${response.status}`);
+    }
+    const runs = await response.json() as Array<{
+      resume_draft?: {target_role?: string} | null;
+      generated_documents?: Array<{id: string; output_format: string}>;
+    }>;
+    const run = runs.find((item) => item.resume_draft?.target_role === roleTitle);
+    const pdf = run?.generated_documents?.find((document) => document.output_format === 'pdf');
+    if (!pdf) {
+      throw new Error('The approved analysis did not include a PDF document.');
+    }
+    return pdf.id;
+  }, title);
   return documentId;
 }
 
 async function expectPdfDownload(page: import('@playwright/test').Page): Promise<void> {
-  const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', {name: 'Download resume', exact: true}).click();
-  const download = await downloadPromise;
-  const stream = await download.createReadStream();
-  if (!stream) {
-    throw new Error('The generated resume download did not provide a readable stream.');
-  }
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of stream) {
-    chunks.push(chunk as Uint8Array);
-  }
-  const artifact = Buffer.concat(chunks);
-  expect(artifact.length).toBeGreaterThan(0);
-  expect(artifact.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  await downloadApprovedPdf(page);
 }
 
 async function expectNoPrivateMarkers(surface: Locator, markers: string[]): Promise<void> {
@@ -94,7 +94,7 @@ test('two users keep profile, pipeline, and document resources private', async (
     });
 
     // The owner can list and open their candidate through valid same-user paths.
-    await expect(page.getByLabel('Candidate profile')).toHaveText(OWNER_PROFILE_NAME);
+    await expect(page.getByLabel('Candidate profile', {exact: true})).toContainText(OWNER_PROFILE_NAME);
     await expect(page.getByRole('heading', {name: OWNER_PROFILE_NAME, exact: true})).toBeVisible();
     ownerApi = await authenticatedRequestContext(page);
     const ownerList = await ownerApi.get('/api/v1/candidates');
@@ -121,13 +121,14 @@ test('two users keep profile, pipeline, and document resources private', async (
 
     const privateMarkers = [OWNER_PROFILE_NAME, OWNER_JOB_TITLE, ownerDocumentId];
     // These are component-level accessible surfaces, not a page-wide text check.
-    await expectNoPrivateMarkers(page.getByLabel('Candidate profile'), privateMarkers);
+    await expectNoPrivateMarkers(page.getByLabel('Candidate profile', {exact: true}), privateMarkers);
     await expectNoPrivateMarkers(
       page.getByRole('heading', {name: OTHER_PROFILE_NAME, exact: true}),
       privateMarkers,
     );
-    await expectNoPrivateMarkers(page.getByRole('complementary'), privateMarkers);
-    await expect(page.getByRole('complementary')).toContainText(OTHER_JOB_TITLE);
+    const results = page.locator('#analysis-results');
+    await expectNoPrivateMarkers(results, privateMarkers);
+    await expect(results).toContainText(OTHER_JOB_TITLE);
     expect(otherCandidateId).not.toBe(ownerCandidateId);
     expect(otherDocumentId).not.toBe(ownerDocumentId);
 
@@ -155,6 +156,24 @@ test('two users keep profile, pipeline, and document resources private', async (
       privateMarkers,
     );
     await expectSanitizedNotFound(await otherApi.get(foreignDocumentPath), privateMarkers);
+    const ownerRuns = await ownerApi.get(`/api/v1/career-analyses/candidate/${ownerCandidateId}`);
+    expect(ownerRuns.ok()).toBeTruthy();
+    const ownerRunId = (await ownerRuns.json() as Array<{id: string}>)[0]?.id;
+    expect(ownerRunId).toBeTruthy();
+    await expectSanitizedNotFound(
+      await otherApi.get(`/api/v1/career-analyses/candidate/${ownerCandidateId}`),
+      privateMarkers,
+    );
+    await expectSanitizedNotFound(
+      await otherApi.get(`/api/v1/career-analyses/${ownerRunId}`),
+      privateMarkers,
+    );
+    await expectSanitizedNotFound(
+      await otherApi.post(`/api/v1/career-analyses/${ownerRunId}/review`, {
+        data: {decision: 'reject'},
+      }),
+      privateMarkers,
+    );
 
     // Re-read the owner's resources after all rejected requests. The owner data
     // and the generated document remain available and unchanged.
@@ -174,7 +193,7 @@ test('two users keep profile, pipeline, and document resources private', async (
 
     await page.getByRole('button', {name: 'Logout'}).click();
     await login(page, USER_A);
-    await expect(page.getByLabel('Candidate profile')).toHaveText(OWNER_PROFILE_NAME);
+    await expect(page.getByLabel('Candidate profile', {exact: true})).toContainText(OWNER_PROFILE_NAME);
     await expect(page.getByRole('heading', {name: OWNER_PROFILE_NAME, exact: true})).toBeVisible();
     await expect(page.getByText('Attempted foreign mutation', {exact: true})).toHaveCount(0);
   } finally {

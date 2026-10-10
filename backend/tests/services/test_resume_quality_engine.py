@@ -228,6 +228,13 @@ class ResumeQualityEngineTests(unittest.TestCase):
         self.assertIn("Languages", skill_categories)
         self.assertIn("Backend", skill_categories)
         self.assertIn("AI / Machine Learning", skill_categories)
+        grouped_skills = {
+            group["category"]: group["skills"] for group in draft.skills_section
+        }
+        self.assertNotIn("SQL", grouped_skills.get("Languages", []))
+        self.assertNotIn("APIs", grouped_skills.get("Languages", []))
+        self.assertNotIn("Automation", grouped_skills.get("Automation", []))
+        self.assertIn("OpenAI API", grouped_skills.get("AI / Machine Learning", []))
         self.assertNotIn("Kubernetes", draft.summary)
         self.assertNotIn("knowledge-base evidence", draft.summary)
         self.assertLessEqual(len(draft.skills_section), 5)

@@ -75,10 +75,12 @@ always begins with the knowledge base.
 
 ### Retrieval and Memory
 
-* Add embedding records keyed to entity UUIDs and update timestamps.
-* Add a vector store adapter without changing relational source-of-truth models.
-* Add LangGraph workflows that read through repositories and persist only
-  candidate-approved changes.
+Persistent evidence embeddings are already in `evidence_embeddings`, scoped by
+candidate profile and cached by content hash. Hybrid ranking and the measured
+benchmark are documented in the root
+[Evidence RAG / retrieval](../../README.md#evidence-rag--retrieval) section.
+LangGraph workflows were not added. Candidate-approved records remain the source
+of truth.
 
 ### Operational Growth
 

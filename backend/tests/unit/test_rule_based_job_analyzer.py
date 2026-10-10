@@ -125,6 +125,82 @@ class RuleBasedJobAnalyzerTests(unittest.TestCase):
             result.red_flags,
         )
 
+    def test_preserves_preferred_sections_and_or_groups(self) -> None:
+        result = self.analyzer.analyze(
+            JobDescriptionInput(
+                raw_title="Applied AI Engineer",
+                description_text=(
+                    "Requirements:\n"
+                    "- Strong Python and FastAPI experience.\n"
+                    "- Degree in AI, Computer Science, Machine Learning, or related field.\n"
+                    "Preferred qualifications:\n"
+                    "- AWS, Kubernetes, and CI/CD experience.\n"
+                    "- Django or Flask.\n"
+                    "- LangChain or LangGraph."
+                ),
+            )
+        )
+
+        self.assertIn("AWS", result.preferred_technologies)
+        self.assertIn("Kubernetes", result.preferred_technologies)
+        self.assertIn("CI/CD", result.preferred_skills)
+        self.assertNotIn("AWS", result.required_technologies)
+        groups = result.match_relevant_signals["requirement_groups"]
+        self.assertTrue(
+            any(group["alternatives"] == ["Django", "Flask"] for group in groups)
+        )
+        self.assertTrue(
+            any(group["alternatives"] == ["LangChain", "LangGraph"] for group in groups)
+        )
+        self.assertTrue(
+            any("Computer Science" in group["alternatives"] for group in groups)
+        )
+
+    def test_preserves_every_canonical_required_and_preferred_bullet(self) -> None:
+        description = (
+            "Required qualifications:\n"
+            "- 0-2 years of professional, internship, or substantial project experience.\n"
+            "- Strong Python programming and machine-learning fundamentals.\n"
+            "- Practical experience with natural-language processing.\n"
+            "- Build validated REST API endpoints using FastAPI and Pydantic models.\n"
+            "- Develop RAG pipelines involving chunking and evidence citations.\n"
+            "- Integrate LLM APIs and schema-validated outputs.\n"
+            "- Build human-in-the-loop review workflows.\n"
+            "- Work with SQL and PostgreSQL.\n"
+            "- Use Git and GitHub collaboration workflows.\n"
+            "- Package services with Docker.\n"
+            "- Bachelor's degree in Computer Science or Machine Learning.\n"
+            "- Experience with LangChain or LangGraph.\n"
+            "Preferred qualifications:\n"
+            "- Familiarity with AWS.\n"
+            "- Familiarity with Kubernetes.\n"
+            "- Experience with Django or Flask.\n"
+            "- Basic CI/CD knowledge.\n"
+            "Applicants may use project evidence."
+        )
+
+        result = self.analyzer.analyze(
+            JobDescriptionInput(
+                raw_title="Junior Applied AI Engineer",
+                description_text=description,
+            )
+        )
+
+        canonical = result.match_relevant_signals["canonical_requirements"]
+        self.assertEqual(len(canonical), 16)
+        self.assertEqual(
+            sum(item["priority"] == "required" for item in canonical),
+            12,
+        )
+        self.assertEqual(
+            sum(item["priority"] == "preferred" for item in canonical),
+            4,
+        )
+        self.assertTrue(
+            any(item["text"].startswith("Build validated REST") for item in canonical)
+        )
+        self.assertFalse(any("Applicants may" in item["text"] for item in canonical))
+
     def test_detects_requested_seniority_levels(self) -> None:
         cases = (
             ("Software Engineering Intern", "Build Python services.", SeniorityLevel.INTERN),

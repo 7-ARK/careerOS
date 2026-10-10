@@ -54,21 +54,21 @@ export async function login(page: Page, user: BrowserUser): Promise<void> {
 
 /** Create a profile visible only to the currently authenticated user. */
 export async function createPrivateProfile(page: Page, profile: PrivateProfileDetails): Promise<string> {
-  await page.getByRole('button', {name: 'Create profile', exact: true}).click();
+  await page.getByRole('button', {name: 'New candidate profile', exact: true}).click();
   await page.getByLabel('Full name').fill(profile.fullName);
 
   const skillsSection = page.getByRole('heading', {name: 'Skills', exact: true}).locator('..');
   for (const skill of profile.skills ?? []) {
-    await skillsSection.getByRole('button', {name: 'Add', exact: true}).click();
+    await skillsSection.getByRole('button', {name: 'Add competency', exact: true}).click();
     await page.getByLabel('Skill').last().fill(skill);
   }
 
   const projectsSection = page.getByRole('heading', {name: 'Projects', exact: true}).locator('..');
   for (const project of profile.projects ?? []) {
-    await projectsSection.getByRole('button', {name: 'Add', exact: true}).click();
-    await page.getByLabel('Project name').last().fill(project.name);
-    await page.getByLabel('Description').last().fill(project.description);
-    await page.getByLabel('Technologies (comma separated)').last().fill(project.technologies);
+    await projectsSection.getByRole('button', {name: 'Add projects', exact: true}).click();
+    await page.getByLabel('Project name', {exact: true}).last().fill(project.name);
+    await page.getByLabel('Description', {exact: true}).last().fill(project.description);
+    await page.getByLabel('Technologies (comma separated)', {exact: true}).last().fill(project.technologies);
   }
 
   await page.getByLabel('Full name').locator('xpath=ancestor::form').getByRole(
@@ -76,21 +76,51 @@ export async function createPrivateProfile(page: Page, profile: PrivateProfileDe
     {name: 'Create profile', exact: true},
   ).click();
   await expect(page.getByRole('heading', {name: profile.fullName, exact: true})).toBeVisible();
-  await expect(page.getByLabel('Candidate profile')).toHaveText(profile.fullName);
-  return page.getByLabel('Candidate profile').inputValue();
+  const candidateProfile = page.getByLabel('Candidate profile', {exact: true});
+  await expect(candidateProfile).toContainText(profile.fullName);
+  return candidateProfile.inputValue();
 }
 
-/** Submit a manual job entry for the profile selected in the workspace. */
+/** Submit a manual job and wait for the human review gate. */
 export async function submitManualJob(page: Page, job: ManualJobDetails): Promise<void> {
+  const description = job.description.length >= 80
+    ? job.description
+    : `${job.description} The role also requires careful testing, readable code, and written updates for the team.`;
   await page.getByRole('button', {name: 'Paste job manually', exact: true}).click();
   await page.getByLabel('Job title').fill(job.title);
   await page.getByRole('textbox', {name: 'Company', exact: true}).fill(job.company);
   if (job.location) {
     await page.getByLabel('Location').fill(job.location);
   }
-  await page.getByLabel('Source platform').selectOption(job.sourcePlatform ?? 'company');
-  await page.getByLabel('Job description').fill(job.description);
-  await page.getByRole('button', {name: 'Generate resume', exact: true}).click();
+  await page.getByLabel('Source').selectOption(job.sourcePlatform ?? 'company');
+  await page.getByLabel('Job description').fill(description);
+  await page.getByRole('button', {name: 'Analyze evidence', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Human review required'})).toBeVisible();
+}
+
+/** Approve the draft that is waiting for review and wait for export. */
+export async function approveCurrentDraft(page: Page): Promise<void> {
+  await page.getByRole('button', {name: 'Approve and export', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Approved and saved'})).toBeVisible();
+}
+
+/** Download the approved PDF and return its bytes. */
+export async function downloadApprovedPdf(page: Page): Promise<Buffer> {
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', {name: 'Download PDF', exact: true}).click();
+  const download = await downloadPromise;
+  const stream = await download.createReadStream();
+  if (!stream) {
+    throw new Error('The generated resume download did not provide a readable stream.');
+  }
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk as Uint8Array);
+  }
+  const artifact = Buffer.concat(chunks);
+  expect(artifact.length).toBeGreaterThan(0);
+  expect(artifact.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  return artifact;
 }
 
 /**

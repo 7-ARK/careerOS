@@ -1,5 +1,5 @@
 import {expect, test} from './fixtures';
-import {createPrivateProfile, submitManualJob} from './acceptance-helpers';
+import {approveCurrentDraft, createPrivateProfile, submitManualJob} from './acceptance-helpers';
 
 const FIRST_TITLE = 'Historical Platform Engineer';
 const FIRST_COMPANY = 'History Systems One';
@@ -19,6 +19,7 @@ test('shows generated resumes in deterministic history order and downloads an ol
     description: 'Build reliable TypeScript systems and communicate clearly with product teams.',
   });
   await expect(page.getByRole('heading', {name: FIRST_TITLE, exact: true})).toBeVisible();
+  await approveCurrentDraft(page);
 
   await submitManualJob(page, {
     title: SECOND_TITLE,
@@ -27,19 +28,22 @@ test('shows generated resumes in deterministic history order and downloads an ol
     description: 'Build trustworthy product workflows using React and TypeScript.',
   });
   await expect(page.getByRole('heading', {name: SECOND_TITLE, exact: true})).toBeVisible();
+  await approveCurrentDraft(page);
 
   const history = page.getByRole('region', {name: 'Resume history'});
   const rows = history.getByRole('listitem');
-  await expect(rows).toHaveCount(2);
-  await expect(rows.nth(0)).toHaveAccessibleName(`${SECOND_TITLE} at ${SECOND_COMPANY}`);
-  await expect(rows.nth(1)).toHaveAccessibleName(`${FIRST_TITLE} at ${FIRST_COMPANY}`);
-  await expect(rows.nth(0)).toContainText(SECOND_TITLE);
-  await expect(rows.nth(0)).toContainText(SECOND_COMPANY);
-  await expect(rows.nth(1)).toContainText(FIRST_TITLE);
-  await expect(rows.nth(1)).toContainText(FIRST_COMPANY);
+  await expect(rows.filter({hasText: SECOND_TITLE}).first()).toBeVisible();
+  await expect(rows.filter({hasText: FIRST_TITLE}).first()).toBeVisible();
+  const names = await rows.evaluateAll((items) => items.map((item) => item.getAttribute('aria-label') ?? ''));
+  const firstOlderIndex = names.findIndex((name) => name.includes(FIRST_TITLE));
+  const firstNewerIndex = names.findIndex((name) => name.includes(SECOND_TITLE));
+  expect(firstNewerIndex).toBeGreaterThanOrEqual(0);
+  expect(firstOlderIndex).toBeGreaterThan(firstNewerIndex);
 
+  const olderPdf = rows.filter({hasText: FIRST_TITLE}).filter({hasText: 'PDF'});
+  await expect(olderPdf).toHaveCount(1);
   const downloadPromise = page.waitForEvent('download');
-  await rows.nth(1).getByRole('button', {name: 'Download historical resume', exact: true}).click();
+  await olderPdf.getByRole('button', {name: 'Download historical resume', exact: true}).click();
   const download = await downloadPromise;
   const stream = await download.createReadStream();
   if (!stream) {

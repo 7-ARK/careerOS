@@ -197,6 +197,19 @@ class CandidateProfileRepository(Repository[CandidateProfile]):
         """List candidate profiles owned by one authenticated user."""
         return self.list(filters={"user_id": user_id})
 
+    def list_by_user_and_email(self, user_id: UUID, email: str) -> list[CandidateProfile]:
+        """Return profiles sharing one normalized owner/email identity."""
+        return list(
+            self.session.scalars(
+                select(CandidateProfile)
+                .where(
+                    CandidateProfile.user_id == user_id,
+                    CandidateProfile.email == email,
+                )
+                .order_by(CandidateProfile.created_at.desc())
+            )
+        )
+
     def search_profiles(
         self,
         query: str,

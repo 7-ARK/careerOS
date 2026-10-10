@@ -1,6 +1,7 @@
 """Pydantic contracts for the lightweight application tracker."""
 
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -10,7 +11,17 @@ from app.models.enums import ApplicationStatus
 from app.schemas.document_generation import GeneratedDocumentRead
 from app.schemas.knowledge_base import EntityRead, SchemaBase
 
-TrackerApplicationStatus = Literal[ApplicationStatus.NOT_APPLIED, ApplicationStatus.APPLIED]
+TrackerApplicationStatus = Literal[
+    ApplicationStatus.NOT_APPLIED,
+    ApplicationStatus.SAVED,
+    ApplicationStatus.APPLIED,
+    ApplicationStatus.INTERVIEWING,
+    ApplicationStatus.OFFER,
+    ApplicationStatus.ACCEPTED,
+    ApplicationStatus.REJECTED,
+    ApplicationStatus.WITHDRAWN,
+    ApplicationStatus.ARCHIVED,
+]
 RequiredText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
@@ -27,6 +38,7 @@ class ApplicationRecordCreate(SchemaBase):
     job_url: str | None = Field(default=None, max_length=1000)
     status: TrackerApplicationStatus = ApplicationStatus.NOT_APPLIED
     notes: str | None = None
+    evidence_coverage_score: Decimal | None = Field(default=None, ge=0, le=100)
     applied_at: datetime | None = None
 
     @field_validator("job_url", "notes", mode="before")
@@ -48,6 +60,7 @@ class ApplicationRecordUpdate(SchemaBase):
     job_url: str | None = Field(default=None, max_length=1000)
     status: TrackerApplicationStatus | None = None
     notes: str | None = None
+    evidence_coverage_score: Decimal | None = Field(default=None, ge=0, le=100)
 
     @field_validator("job_url", "notes", mode="before")
     @classmethod
@@ -69,6 +82,7 @@ class ApplicationRecordRead(EntityRead):
     job_url: str | None
     status: TrackerApplicationStatus
     notes: str | None
+    evidence_coverage_score: Decimal | None = None
     applied_at: datetime | None
 
     @field_validator("applied_at", mode="before")
@@ -85,3 +99,9 @@ class GeneratedDocumentHistoryRead(GeneratedDocumentRead):
 
     role_title: str
     company_name: str | None
+
+
+class ApplicationStatusUpdate(SchemaBase):
+    """Update only the user-facing application lifecycle state."""
+
+    status: TrackerApplicationStatus

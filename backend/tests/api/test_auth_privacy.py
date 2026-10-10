@@ -2,10 +2,12 @@
 
 import unittest
 from collections.abc import Iterator
+from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
+from docx import Document
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
@@ -55,6 +57,11 @@ OWNER_SCOPED_ROUTE_INVENTORY = (
         "application mark not applied",
     ),
     (
+        "backend/app/api/routes/applications.py",
+        "PATCH /api/v1/applications/{application_id}/status",
+        "application status",
+    ),
+    (
         "backend/app/api/routes/documents.py",
         "GET /api/v1/documents/{document_id}/download",
         "document download",
@@ -66,6 +73,31 @@ OWNER_SCOPED_ROUTE_INVENTORY = (
         "URL extraction",
     ),
     ("backend/app/api/routes/job_url_extraction.py", "POST /api/v1/pipeline/url", "URL pipeline"),
+    (
+        "backend/app/api/routes/career_analysis.py",
+        "POST /api/v1/career-analyses",
+        "career analysis start",
+    ),
+    (
+        "backend/app/api/routes/career_analysis.py",
+        "GET /api/v1/career-analyses/candidate/{candidate_profile_id}",
+        "career analysis list",
+    ),
+    (
+        "backend/app/api/routes/career_analysis.py",
+        "GET /api/v1/career-analyses/{run_id}",
+        "career analysis detail",
+    ),
+    (
+        "backend/app/api/routes/career_analysis.py",
+        "POST /api/v1/career-analyses/{run_id}/review",
+        "career analysis review",
+    ),
+    (
+        "backend/app/api/routes/career_analysis.py",
+        "POST /api/v1/jobs/{job_id}/match-explain",
+        "job match explain",
+    ),
 )
 
 
@@ -240,7 +272,11 @@ class AuthPrivacyTests(unittest.TestCase):
 
     def test_owner_scoped_route_matrix_rejects_without_disclosure_or_mutation(self) -> None:
         """Reject every foreign resource substitution without changing owner data."""
+        from datetime import UTC, datetime
+        from decimal import Decimal
+
         from app.models.application_tracking import ApplicationRecord
+        from app.models.career_analysis import CareerAnalysisRun
 
         owner = self._register("matrix-owner@example.com", "Private Owner")
         stranger = self._register("matrix-stranger@example.com", "Matrix Stranger")
@@ -255,6 +291,22 @@ class AuthPrivacyTests(unittest.TestCase):
             status="not_applied",
         )
         self.session.add(owner_record)
+        owner_run = CareerAnalysisRun(
+            user_id=UUID(owner.json()["user"]["id"]),
+            candidate_profile_id=UUID(owner_profile["id"]),
+            job_description_id=owner_document.job_analysis.job_description_id,
+            started_at=datetime.now(UTC),
+            status="awaiting_review",
+            current_stage="human_review",
+            provider="deterministic",
+            review_notes="private review note",
+            structured_requirements={"job_title": "Private Role"},
+            evidence_matches={},
+            stage_results=[],
+            token_usage={},
+            estimated_cost_usd=Decimal("0"),
+        )
+        self.session.add(owner_run)
         self.session.commit()
 
         before = self._serialized_owner_state(
@@ -325,6 +377,14 @@ class AuthPrivacyTests(unittest.TestCase):
                 ),
             ),
             (
+                "application status",
+                lambda: self.client.patch(
+                    f"/api/v1/applications/{owner_record.id}/status",
+                    json={"status": "rejected"},
+                    headers=stranger_headers,
+                ),
+            ),
+            (
                 "manual pipeline",
                 lambda: self.client.post(
                     "/api/v1/pipeline/manual",
@@ -366,6 +426,52 @@ class AuthPrivacyTests(unittest.TestCase):
                     f"/api/v1/documents/{owner_document.id}/download", headers=stranger_headers
                 ),
             ),
+            (
+                "career analysis start",
+                lambda: self.client.post(
+                    "/api/v1/career-analyses",
+                    json={
+                        "candidate_profile_id": owner_profile["id"],
+                        "raw_title": "Private Role",
+                        "company_name": "Private Company",
+                        "description_text": (
+                            "Private description that is long enough to satisfy the "
+                            "career analysis request contract for this privacy check."
+                        ),
+                    },
+                    headers=stranger_headers,
+                ),
+            ),
+            (
+                "career analysis list",
+                lambda: self.client.get(
+                    f"/api/v1/career-analyses/candidate/{owner_profile['id']}",
+                    headers=stranger_headers,
+                ),
+            ),
+            (
+                "career analysis detail",
+                lambda: self.client.get(
+                    f"/api/v1/career-analyses/{owner_run.id}",
+                    headers=stranger_headers,
+                ),
+            ),
+            (
+                "career analysis review",
+                lambda: self.client.post(
+                    f"/api/v1/career-analyses/{owner_run.id}/review",
+                    json={"decision": "reject"},
+                    headers=stranger_headers,
+                ),
+            ),
+            (
+                "job match explain",
+                lambda: self.client.post(
+                    f"/api/v1/jobs/{owner_run.job_description_id}/match-explain",
+                    json={"candidate_profile_id": owner_profile["id"]},
+                    headers=stranger_headers,
+                ),
+            ),
         ]
         self.assertEqual(
             sorted(operation for operation, _ in foreign_attempts),
@@ -377,6 +483,7 @@ class AuthPrivacyTests(unittest.TestCase):
         from app.api.routes import (
             applications,
             candidates,
+            career_analysis,
             documents,
             job_url_extraction,
             pipeline,
@@ -389,6 +496,8 @@ class AuthPrivacyTests(unittest.TestCase):
             ("backend/app/api/routes/documents.py", documents.router),
             ("backend/app/api/routes/pipeline.py", pipeline.router),
             ("backend/app/api/routes/job_url_extraction.py", job_url_extraction.router),
+            ("backend/app/api/routes/career_analysis.py", career_analysis.router),
+            ("backend/app/api/routes/career_analysis.py", career_analysis.jobs_router),
         ):
             for route in router.routes:
                 parameters = signature(route.endpoint).parameters
@@ -397,6 +506,8 @@ class AuthPrivacyTests(unittest.TestCase):
                     "candidate_profile_id",
                     "application_id",
                     "document_id",
+                    "run_id",
+                    "job_id",
                 }.intersection(parameters)
                 request_carries_candidate_identifier = (
                     "request" in parameters
@@ -404,17 +515,21 @@ class AuthPrivacyTests(unittest.TestCase):
                     in {
                         "backend/app/api/routes/pipeline.py",
                         "backend/app/api/routes/job_url_extraction.py",
+                        "backend/app/api/routes/career_analysis.py",
                     }
                 )
                 if "current_user" in parameters and (
                     owns_path_identifier or request_carries_candidate_identifier
                 ):
-                    for method in sorted(route.methods):
+                    for method in sorted(
+                        method for method in route.methods if method not in {"HEAD", "OPTIONS"}
+                    ):
                         router_inventory.append((source_path, f"{method} {route.path}"))
-        self.assertEqual(
-            [(source_path, operation) for source_path, operation, _ in OWNER_SCOPED_ROUTE_INVENTORY],
-            router_inventory,
-        )
+        expected_inventory = [
+            (source_path, operation)
+            for source_path, operation, _ in OWNER_SCOPED_ROUTE_INVENTORY
+        ]
+        self.assertEqual(expected_inventory, router_inventory)
 
         expected_not_found_payload = {
             "error": {"code": "not_found", "message": "Resource was not found."}
@@ -430,6 +545,8 @@ class AuthPrivacyTests(unittest.TestCase):
             owner_record.notes,
             owner_document.file_name,
             owner_document.file_path,
+            str(owner_run.id),
+            owner_run.review_notes,
         )
         for operation, attempt in foreign_attempts:
             with self.subTest(operation=operation):
@@ -448,6 +565,11 @@ class AuthPrivacyTests(unittest.TestCase):
             str(owner_document.id),
         )
         self.assertEqual(after, before)
+        self.session.expire_all()
+        persisted_run = self.session.get(CareerAnalysisRun, owner_run.id)
+        self.assertIsNotNone(persisted_run)
+        self.assertEqual(persisted_run.review_notes, "private review note")
+        self.assertEqual(persisted_run.status, "awaiting_review")
 
     def test_document_history_is_owner_scoped(self) -> None:
         """History exposes only documents belonging to the authorized candidate owner."""
@@ -475,7 +597,10 @@ class AuthPrivacyTests(unittest.TestCase):
         self.assertEqual([row["id"] for row in owner_history.json()], [str(owner_document.id)])
         self.assertEqual(owner_history.json()[0]["role_title"], "Private Role")
         self.assertEqual(stranger_history.status_code, 200)
-        self.assertEqual([row["id"] for row in stranger_history.json()], [str(stranger_document.id)])
+        self.assertEqual(
+            [row["id"] for row in stranger_history.json()],
+            [str(stranger_document.id)],
+        )
         self.assertNotIn(str(owner_document.id), stranger_history.text)
         self.assertEqual(foreign_history.status_code, 404)
         self.assertEqual(
@@ -621,6 +746,35 @@ class AuthPrivacyTests(unittest.TestCase):
             separators=(",", ":"),
             sort_keys=True,
         ).encode()
+
+    def test_resume_import_requires_auth_and_does_not_persist_before_review(self) -> None:
+        document = Document()
+        document.add_paragraph("Review Candidate")
+        document.add_paragraph("Skills")
+        document.add_paragraph("Python, FastAPI")
+        content = BytesIO()
+        document.save(content)
+        files = {
+            "resume": (
+                "resume.docx",
+                content.getvalue(),
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+        }
+
+        unauthenticated = self.client.post("/api/v1/candidates/import-preview", files=files)
+        owner = self._register("importer@example.com", "Importer")
+        preview = self.client.post(
+            "/api/v1/candidates/import-preview",
+            files=files,
+            headers=self._headers(owner),
+        )
+        candidates = self.client.get("/api/v1/candidates", headers=self._headers(owner))
+
+        self.assertEqual(unauthenticated.status_code, 401)
+        self.assertEqual(preview.status_code, 200)
+        self.assertTrue(preview.json()["requires_review"])
+        self.assertEqual(candidates.json(), [])
 
     def _register(self, email: str, full_name: str) -> object:
         return self.client.post(

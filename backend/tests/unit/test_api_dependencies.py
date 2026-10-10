@@ -19,7 +19,8 @@ class ApiDependencyTests(unittest.TestCase):
             factory = get_session_factory()
 
         engine = factory.kw["bind"]
-        self.assertEqual(str(engine.url), "sqlite+pysqlite:///:memory:")
+        self.assertEqual(engine.url.drivername, "sqlite+pysqlite")
+        self.assertEqual(engine.url.database, ":memory:")
         engine.dispose()
 
     def test_session_factory_requires_database_url(self) -> None:

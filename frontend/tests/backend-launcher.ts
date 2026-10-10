@@ -8,9 +8,8 @@
  *      never silently attaches to a foreign server.
  *   2. Reset only the disposable, gitignored SQLite database file, creating
  *      its parent directory first so SQLite can create the database file.
- *   3. Initialize the schema with the existing backend SQLAlchemy entry
- *      points (app.models + Base.metadata.create_all) using the same
- *      interpreter and DATABASE_URL that uvicorn will use.
+ *   3. Apply the backend Alembic migrations using the same interpreter and
+ *      DATABASE_URL that uvicorn will use.
  *   4. Start uvicorn only after schema initialization succeeds, then
  *      propagate server exit and termination signals (SIGTERM/SIGINT)
  *      cleanly, exiting nonzero on any failure.
@@ -88,17 +87,14 @@ function resetDisposableDatabase(): void {
 }
 
 /**
- * Initialize the schema with the existing backend SQLAlchemy entry points.
+ * Initialize the schema through the production migration path.
  * Throws when initialization fails so uvicorn is never started against an
  * uninitialized database.
  */
 function initializeSchema(pythonCommand: string, backendDir: string, databaseUrl: string): void {
   const result = spawnSync(
     pythonCommand,
-    [
-      '-c',
-      "import app.models; from app.db.base import Base; from app.db.session import create_database_engine; from os import environ; Base.metadata.create_all(create_database_engine(environ['DATABASE_URL']))",
-    ],
+    ['-m', 'alembic', 'upgrade', 'head'],
     {
       cwd: backendDir,
       env: {...process.env, DATABASE_URL: databaseUrl},
@@ -134,6 +130,8 @@ async function main(): Promise<void> {
         ...process.env,
         DATABASE_URL: databaseUrl,
         USE_LLM_RESUME_INTELLIGENCE: 'false',
+        RAG_EMBEDDING_PROVIDER: 'deterministic',
+        OPENAI_API_KEY: '',
       },
       stdio: 'inherit',
       shell: false,

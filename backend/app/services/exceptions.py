@@ -77,6 +77,31 @@ class InvalidApplicationReferenceError(ApplicationTrackerError):
     """Raised when linked tracker records do not belong together."""
 
 
+class CareerAnalysisError(Exception):
+    """Base exception for the golden career-analysis flow."""
+
+
+class CareerAnalysisRunNotFoundError(CareerAnalysisError):
+    """Raised when a user-owned career-analysis run cannot be found."""
+
+
+class InvalidCareerAnalysisStateError(CareerAnalysisError):
+    """Raised when a review or export action violates the run lifecycle."""
+
+
+class CareerAnalysisExecutionError(CareerAnalysisError):
+    """Raised when one inspectable Golden Flow stage fails."""
+
+    def __init__(self, stage: object, run_id: object) -> None:
+        self.stage = stage
+        self.run_id = run_id
+        super().__init__(f"career analysis failed during {stage}")
+
+
+class ResumeGroundingError(CareerAnalysisError):
+    """Raised when generated resume claims are not fully evidence-grounded."""
+
+
 class PipelineError(Exception):
     """Base exception for end-to-end application-pipeline operations."""
 

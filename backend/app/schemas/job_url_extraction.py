@@ -1,7 +1,7 @@
 """Pydantic contracts for user-authorized single-URL job extraction."""
 
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import AnyHttpUrl, EmailStr, Field, TypeAdapter, field_validator
@@ -17,7 +17,7 @@ from app.schemas.pipeline import ManualJobPipelineResult
 HTTP_URL_ADAPTER = TypeAdapter(AnyHttpUrl)
 
 
-class JobUrlExtractionOutcome(str, Enum):
+class JobUrlExtractionOutcome(StrEnum):
     """Stable machine-readable categories for URL extraction results."""
 
     SUCCESS = "success"

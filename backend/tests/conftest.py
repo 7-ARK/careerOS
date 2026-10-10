@@ -3,6 +3,13 @@
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def deterministic_embeddings(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the normal suite on local embeddings and off the network."""
+    monkeypatch.setenv("RAG_EMBEDDING_PROVIDER", "deterministic")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Register the explicit opt-in flag for local Playwright browser tests."""
     parser.addoption(

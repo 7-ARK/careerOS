@@ -49,6 +49,7 @@ class LLMResumeQualityService:
         enabled: bool,
         api_key: str | None,
         model: str,
+        timeout_seconds: int = 30,
         deterministic_engine: DeterministicResumeQualityEngine | None = None,
         client: JSONResumeClient | None = None,
     ) -> None:
@@ -56,6 +57,7 @@ class LLMResumeQualityService:
         self.enabled = enabled
         self.api_key = api_key
         self.model = model
+        self.timeout_seconds = timeout_seconds
         self.deterministic_engine = deterministic_engine or DeterministicResumeQualityEngine()
         self.client = client
 
@@ -72,6 +74,7 @@ class LLMResumeQualityService:
             enabled=runtime_settings.use_llm_resume_intelligence,
             api_key=runtime_settings.openai_api_key,
             model=runtime_settings.openai_model,
+            timeout_seconds=runtime_settings.provider_timeout_seconds,
             deterministic_engine=deterministic_engine,
         )
 
@@ -125,7 +128,12 @@ class LLMResumeQualityService:
         deterministic: ResumeQualityResult,
     ) -> LLMResumeQualityOutput:
         """Call the configured LLM client and validate the result."""
-        client = self.client or OpenAIResumeClient(api_key=self.api_key or "", model=self.model)
+        client = self.client or OpenAIResumeClient(
+            api_key=self.api_key or "",
+            model=self.model,
+            timeout_seconds=self.timeout_seconds,
+            max_retries=1,
+        )
         return LLMResumeQualityOutput.model_validate(
             client.create_json_response(
                 system_prompt=LLM_RESUME_QUALITY_SYSTEM_PROMPT,

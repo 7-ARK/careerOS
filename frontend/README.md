@@ -9,6 +9,7 @@ Start the FastAPI backend in one terminal:
 ```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
+python -m alembic upgrade head
 python -m uvicorn app.main:app --reload
 ```
 
@@ -20,9 +21,14 @@ npm install
 npm run dev
 ```
 
-The frontend is available at `http://localhost:3000`. By default, it sends API
-requests to `http://127.0.0.1:8000`. Set `VITE_API_BASE_URL` in an ignored
-`frontend/.env.local` file only when a different local API URL is needed.
+The frontend is available at `http://127.0.0.1:3000`. The default API base is same-origin `/api`. During development, Vite forwards that path to the loopback FastAPI server. Swagger is available at `http://127.0.0.1:8000/docs`.
+
+Create `frontend/.env.local` only when you need an explicit override:
+
+```dotenv
+VITE_API_BASE_URL=/api
+VITE_PREVIEW_MODE=false
+```
 
 ## Local acceptance gate
 
@@ -32,14 +38,13 @@ Run the complete regression gate from `frontend`:
 npm run acceptance
 ```
 
-The command is deliberately sequential, using `&&`, so it stops and exits
-nonzero at the first failed check. It runs, in order:
+The command is sequential and exits nonzero at the first failed check. It runs, in order:
 
 1. backend `pytest`;
 2. backend `ruff check .`;
 3. backend bytecode compilation for `app`;
 4. frontend TypeScript checking;
-5. frontend production build; and
+5. frontend production build;
 6. the complete Playwright suite.
 
 Install the required local tooling first:
@@ -55,26 +60,17 @@ npm install
 npx playwright install chromium
 ```
 
-On macOS or Linux, activate the backend virtual environment with
-`source .venv/bin/activate` instead. The Playwright harness prefers that
-virtual environment's Python interpreter and falls back to `python` on PATH.
+On macOS or Linux, activate the backend virtual environment with `source .venv/bin/activate`. The Playwright harness prefers that virtual environment's Python interpreter and falls back to `python` on PATH.
 
-## Browser-test harness
+## Browser tests
 
-`npm run test:e2e` starts both test servers; do not start servers manually for
-that command. The harness uses a disposable SQLite database at
-`frontend/test-results/careeros-e2e.db`, starts FastAPI at
-`http://127.0.0.1:8000`, and starts Vite at `http://127.0.0.1:3000` with its
-API base URL directed to that backend. It disables LLM resume intelligence.
+`npm run test:e2e` starts both test servers. Do not start them manually for that command. Playwright uses Chromium only.
 
-The configured default is four Playwright workers. Both server ports are fixed:
-the Vite command uses `--strictPort`, and the backend launcher rejects an
-occupied backend port. A collision therefore fails instead of reusing another
-local server. The database and Playwright artifacts are local generated test
-state; the suite does not use a real database, local environment file, or
-cloud browser service.
+The harness uses a disposable SQLite database at `frontend/test-results/careeros-e2e.db`. It applies `python -m alembic upgrade head` before uvicorn starts, with `USE_LLM_RESUME_INTELLIGENCE=false`. FastAPI listens at `http://127.0.0.1:8000`. Vite listens at `http://127.0.0.1:3000` and forwards same-origin `/api` requests to that backend. The default is four workers.
 
-For focused browser debugging:
+Both ports are fixed. Vite uses `--strictPort`, and the backend launcher refuses an occupied port. A collision fails the run instead of attaching to another local server. Importing `playwright.config.ts` does not create the database. Setup runs once inside `tests/backend-launcher.ts`. The suite does not use a real database, a local environment file, or a cloud browser service.
+
+Focused commands:
 
 ```powershell
 npm run test:e2e:auth
@@ -82,31 +78,11 @@ npm run test:e2e:smoke
 npm run test:e2e:ui
 ```
 
-Failure traces, screenshots, and videos are retained in `test-results/`; the
-HTML report is written to `playwright-report/`.
+Failure traces, screenshots, and videos stay in `test-results/`. The HTML report is written to `playwright-report/`.
 
-## Behavior covered by the browser suite
+The suite covers registration, login, logout, and session restore; private profile creation and editing; empty states and validation that keeps entered values; manual job analysis, human approval, and nonempty PDF download; owner scoped profile, analysis, pipeline, and document access for two users; URL extraction into editable fields and manual recovery after a typed extraction failure; and resume history order with download of an older PDF.
 
-The complete browser suite verifies these user-visible and local API flows:
-
-- registration, login, logout, and session restoration after reload;
-- creating a candidate profile, editing it, preserving the selected profile,
-  and retaining entered fields after a validation error;
-- distinct empty states for users with no profile and profiles with no resume
-  history;
-- manual job entry, resume generation, and nonempty PDF downloads;
-- private candidate, pipeline, and document access for two separate users,
-  including sanitized `not_found` responses for foreign identifiers;
-- URL extraction into editable job fields, generating from edited extraction
-  results, and manual recovery after an extraction failure without creating an
-  application record first; and
-- resume-history ordering and downloading an older generated PDF.
-
-The URL scenarios use browser-routed loopback fixture content and mocked
-extraction responses. They verify the frontend's extraction and fallback
-behavior without contacting external job sites.
-
-## Environment overrides for browser tests
+URL scenarios use loopback fixture content and mocked extraction responses. They do not contact external job sites.
 
 ```dotenv
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000
@@ -115,5 +91,14 @@ PLAYWRIGHT_HEADLESS=false
 PLAYWRIGHT_WORKERS=1
 ```
 
-`PLAYWRIGHT_WORKERS` is an explicit debugging override; omit it to retain the
-configured default of four workers.
+`PLAYWRIGHT_WORKERS` is a debugging override. Omit it to keep four workers.
+
+## Golden Career Analysis
+
+The primary frontend path sends manual job details to `POST /api/v1/career-analyses`. It shows typed requirements, the calculated Evidence Coverage Score, supporting evidence, gaps, and a grounded resume preview. DOCX and PDF generation stay blocked until the user approves the draft at `/api/v1/career-analyses/{run_id}/review`.
+
+`Use job URL` calls `POST /api/v1/pipeline/extract` and copies the result into the same editable fields. A typed failure shows the extraction message and leaves those fields editable. It does not create an application record.
+
+The Applications tab loads `/api/v1/applications/{candidate_id}` and updates lifecycle status through the authenticated status endpoint. Resume history loads `/api/v1/applications/{candidate_id}/history` and can download an older generated file.
+
+`POST /api/v1/pipeline/manual` and `POST /api/v1/pipeline/url` remain available. The recruiter facing screen uses the reviewed analysis endpoint.

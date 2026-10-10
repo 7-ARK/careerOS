@@ -299,17 +299,18 @@ class FastApiEndpointTests(unittest.TestCase):
         )
         for outcome, platform, message in failures:
             with self.subTest(outcome=outcome):
-                app.dependency_overrides[get_job_url_pipeline_service] = lambda: StubUrlPipelineService(
-                    JobUrlExtractionResult(
-                        job_url="https://www.linkedin.com/jobs/view/123",
-                        detected_platform=platform,
-                        description_text="",
-                        extraction_confidence=Decimal("0"),
-                        extraction_warnings=["Use manual import fallback."],
-                        outcome=outcome,
-                        message=message,
-                        pipeline_ready=False,
-                    )
+                extracted = JobUrlExtractionResult(
+                    job_url="https://www.linkedin.com/jobs/view/123",
+                    detected_platform=platform,
+                    description_text="",
+                    extraction_confidence=Decimal("0"),
+                    extraction_warnings=["Use manual import fallback."],
+                    outcome=outcome,
+                    message=message,
+                    pipeline_ready=False,
+                )
+                app.dependency_overrides[get_job_url_pipeline_service] = (
+                    lambda extracted=extracted: StubUrlPipelineService(extracted)
                 )
 
                 response = self.client.post(
@@ -328,6 +329,8 @@ class FastApiEndpointTests(unittest.TestCase):
                 self.assertNotIn("C:\\", response.text)
 
     def test_job_url_extraction_endpoint_rejects_empty_url(self) -> None:
+        app.dependency_overrides[get_job_url_pipeline_service] = lambda: object()
+
         response = self.client.post(
             "/api/v1/pipeline/extract",
             json={

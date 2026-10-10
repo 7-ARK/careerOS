@@ -1,7 +1,9 @@
 import {test, expect} from './fixtures';
 import {
+  approveCurrentDraft,
   authenticatedRequestContext,
   createPrivateProfile,
+  downloadApprovedPdf,
   expectAuthenticationScreen,
   login,
   register,
@@ -16,7 +18,7 @@ import {
  *   - login state is preserved in localStorage and survives a page reload;
  *   - authenticated navigation reaches the resume workspace.
  *
- * The backend must be running at VITE_API_BASE_URL (default http://127.0.0.1:8000).
+ * Same-origin `/api` requests reach the test backend through Vite's loopback proxy.
  */
 
 test('isolated user can register and land on the workspace', async ({authenticatedPage, isolatedUser}) => {
@@ -79,26 +81,14 @@ test('isolated user creates a private profile and downloads a tailored PDF resum
     description: 'Acme Career Tools needs a Senior TypeScript Engineer to build React resume workflows. Required skills include TypeScript, React, and clear communication.',
   });
 
-  await expect(page.getByRole('heading', {name: 'Senior TypeScript Engineer', exact: true})).toBeVisible();
-  await expect(page.getByText('Acme Career Tools', {exact: true})).toBeVisible();
-  await expect(page.getByText('Match Summary', {exact: true})).toBeVisible();
-  const resultPanel = page.getByRole('complementary');
-  await expect(resultPanel.getByText('TypeScript', {exact: true})).toBeVisible();
-  await expect(resultPanel.getByText('Resume Builder', {exact: true})).toBeVisible();
+  const results = page.locator('#analysis-results');
+  await expect(results.getByRole('heading', {name: 'Senior TypeScript Engineer', exact: true})).toBeVisible();
+  await expect(results.getByText('Acme Career Tools', {exact: true})).toBeVisible();
+  await expect(results.getByRole('heading', {name: 'Requirement-to-evidence map'})).toBeVisible();
+  await expect(results.getByText('TypeScript', {exact: true}).first()).toBeVisible();
+  await expect(results.getByText('Resume Builder', {exact: true}).first()).toBeVisible();
 
-  const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', {name: 'Download resume', exact: true}).click();
-  const download = await downloadPromise;
-  const stream = await download.createReadStream();
-  if (!stream) {
-    throw new Error('The generated resume download did not provide a readable stream.');
-  }
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of stream) {
-    chunks.push(chunk as Uint8Array);
-  }
-  const artifact = Buffer.concat(chunks);
-  expect(artifact.length).toBeGreaterThan(0);
-  expect(artifact.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  await approveCurrentDraft(page);
+  await downloadApprovedPdf(page);
 });
 

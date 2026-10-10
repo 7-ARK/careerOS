@@ -140,6 +140,9 @@ class ResumeDraft(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     ats_keywords_used: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     omitted_keywords: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     truthfulness_notes: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    grounding_manifest: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON, nullable=False, default=list
+    )
     status: Mapped[str] = mapped_column(
         String(50), nullable=False, default=ResumeDraftStatus.DRAFT, index=True
     )

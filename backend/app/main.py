@@ -9,22 +9,17 @@ from app.api.routes import (
     applications,
     auth,
     candidates,
+    career_analysis,
     documents,
     health,
     job_url_extraction,
     pipeline,
 )
+from app.core.config import Settings
+from app.core.observability import log_http_request
 
 APP_NAME = "careerOS"
 APP_VERSION = __version__
-LOCAL_FRONTEND_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-
 def create_app() -> FastAPI:
     """Create the FastAPI application and register v1 HTTP adapters."""
     application = FastAPI(
@@ -34,11 +29,12 @@ def create_app() -> FastAPI:
     )
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=LOCAL_FRONTEND_ORIGINS,
+        allow_origins=list(Settings.from_env().cors_origins),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    application.middleware("http")(log_http_request)
     register_exception_handlers(application)
     application.include_router(health.router)
     application.include_router(auth.router)
@@ -47,6 +43,8 @@ def create_app() -> FastAPI:
     application.include_router(documents.router)
     application.include_router(candidates.router)
     application.include_router(applications.router)
+    application.include_router(career_analysis.router)
+    application.include_router(career_analysis.jobs_router)
     return application
 
 

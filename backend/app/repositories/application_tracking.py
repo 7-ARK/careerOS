@@ -39,7 +39,7 @@ class ApplicationRecordRepository(Repository[ApplicationRecord]):
         offset: int = 0,
         limit: int = 100,
     ) -> list[ApplicationRecord]:
-        """List records by one of the lightweight tracker states."""
+        """List records by one supported tracker state."""
         self._validate_tracker_status(status)
         filters: dict[str, object] = {"status": str(status)}
         if candidate_profile_id is not None:
@@ -75,7 +75,7 @@ class ApplicationRecordRepository(Repository[ApplicationRecord]):
         *,
         applied_at: datetime | None,
     ) -> ApplicationRecord:
-        """Update the two-state lifecycle and its application timestamp."""
+        """Update the tracker lifecycle and its application timestamp."""
         self._validate_tracker_status(status)
         return self.update(record, {"status": str(status), "applied_at": applied_at})
 
@@ -109,6 +109,18 @@ class ApplicationRecordRepository(Repository[ApplicationRecord]):
 
     @staticmethod
     def _validate_tracker_status(status: ApplicationStatus) -> None:
-        """Reject legacy pipeline states in the lightweight tracker repository."""
-        if status not in {ApplicationStatus.NOT_APPLIED, ApplicationStatus.APPLIED}:
-            raise ValueError("lightweight tracker status must be not_applied or applied")
+        """Reject lifecycle states not exposed by the recruiter-ready tracker."""
+        if status not in {
+            ApplicationStatus.NOT_APPLIED,
+            ApplicationStatus.SAVED,
+            ApplicationStatus.APPLIED,
+            ApplicationStatus.INTERVIEWING,
+            ApplicationStatus.OFFER,
+            ApplicationStatus.ACCEPTED,
+            ApplicationStatus.REJECTED,
+            ApplicationStatus.WITHDRAWN,
+            ApplicationStatus.ARCHIVED,
+        }:
+            raise ValueError(
+                "tracker status is not part of the supported application lifecycle"
+            )

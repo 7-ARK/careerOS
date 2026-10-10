@@ -119,6 +119,19 @@ class ApplicationTrackerServiceTests(unittest.TestCase):
         self.assertEqual(self.service.search_applications("Platform"), [attached])
         self.assertEqual(self.service.search_applications("Backend"), [attached])
 
+    def test_supports_offer_outcome_and_archive_statuses(self) -> None:
+        record = self._create_record()
+
+        for status in (
+            ApplicationStatus.INTERVIEWING,
+            ApplicationStatus.OFFER,
+            ApplicationStatus.ACCEPTED,
+            ApplicationStatus.WITHDRAWN,
+            ApplicationStatus.ARCHIVED,
+        ):
+            updated = self.service.update_status(record.id, status)
+            self.assertEqual(updated.status, status)
+
     def test_rejects_missing_record_and_document_from_another_candidate(self) -> None:
         with self.assertRaises(ApplicationRecordNotFoundError):
             self.service.mark_as_applied(uuid4())

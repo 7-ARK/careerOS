@@ -1,0 +1,27 @@
+{
+  "name": "Python/AI Backend Internship",
+  "job": {
+    "title": "Python AI Backend Intern",
+    "company": "Backend Studio",
+    "description": "Responsibilities:\nSupport backend development and test automation with the engineering team.\nRequirements:\nPython, FastAPI, PostgreSQL, Git, and Redis are required.\nPreferred skills:\nDocker is a plus."
+  },
+  "evidence": [
+    {
+      "evidence_id": "project-api-001",
+      "category": "project",
+      "text": "Implemented Python FastAPI endpoints with PostgreSQL and automated API tests."
+    },
+    {
+      "evidence_id": "skill-git-001",
+      "category": "skill",
+      "text": "Used Git and GitHub for source control on software projects."
+    }
+  ],
+  "expected_extracted_terms": ["Backend Development", "Test Automation", "Python", "FastAPI", "PostgreSQL", "Git", "Redis", "Docker"],
+  "expected_retrieval": {
+    "Python FastAPI PostgreSQL": "project-api-001",
+    "Git source control": "skill-git-001"
+  },
+  "expected_missing_requirements": ["Redis", "Docker"],
+  "unsupported_claims_to_reject": ["Operated a production Redis cluster."]
+}

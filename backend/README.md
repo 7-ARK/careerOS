@@ -1,33 +1,32 @@
-# careerOS backend
+# careerOS Backend
 
-The FastAPI backend for careerOS manages authenticated candidate profiles, job
-analysis, resume generation, application history, and generated documents.
+FastAPI, Pydantic, SQLAlchemy, Alembic, deterministic evidence retrieval, grounded resume generation, DOCX/PDF export, and application tracking for the [careerOS Golden Career Analysis Flow](../README.md).
 
-## Local testing
-
-Install backend dependencies in a local virtual environment, then use the
-frontend acceptance gate to run all repository checks:
+## Start locally
 
 ```powershell
-cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
-cd ..\frontend
-npm install
-npx playwright install chromium
-npm run acceptance
+python -m alembic upgrade head
+python -m scripts.seed_candidate
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
-`npm run acceptance` is the documented full regression command. It runs backend
-pytest, Ruff, backend compilation, frontend type checking, frontend production
-build, and the complete Playwright suite sequentially. It exits nonzero when
-any check fails.
+`DATABASE_URL` is required for local startup. Copy the root `.env.example` values into an ignored environment file or set them in the shell. The deterministic defaults require no provider key.
 
-See [local testing](docs/local_testing.md) for the backend test coverage and
-for separately running the application during local development.
+Use `python -m alembic revision --autogenerate -m "description"` for future schema changes and review every generated migration before applying it. Runtime application startup does not call `Base.metadata.create_all`.
 
-## Status
+## Verify
 
-Under development.
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\ruff.exe check .
+.\.venv\Scripts\python.exe -m compileall -q .
+```
+
+From `frontend`, `npm run acceptance` runs those backend checks, then frontend type checking, the production build, and the Playwright suite. It stops at the first failure. See [local testing](docs/local_testing.md).
+
+OpenAPI is served at `http://127.0.0.1:8000/docs` and health at `/health`.
+
+Retrieval defaults are `RAG_EMBEDDING_PROVIDER=deterministic` and `RAG_VECTOR_STORE=local`. Optional semantic mode is `RAG_EMBEDDING_PROVIDER=openai` with `OPENAI_API_KEY` set only in an ignored env file or the shell. The benchmark command is `python -m scripts.retrieval_eval`. Measured results and setup notes are in the root [Evidence RAG / retrieval](../README.md#evidence-rag--retrieval) section. See [scripts/README.md](scripts/README.md).

@@ -5,9 +5,9 @@ test('profile edits persist after reload and remain selected for resume generati
   await page.goto('/');
   await register(page, isolatedUser);
 
-  await page.getByRole('button', {name: 'Create profile', exact: true}).click();
+  await page.getByRole('button', {name: 'New candidate profile', exact: true}).click();
   await page.getByRole('textbox', {name: 'Full name'}).fill('Persistent Profile Candidate');
-  await page.getByRole('button', {name: 'Create profile', exact: true}).last().click();
+  await page.getByRole('button', {name: 'Create profile', exact: true}).click();
 
   await expect(
     page.getByRole('heading', {name: 'Persistent Profile Candidate', exact: true}),
@@ -20,7 +20,9 @@ test('profile edits persist after reload and remain selected for resume generati
 
   await page.reload();
 
-  await expect(page.getByLabel('Candidate profile')).toHaveText('Persistent Profile Candidate');
+  await expect(page.getByLabel('Candidate profile', {exact: true})).toContainText(
+    'Persistent Profile Candidate',
+  );
   await expect(
     page.getByRole('heading', {name: 'Persistent Profile Candidate', exact: true}),
   ).toBeVisible();

@@ -18,9 +18,9 @@ MAX_SKILLS = 16
 MAX_SKILL_GROUPS = 5
 
 SKILL_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("Languages", ("python", "sql")),
+    ("Languages", ("python",)),
     ("Backend", ("fastapi", "api", "apis", "microservices", "backend architecture")),
-    ("Databases", ("postgresql", "database", "databases")),
+    ("Databases", ("sql", "postgresql", "database", "databases")),
     (
         "AI / Machine Learning",
         (
@@ -34,6 +34,7 @@ SKILL_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
             "langchain",
             "langgraph",
             "rag",
+            "openai api",
             "mlops",
         ),
     ),
@@ -106,7 +107,7 @@ ROLE_SKILL_ORDER: dict[RoleKind, tuple[str, ...]] = {
         "Languages",
         "Backend",
         "AI / Machine Learning",
-        "Automation",
+        "Databases",
         "Developer Tools",
     ),
 }
@@ -279,6 +280,11 @@ class DeterministicResumeQualityEngine:
             return "machine_learning"
         if automation_hits >= 2:
             return "ai_automation"
+        if "applied ai" in text or _count_terms(
+            text,
+            ("large language model", "llm", "rag", "natural language processing"),
+        ) >= 2:
+            return "general"
         if backend_hits >= 3:
             return "backend_python"
         return "general"
@@ -373,8 +379,12 @@ class DeterministicResumeQualityEngine:
         supported_values: dict[str, tuple[str, str]] = {
             _normalize(skill.name): (skill.name, skill.category) for skill in candidate.skills
         }
+        # Only candidate-owned technology names are citable here. Job terms that
+        # merely occur inside project prose (for example "OpenAI" inside
+        # "OpenAI API", or "APIs" inside "FastAPI") are unsupported claims and
+        # stay on the evidence map as not_evidenced.
         for score in selection.selected:
-            for term in [*score.project.technologies, *score.matched_terms]:
+            for term in score.project.technologies:
                 key = _normalize(term)
                 if key and key not in supported_values:
                     supported_values[key] = (term, "Project Evidence")
@@ -396,6 +406,8 @@ class DeterministicResumeQualityEngine:
             for skill_name, _category in ranked_skills:
                 key = _normalize(skill_name)
                 if key in used:
+                    continue
+                if key == _normalize(group_name):
                     continue
                 if _skill_matches_group(key, aliases):
                     values.append(skill_name)

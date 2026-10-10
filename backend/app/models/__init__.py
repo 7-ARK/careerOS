@@ -2,15 +2,19 @@
 
 from app.models.application_tracking import ApplicationRecord
 from app.models.auth import User
+from app.models.career_analysis import CareerAnalysisRun
 from app.models.document_generation import GeneratedDocument
 from app.models.enums import (
     ApplicationStatus,
+    CareerAnalysisStage,
+    CareerAnalysisStatus,
     DocumentFormat,
     DocumentGenerationStatus,
     EmploymentType,
     MatchQuality,
     RelocationPreference,
     RemotePreference,
+    RequirementMatchStatus,
     ResumeDraftStatus,
     ResumeSectionType,
     ResumeStyle,
@@ -19,6 +23,7 @@ from app.models.enums import (
     SourcePlatform,
     WorkplaceType,
 )
+from app.models.evidence_embedding import EvidenceEmbedding
 from app.models.job_analysis import JobAnalysis, JobDescription
 from app.models.knowledge_base import (
     ApplicationHistory,
@@ -38,12 +43,16 @@ __all__ = [
     "ApplicationHistory",
     "ApplicationRecord",
     "ApplicationStatus",
+    "CareerAnalysisRun",
+    "CareerAnalysisStage",
+    "CareerAnalysisStatus",
     "User",
     "CandidateProfile",
     "CareerGoal",
     "Certification",
     "Education",
     "EmploymentType",
+    "EvidenceEmbedding",
     "DocumentFormat",
     "DocumentGenerationStatus",
     "GeneratedDocument",
@@ -56,6 +65,7 @@ __all__ = [
     "RemotePreference",
     "ResumeStyle",
     "ResumeTemplateName",
+    "RequirementMatchStatus",
     "ResumeAnalysis",
     "ResumeDraft",
     "ResumeDraftStatus",

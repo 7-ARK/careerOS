@@ -126,6 +126,7 @@ class ResumeDraftBase(SchemaBase):
     ats_keywords_used: list[str] = Field(default_factory=list)
     omitted_keywords: list[str] = Field(default_factory=list)
     truthfulness_notes: list[str] = Field(default_factory=list)
+    grounding_manifest: list[dict[str, Any]] = Field(default_factory=list)
     status: ResumeDraftStatus | str = ResumeDraftStatus.DRAFT
 
 
@@ -150,6 +151,7 @@ class ResumeDraftUpdate(SchemaBase):
     ats_keywords_used: list[str] | None = None
     omitted_keywords: list[str] | None = None
     truthfulness_notes: list[str] | None = None
+    grounding_manifest: list[dict[str, Any]] | None = None
     status: ResumeDraftStatus | str | None = None
 
 

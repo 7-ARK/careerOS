@@ -1,0 +1,1179 @@
+{
+  "source_results": "evals/results/results.json",
+  "mode": "openai_semantic_hybrid",
+  "provider_name": "openai",
+  "model_name": "text-embedding-3-small",
+  "ranking": "rank_evidence order (lexical 0.7 / vector 0.3)",
+  "product_rule": {
+    "module": "app.features.resume_intelligence.matching",
+    "function": "EvidenceMatchService._evaluate_text",
+    "explicit_rules_line": 80,
+    "explicit_eval_line": 551,
+    "evaluate_text_line": 527,
+    "citation_floor_line": 541,
+    "matched_lexical_line": 545,
+    "partial_lexical_line": 547,
+    "matched_lexical_bar": "0.6500",
+    "partial_lexical_bar": "0.2500",
+    "vector_citation_floor": "0.4500",
+    "explicit_rules": {
+      "AWS": [
+        "aws",
+        "amazon web services",
+        "amazon ec2",
+        "amazon s3",
+        "aws lambda"
+      ],
+      "Kubernetes": [
+        "kubernetes",
+        "k8s"
+      ],
+      "CI/CD": [
+        "ci cd",
+        "continuous integration",
+        "continuous delivery",
+        "continuous deployment"
+      ]
+    },
+    "status_top_k": 3,
+    "hybrid_weights": "lexical 0.7 / vector 0.3, ranking only"
+  },
+  "baseline": {
+    "status_accuracy": {
+      "hits": 19,
+      "cases": 24
+    },
+    "paraphrase_status_accuracy": {
+      "hits": 1,
+      "cases": 6
+    },
+    "unsupported_false_positives": {
+      "count": 0,
+      "cases": 5,
+      "case_ids": []
+    },
+    "near_miss_false_positives": {
+      "count": 0,
+      "cases": 5,
+      "case_ids": []
+    }
+  },
+  "focus_cases": [
+    {
+      "id": "para-ocr",
+      "category": "paraphrase",
+      "query": "optical character recognition",
+      "expected_status": "matched",
+      "predicted_status": "not_evidenced",
+      "status_correct": false,
+      "correct_evidence_rank": 1,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "project:Legal Document OCR and Extraction System",
+        "lexical_score": "0.0000",
+        "vector_score": "0.3141",
+        "combined_score": "0.0942",
+        "overlap_tokens": [],
+        "relevant": true
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "project:Legal Document OCR and Extraction System",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3141",
+          "combined_score": "0.0942",
+          "overlap_tokens": [],
+          "relevant": true
+        },
+        {
+          "rank": 2,
+          "key": "project:AI Resume Automation / careerOS",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2266",
+          "combined_score": "0.0680",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "experience:Civic Tech Lab",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2229",
+          "combined_score": "0.0669",
+          "overlap_tokens": [],
+          "relevant": true
+        }
+      ],
+      "first_relevant": {
+        "rank": 1,
+        "key": "project:Legal Document OCR and Extraction System",
+        "lexical_score": "0.0000",
+        "vector_score": "0.3141",
+        "combined_score": "0.0942",
+        "overlap_tokens": [],
+        "relevant": true
+      },
+      "rule_id": "citation_filter_empty",
+      "rule": "No top-3 chunk was admitted. Admission requires lexical_score > 0 or vector_score >= 0.45. Rank-1 project:Legal Document OCR and Extraction System has lexical 0.0000 and vector 0.3141. The highest top-3 vector is 0.3141. `_evaluate_text` returns not_evidenced on the empty citation list, before the 0.65 lexical bar is evaluated.",
+      "blocked_expected_status": true,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "para-sql-expansion",
+      "category": "paraphrase",
+      "query": "structured query language",
+      "expected_status": "matched",
+      "predicted_status": "partially_matched",
+      "status_correct": false,
+      "correct_evidence_rank": 1,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "experience:Civic Tech Lab",
+        "lexical_score": "0.3333",
+        "vector_score": "0.2078",
+        "combined_score": "0.2957",
+        "overlap_tokens": [
+          "structured"
+        ],
+        "relevant": true
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "experience:Civic Tech Lab",
+          "lexical_score": "0.3333",
+          "vector_score": "0.2078",
+          "combined_score": "0.2957",
+          "overlap_tokens": [
+            "structured"
+          ],
+          "relevant": true
+        },
+        {
+          "rank": 2,
+          "key": "project:Legal Document OCR and Extraction System",
+          "lexical_score": "0.3333",
+          "vector_score": "0.2051",
+          "combined_score": "0.2949",
+          "overlap_tokens": [
+            "structured"
+          ],
+          "relevant": true
+        },
+        {
+          "rank": 3,
+          "key": "project:AI Resume Automation / careerOS",
+          "lexical_score": "0.3333",
+          "vector_score": "0.1981",
+          "combined_score": "0.2928",
+          "overlap_tokens": [
+            "structured"
+          ],
+          "relevant": true
+        }
+      ],
+      "first_relevant": {
+        "rank": 1,
+        "key": "experience:Civic Tech Lab",
+        "lexical_score": "0.3333",
+        "vector_score": "0.2078",
+        "combined_score": "0.2957",
+        "overlap_tokens": [
+          "structured"
+        ],
+        "relevant": true
+      },
+      "rule_id": "lexical_partial_below_matched_bar",
+      "rule": "Admitted citations have best lexical 0.3333 (experience:Civic Tech Lab overlap ['structured']; project:Legal Document OCR and Extraction System overlap ['structured']; project:AI Resume Automation / careerOS overlap ['structured']). That is below the 0.65 matched bar and at least the 0.25 partial bar, so status is partially_matched. The normalized query is not an exact substring of an admitted citation.",
+      "blocked_expected_status": true,
+      "relevant_outside_top_hits": [
+        "skill:SQL"
+      ]
+    },
+    {
+      "id": "para-containers",
+      "category": "paraphrase",
+      "query": "operating-system level containers",
+      "expected_status": "matched",
+      "predicted_status": "partially_matched",
+      "status_correct": false,
+      "correct_evidence_rank": 1,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "project:Legal Document OCR and Extraction System",
+        "lexical_score": "0.2500",
+        "vector_score": "0.2318",
+        "combined_score": "0.2445",
+        "overlap_tokens": [
+          "system"
+        ],
+        "relevant": true
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "project:Legal Document OCR and Extraction System",
+          "lexical_score": "0.2500",
+          "vector_score": "0.2318",
+          "combined_score": "0.2445",
+          "overlap_tokens": [
+            "system"
+          ],
+          "relevant": true
+        },
+        {
+          "rank": 2,
+          "key": "project:AI Workflow Automation System",
+          "lexical_score": "0.2500",
+          "vector_score": "0.1504",
+          "combined_score": "0.2201",
+          "overlap_tokens": [
+            "system"
+          ],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "skill:Docker",
+          "lexical_score": "0.0000",
+          "vector_score": "0.4279",
+          "combined_score": "0.1284",
+          "overlap_tokens": [],
+          "relevant": true
+        }
+      ],
+      "first_relevant": {
+        "rank": 1,
+        "key": "project:Legal Document OCR and Extraction System",
+        "lexical_score": "0.2500",
+        "vector_score": "0.2318",
+        "combined_score": "0.2445",
+        "overlap_tokens": [
+          "system"
+        ],
+        "relevant": true
+      },
+      "rule_id": "lexical_partial_below_matched_bar",
+      "rule": "Admitted citations have best lexical 0.2500 (project:Legal Document OCR and Extraction System overlap ['system']; project:AI Workflow Automation System overlap ['system']). That is below the 0.65 matched bar and at least the 0.25 partial bar, so status is partially_matched. The normalized query is not an exact substring of an admitted citation.",
+      "blocked_expected_status": true,
+      "relevant_outside_top_hits": [
+        "project:Web Scraping and Job Data Extraction Tool"
+      ]
+    },
+    {
+      "id": "para-python-web-framework",
+      "category": "paraphrase",
+      "query": "Python web API framework",
+      "expected_status": "matched",
+      "predicted_status": "matched",
+      "status_correct": true,
+      "correct_evidence_rank": 2,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "project:Web Scraping and Job Data Extraction Tool",
+        "lexical_score": "0.7500",
+        "vector_score": "0.3939",
+        "combined_score": "0.6432",
+        "overlap_tokens": [
+          "api",
+          "python",
+          "web"
+        ],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "project:Web Scraping and Job Data Extraction Tool",
+          "lexical_score": "0.7500",
+          "vector_score": "0.3939",
+          "combined_score": "0.6432",
+          "overlap_tokens": [
+            "api",
+            "python",
+            "web"
+          ],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "profile",
+          "lexical_score": "0.5000",
+          "vector_score": "0.3870",
+          "combined_score": "0.4661",
+          "overlap_tokens": [
+            "api",
+            "python"
+          ],
+          "relevant": true
+        },
+        {
+          "rank": 3,
+          "key": "project:AI Resume Automation / careerOS",
+          "lexical_score": "0.5000",
+          "vector_score": "0.3475",
+          "combined_score": "0.4543",
+          "overlap_tokens": [
+            "api",
+            "python"
+          ],
+          "relevant": true
+        }
+      ],
+      "first_relevant": {
+        "rank": 2,
+        "key": "profile",
+        "lexical_score": "0.5000",
+        "vector_score": "0.3870",
+        "combined_score": "0.4661",
+        "overlap_tokens": [
+          "api",
+          "python"
+        ],
+        "relevant": true
+      },
+      "rule_id": "lexical_matched_bar",
+      "rule": "best lexical 0.7500 on project:Web Scraping and Job Data Extraction Tool (overlap ['api', 'python', 'web']) meets the 0.65 matched bar.",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": [
+        "skill:FastAPI",
+        "project:Legal Document OCR and Extraction System"
+      ]
+    },
+    {
+      "id": "para-human-approval",
+      "category": "paraphrase",
+      "query": "human approval of machine-generated text",
+      "expected_status": "matched",
+      "predicted_status": "partially_matched",
+      "status_correct": false,
+      "correct_evidence_rank": 1,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "project:AI Workflow Automation System",
+        "lexical_score": "0.3333",
+        "vector_score": "0.4406",
+        "combined_score": "0.3655",
+        "overlap_tokens": [
+          "generated",
+          "human"
+        ],
+        "relevant": true
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "project:AI Workflow Automation System",
+          "lexical_score": "0.3333",
+          "vector_score": "0.4406",
+          "combined_score": "0.3655",
+          "overlap_tokens": [
+            "generated",
+            "human"
+          ],
+          "relevant": true
+        },
+        {
+          "rank": 2,
+          "key": "education:Metro Institute of Technology",
+          "lexical_score": "0.3333",
+          "vector_score": "0.1571",
+          "combined_score": "0.2805",
+          "overlap_tokens": [
+            "machine",
+            "of"
+          ],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "experience:Civic Tech Lab",
+          "lexical_score": "0.1667",
+          "vector_score": "0.3408",
+          "combined_score": "0.2189",
+          "overlap_tokens": [
+            "text"
+          ],
+          "relevant": false
+        }
+      ],
+      "first_relevant": {
+        "rank": 1,
+        "key": "project:AI Workflow Automation System",
+        "lexical_score": "0.3333",
+        "vector_score": "0.4406",
+        "combined_score": "0.3655",
+        "overlap_tokens": [
+          "generated",
+          "human"
+        ],
+        "relevant": true
+      },
+      "rule_id": "lexical_partial_below_matched_bar",
+      "rule": "Admitted citations have best lexical 0.3333 (project:AI Workflow Automation System overlap ['generated', 'human']; education:Metro Institute of Technology overlap ['machine', 'of']). That is below the 0.65 matched bar and at least the 0.25 partial bar, so status is partially_matched. The normalized query is not an exact substring of an admitted citation.",
+      "blocked_expected_status": true,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "para-relational-databases",
+      "category": "paraphrase",
+      "query": "relational databases",
+      "expected_status": "matched",
+      "predicted_status": "partially_matched",
+      "status_correct": false,
+      "correct_evidence_rank": 1,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "skill:SQL",
+        "lexical_score": "0.5000",
+        "vector_score": "0.3413",
+        "combined_score": "0.4524",
+        "overlap_tokens": [
+          "database"
+        ],
+        "relevant": true
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "skill:SQL",
+          "lexical_score": "0.5000",
+          "vector_score": "0.3413",
+          "combined_score": "0.4524",
+          "overlap_tokens": [
+            "database"
+          ],
+          "relevant": true
+        },
+        {
+          "rank": 2,
+          "key": "skill:PostgreSQL",
+          "lexical_score": "0.5000",
+          "vector_score": "0.3231",
+          "combined_score": "0.4469",
+          "overlap_tokens": [
+            "database"
+          ],
+          "relevant": true
+        },
+        {
+          "rank": 3,
+          "key": "education:Metro Institute of Technology",
+          "lexical_score": "0.5000",
+          "vector_score": "0.1595",
+          "combined_score": "0.3978",
+          "overlap_tokens": [
+            "database"
+          ],
+          "relevant": false
+        }
+      ],
+      "first_relevant": {
+        "rank": 1,
+        "key": "skill:SQL",
+        "lexical_score": "0.5000",
+        "vector_score": "0.3413",
+        "combined_score": "0.4524",
+        "overlap_tokens": [
+          "database"
+        ],
+        "relevant": true
+      },
+      "rule_id": "lexical_partial_below_matched_bar",
+      "rule": "Admitted citations have best lexical 0.5000 (skill:SQL overlap ['database']; skill:PostgreSQL overlap ['database']; education:Metro Institute of Technology overlap ['database']). That is below the 0.65 matched bar and at least the 0.25 partial bar, so status is partially_matched. The normalized query is not an exact substring of an admitted citation.",
+      "blocked_expected_status": true,
+      "relevant_outside_top_hits": [
+        "project:AI Resume Automation / careerOS",
+        "project:Legal Document OCR and Extraction System",
+        "experience:Northstar Digital Studio",
+        "experience:Civic Tech Lab"
+      ]
+    },
+    {
+      "id": "near-kubernetes",
+      "category": "near_miss",
+      "query": "Kubernetes",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": true,
+      "explicit_labels": [
+        "Kubernetes"
+      ],
+      "top1": {
+        "rank": 1,
+        "key": "skill:Docker",
+        "lexical_score": "0.0000",
+        "vector_score": "0.3471",
+        "combined_score": "0.1041",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "skill:Docker",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3471",
+          "combined_score": "0.1041",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "experience:Northstar Digital Studio",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3209",
+          "combined_score": "0.0963",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "skill:GitHub",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2758",
+          "combined_score": "0.0827",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "explicit_phrase_absent",
+      "rule": "Query triggers explicit phrase rule Kubernetes. `_evaluate_explicit_evidence` found no corpus chunk with the required alias, so status is not_evidenced. Hybrid scores are not consulted. Rank-1 neighbor is skill:Docker at lexical 0.0000, vector 0.3471, combined 0.1041 (overlap none).",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "near-cicd",
+      "category": "near_miss",
+      "query": "CI/CD",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": true,
+      "explicit_labels": [
+        "CI/CD"
+      ],
+      "top1": {
+        "rank": 1,
+        "key": "skill:Docker",
+        "lexical_score": "0.0000",
+        "vector_score": "0.3974",
+        "combined_score": "0.1192",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "skill:Docker",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3974",
+          "combined_score": "0.1192",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "skill:GitHub",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3655",
+          "combined_score": "0.1096",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "skill:LangChain",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3168",
+          "combined_score": "0.0950",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "explicit_phrase_absent",
+      "rule": "Query triggers explicit phrase rule CI/CD. `_evaluate_explicit_evidence` found no corpus chunk with the required alias, so status is not_evidenced. Hybrid scores are not consulted. Rank-1 neighbor is skill:Docker at lexical 0.0000, vector 0.3974, combined 0.1192 (overlap none).",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "near-django",
+      "category": "near_miss",
+      "query": "Django",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "experience:Northstar Digital Studio",
+        "lexical_score": "0.0000",
+        "vector_score": "0.3459",
+        "combined_score": "0.1038",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "experience:Northstar Digital Studio",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3459",
+          "combined_score": "0.1038",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "profile",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2762",
+          "combined_score": "0.0828",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "project:AI Resume Automation / careerOS",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2632",
+          "combined_score": "0.0789",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "citation_filter_empty",
+      "rule": "No top-3 chunk was admitted. Admission requires lexical_score > 0 or vector_score >= 0.45. Rank-1 experience:Northstar Digital Studio has lexical 0.0000 and vector 0.3459. The highest top-3 vector is 0.3459. `_evaluate_text` returns not_evidenced on the empty citation list, before the 0.65 lexical bar is evaluated.",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "near-spring",
+      "category": "near_miss",
+      "query": "Java Spring Boot",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "project:AI Resume Automation / careerOS",
+        "lexical_score": "0.0000",
+        "vector_score": "0.2433",
+        "combined_score": "0.0730",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "project:AI Resume Automation / careerOS",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2433",
+          "combined_score": "0.0730",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "experience:Northstar Digital Studio",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2352",
+          "combined_score": "0.0706",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "skill:Webhooks",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2342",
+          "combined_score": "0.0703",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "citation_filter_empty",
+      "rule": "No top-3 chunk was admitted. Admission requires lexical_score > 0 or vector_score >= 0.45. Rank-1 project:AI Resume Automation / careerOS has lexical 0.0000 and vector 0.2433. The highest top-3 vector is 0.2433. `_evaluate_text` returns not_evidenced on the empty citation list, before the 0.65 lexical bar is evaluated.",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "near-attorney",
+      "category": "near_miss",
+      "query": "licensed attorney",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "skill:LangGraph",
+        "lexical_score": "0.0000",
+        "vector_score": "0.1911",
+        "combined_score": "0.0573",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "skill:LangGraph",
+          "lexical_score": "0.0000",
+          "vector_score": "0.1911",
+          "combined_score": "0.0573",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "skill:LangChain",
+          "lexical_score": "0.0000",
+          "vector_score": "0.1808",
+          "combined_score": "0.0542",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "project:Legal Document OCR and Extraction System",
+          "lexical_score": "0.0000",
+          "vector_score": "0.1723",
+          "combined_score": "0.0517",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "citation_filter_empty",
+      "rule": "No top-3 chunk was admitted. Admission requires lexical_score > 0 or vector_score >= 0.45. Rank-1 skill:LangGraph has lexical 0.0000 and vector 0.1911. The highest top-3 vector is 0.1911. `_evaluate_text` returns not_evidenced on the empty citation list, before the 0.65 lexical bar is evaluated.",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "unsup-aws",
+      "category": "unsupported",
+      "query": "Amazon Web Services",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": true,
+      "explicit_labels": [
+        "AWS"
+      ],
+      "top1": {
+        "rank": 1,
+        "key": "profile",
+        "lexical_score": "0.3333",
+        "vector_score": "0.3602",
+        "combined_score": "0.3414",
+        "overlap_tokens": [
+          "services"
+        ],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "profile",
+          "lexical_score": "0.3333",
+          "vector_score": "0.3602",
+          "combined_score": "0.3414",
+          "overlap_tokens": [
+            "services"
+          ],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "experience:Northstar Digital Studio",
+          "lexical_score": "0.3333",
+          "vector_score": "0.3176",
+          "combined_score": "0.3286",
+          "overlap_tokens": [
+            "services"
+          ],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "project:AI Resume Automation / careerOS",
+          "lexical_score": "0.3333",
+          "vector_score": "0.2951",
+          "combined_score": "0.3219",
+          "overlap_tokens": [
+            "services"
+          ],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "explicit_phrase_absent",
+      "rule": "Query triggers explicit phrase rule AWS. `_evaluate_explicit_evidence` found no corpus chunk with the required alias, so status is not_evidenced. Hybrid scores are not consulted. Rank-1 neighbor is profile at lexical 0.3333, vector 0.3602, combined 0.3414 (overlap ['services']).",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "unsup-terraform",
+      "category": "unsupported",
+      "query": "Terraform",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "skill:GitHub",
+        "lexical_score": "0.0000",
+        "vector_score": "0.2062",
+        "combined_score": "0.0619",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "skill:GitHub",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2062",
+          "combined_score": "0.0619",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "experience:Civic Tech Lab",
+          "lexical_score": "0.0000",
+          "vector_score": "0.1940",
+          "combined_score": "0.0582",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "project:Legal Document OCR and Extraction System",
+          "lexical_score": "0.0000",
+          "vector_score": "0.1938",
+          "combined_score": "0.0581",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "citation_filter_empty",
+      "rule": "No top-3 chunk was admitted. Admission requires lexical_score > 0 or vector_score >= 0.45. Rank-1 skill:GitHub has lexical 0.0000 and vector 0.2062. The highest top-3 vector is 0.2062. `_evaluate_text` returns not_evidenced on the empty citation list, before the 0.65 lexical bar is evaluated.",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "unsup-salesforce",
+      "category": "unsupported",
+      "query": "Salesforce",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "experience:Northstar Digital Studio",
+        "lexical_score": "0.0000",
+        "vector_score": "0.3527",
+        "combined_score": "0.1058",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "experience:Northstar Digital Studio",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3527",
+          "combined_score": "0.1058",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "skill:Zapier",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3526",
+          "combined_score": "0.1058",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "skill:n8n",
+          "lexical_score": "0.0000",
+          "vector_score": "0.3192",
+          "combined_score": "0.0958",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "citation_filter_empty",
+      "rule": "No top-3 chunk was admitted. Admission requires lexical_score > 0 or vector_score >= 0.45. Rank-1 experience:Northstar Digital Studio has lexical 0.0000 and vector 0.3527. The highest top-3 vector is 0.3527. `_evaluate_text` returns not_evidenced on the empty citation list, before the 0.65 lexical bar is evaluated.",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "unsup-swiftui",
+      "category": "unsupported",
+      "query": "SwiftUI",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "skill:FastAPI",
+        "lexical_score": "0.0000",
+        "vector_score": "0.2295",
+        "combined_score": "0.0688",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "skill:FastAPI",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2295",
+          "combined_score": "0.0688",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "certification:Postman",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2152",
+          "combined_score": "0.0646",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "skill:Zapier",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2104",
+          "combined_score": "0.0631",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "citation_filter_empty",
+      "rule": "No top-3 chunk was admitted. Admission requires lexical_score > 0 or vector_score >= 0.45. Rank-1 skill:FastAPI has lexical 0.0000 and vector 0.2295. The highest top-3 vector is 0.2295. `_evaluate_text` returns not_evidenced on the empty citation list, before the 0.65 lexical bar is evaluated.",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    },
+    {
+      "id": "unsup-rust",
+      "category": "unsupported",
+      "query": "Rust",
+      "expected_status": "not_evidenced",
+      "predicted_status": "not_evidenced",
+      "status_correct": true,
+      "correct_evidence_rank": null,
+      "explicit": false,
+      "explicit_labels": [],
+      "top1": {
+        "rank": 1,
+        "key": "skill:GitHub",
+        "lexical_score": "0.0000",
+        "vector_score": "0.2465",
+        "combined_score": "0.0739",
+        "overlap_tokens": [],
+        "relevant": false
+      },
+      "top3": [
+        {
+          "rank": 1,
+          "key": "skill:GitHub",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2465",
+          "combined_score": "0.0739",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 2,
+          "key": "skill:RAG",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2365",
+          "combined_score": "0.0710",
+          "overlap_tokens": [],
+          "relevant": false
+        },
+        {
+          "rank": 3,
+          "key": "skill:Docker",
+          "lexical_score": "0.0000",
+          "vector_score": "0.2347",
+          "combined_score": "0.0704",
+          "overlap_tokens": [],
+          "relevant": false
+        }
+      ],
+      "first_relevant": null,
+      "rule_id": "citation_filter_empty",
+      "rule": "No top-3 chunk was admitted. Admission requires lexical_score > 0 or vector_score >= 0.45. Rank-1 skill:GitHub has lexical 0.0000 and vector 0.2465. The highest top-3 vector is 0.2465. `_evaluate_text` returns not_evidenced on the empty citation list, before the 0.65 lexical bar is evaluated.",
+      "blocked_expected_status": false,
+      "relevant_outside_top_hits": []
+    }
+  ],
+  "options": [
+    {
+      "id": "vector_top3_0_42",
+      "name": "Option A: top-3 vector matched bar (0.42)",
+      "definition": "After the explicit phrase rules and the current matched conditions (exact substring or lexical >= 0.65), also mark `matched` when any top-3 chunk has vector_score >= 0.42. 0.42 sits inside the measured zero-false-positive band: above Salesforce 0.3527 and CI/CD's Docker neighbor 0.3974, and still at or below `para-containers` skill:Docker 0.4279 and `para-human-approval` 0.4406.",
+      "status_accuracy": {
+        "hits": 21,
+        "cases": 24
+      },
+      "paraphrase_status_accuracy": {
+        "hits": 3,
+        "cases": 6
+      },
+      "unsupported_false_positives": {
+        "count": 0,
+        "cases": 5,
+        "case_ids": []
+      },
+      "near_miss_false_positives": {
+        "count": 0,
+        "cases": 5,
+        "case_ids": []
+      },
+      "changed_cases": [
+        {
+          "id": "para-containers",
+          "category": "paraphrase",
+          "from": "partially_matched",
+          "to": "matched",
+          "chunk": "skill:Docker",
+          "lexical_score": "0.0000",
+          "vector_score": "0.4279",
+          "combined_score": "0.1284"
+        },
+        {
+          "id": "para-human-approval",
+          "category": "paraphrase",
+          "from": "partially_matched",
+          "to": "matched",
+          "chunk": "project:AI Workflow Automation System",
+          "lexical_score": "0.3333",
+          "vector_score": "0.4406",
+          "combined_score": "0.3655"
+        }
+      ]
+    },
+    {
+      "id": "same_chunk_lexical_0_25_vector_0_30",
+      "name": "Option B: same-chunk partial confirmation (lexical 0.25 and vector 0.30)",
+      "definition": "After the explicit phrase rules and the current matched conditions, also mark `matched` when one top-3 chunk has lexical_score >= 0.25 and vector_score >= 0.30. The lexical floor is the existing partial bar. The vector floor sits below `para-relational-databases` skill:SQL 0.3413 and `para-human-approval` 0.4406, and above the incidental partials `para-sql-expansion` 0.2078 and the `para-containers` \"system\" overlap 0.2318. Lexical and vector must come from the same chunk.",
+      "status_accuracy": {
+        "hits": 21,
+        "cases": 24
+      },
+      "paraphrase_status_accuracy": {
+        "hits": 3,
+        "cases": 6
+      },
+      "unsupported_false_positives": {
+        "count": 0,
+        "cases": 5,
+        "case_ids": []
+      },
+      "near_miss_false_positives": {
+        "count": 0,
+        "cases": 5,
+        "case_ids": []
+      },
+      "changed_cases": [
+        {
+          "id": "para-human-approval",
+          "category": "paraphrase",
+          "from": "partially_matched",
+          "to": "matched",
+          "chunk": "project:AI Workflow Automation System",
+          "lexical_score": "0.3333",
+          "vector_score": "0.4406",
+          "combined_score": "0.3655"
+        },
+        {
+          "id": "para-relational-databases",
+          "category": "paraphrase",
+          "from": "partially_matched",
+          "to": "matched",
+          "chunk": "skill:SQL",
+          "lexical_score": "0.5000",
+          "vector_score": "0.3413",
+          "combined_score": "0.4524"
+        }
+      ]
+    }
+  ],
+  "separability": {
+    "para_ocr_max_top3_vector": "0.3141",
+    "non_explicit_negatives_at_or_above_para_ocr": [
+      "near-django",
+      "unsup-salesforce"
+    ],
+    "strongest_non_explicit_negative": {
+      "id": "unsup-salesforce",
+      "vector": "0.3527"
+    },
+    "zero_fp_vector_band_exclusive_floor": "0.3527",
+    "paraphrase_cases_above_that_floor": [
+      "para-containers",
+      "para-python-web-framework",
+      "para-human-approval"
+    ],
+    "paraphrase_cases_at_or_above_citation_floor_0_45": [],
+    "near_cicd_max_top3_vector": "0.3974",
+    "near_django_max_top3_vector": "0.3459",
+    "unsup_salesforce_max_top3_vector": "0.3527",
+    "unsup_aws_max_top3_vector": "0.3602",
+    "unsup_aws_max_top3_lexical": "0.3333"
+  },
+  "recommendation": {
+    "choice": "leave_unchanged",
+    "text": "Leave the product status gate unchanged. The measured miss that retrieval already ranked correctly is `para-ocr`: relevant evidence is rank 1 with lexical 0.0000 and vector 0.3141. Both simulated options leave that case `not_evidenced`. An absolute vector cut low enough to admit that 0.3141 score also admits `near-django`, `unsup-salesforce` on this frozen run (Django vector 0.3459, Salesforce vector 0.3527), even while the AWS, Kubernetes, and CI/CD phrase rules stay in front. The 0.42 vector bar moves `para-containers` (partially_matched -> matched), `para-human-approval` (partially_matched -> matched). The accepted Docker skill vector is 0.4279 and the CI/CD neighbor on `skill:Docker` is 0.3974. That gap is too small to add a new constant from one 24-case run. The same-chunk partial confirmation moves `para-human-approval` (partially_matched -> matched), `para-relational-databases` (partially_matched -> matched). It still misses `para-ocr` and `para-sql-expansion`. `unsup-aws` would satisfy the same numeric test (lexical 0.3333, vector 0.3602) if the explicit AWS phrase rule did not return first. Unsupported false positives stay 0/5 and near-miss false positives stay 0/5 under both options. Those safe counts do not repair the rank-correct zero-lexical miss, so neither rule is worth implementing yet."
+  }
+}

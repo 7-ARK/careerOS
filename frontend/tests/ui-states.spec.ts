@@ -34,7 +34,7 @@ test('profile validation failures keep entered values available for correction',
     });
   });
 
-  await page.getByRole('button', {name: 'Create profile', exact: true}).click();
+  await page.getByRole('button', {name: 'New candidate profile', exact: true}).click();
   await page.getByRole('textbox', {name: 'Full name'}).fill('Retained Candidate');
   await page.getByRole('textbox', {name: 'Professional headline'}).fill('Platform Engineer');
   await page.getByRole('button', {name: 'Create profile', exact: true}).last().click();

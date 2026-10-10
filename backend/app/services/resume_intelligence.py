@@ -60,6 +60,7 @@ DRAFT_JSON_FIELDS = {
     "ats_keywords_used",
     "omitted_keywords",
     "truthfulness_notes",
+    "grounding_manifest",
 }
 
 
@@ -199,6 +200,13 @@ class ResumeIntelligenceService:
         candidate = self._require_candidate(analysis.candidate_profile_id)
         job_analysis = self._require_job_analysis(analysis.job_analysis_id)
         quality = self.quality_engine.build(candidate, job_analysis, analysis)
+        experience_section = self._experience_section(
+            candidate,
+            analysis,
+            include_additional=quality.include_additional_experience,
+        )
+        education_section = self._education_section(candidate)
+        certifications_section = self._certifications_section(candidate)
         draft_data = ResumeDraftCreate(
             resume_analysis_id=analysis.id,
             candidate_profile_id=candidate.id,
@@ -207,18 +215,24 @@ class ResumeIntelligenceService:
             target_role=job_analysis.normalized_title,
             summary=quality.summary,
             skills_section=quality.skills_section,
-            experience_section=self._experience_section(
-                candidate,
-                analysis,
-                include_additional=quality.include_additional_experience,
-            ),
+            experience_section=experience_section,
             projects_section=quality.projects_section,
-            education_section=self._education_section(candidate),
-            certifications_section=self._certifications_section(candidate),
+            education_section=education_section,
+            certifications_section=certifications_section,
             ats_keywords_used=analysis.matched_keywords,
             omitted_keywords=analysis.missing_keywords,
             truthfulness_notes=self._deduplicate(
                 [*analysis.truthfulness_warnings, *quality.warnings]
+            ),
+            grounding_manifest=self._grounding_manifest(
+                candidate,
+                analysis,
+                summary=quality.summary,
+                skills_section=quality.skills_section,
+                experience_section=experience_section,
+                projects_section=quality.projects_section,
+                education_section=education_section,
+                certifications_section=certifications_section,
             ),
             status=ResumeDraftStatus.DRAFT,
         )
@@ -545,6 +559,100 @@ class ResumeIntelligenceService:
             }
             for certification in candidate.certifications
         ]
+
+    @staticmethod
+    def _grounding_manifest(
+        candidate: CandidateProfile,
+        analysis: ResumeAnalysis,
+        *,
+        summary: str,
+        skills_section: list[dict[str, object]],
+        experience_section: list[dict[str, object]],
+        projects_section: list[dict[str, object]],
+        education_section: list[dict[str, object]],
+        certifications_section: list[dict[str, object]],
+    ) -> list[dict[str, object]]:
+        """Attach stable evidence IDs to every generated resume claim group."""
+        skill_ids = {skill.name.casefold(): f"skill-{skill.id}" for skill in candidate.skills}
+        project_ids = {
+            term.casefold(): f"project-{project.id}"
+            for project in candidate.projects
+            for term in [project.title, *project.technologies]
+        }
+        summary_ids = list(
+            dict.fromkeys(
+                [
+                    *(
+                        skill_ids[term.casefold()]
+                        for term in analysis.matched_skills
+                        if term.casefold() in skill_ids
+                    ),
+                    *(
+                        f"project-{reference['source_id']}"
+                        for reference in analysis.relevant_projects
+                    ),
+                    *(
+                        f"experience-{reference['source_id']}"
+                        for reference in analysis.relevant_experiences
+                    ),
+                ]
+            )
+        )
+        if candidate.headline or candidate.summary or candidate.location:
+            summary_ids.insert(0, f"profile-{candidate.id}-summary")
+        if not summary_ids and candidate.skills:
+            summary_ids = [f"skill-{candidate.skills[0].id}"]
+        manifest: list[dict[str, object]] = [
+            {"claim_type": "summary", "text": summary, "evidence_ids": summary_ids}
+        ]
+        for group in skills_section:
+            for skill_name in group.get("skills", []):
+                key = str(skill_name).casefold()
+                evidence_id = skill_ids.get(key) or project_ids.get(key)
+                manifest.append(
+                    {
+                        "claim_type": "skill",
+                        "text": str(skill_name),
+                        "evidence_ids": [evidence_id] if evidence_id else [],
+                    }
+                )
+        manifest.extend(
+            {
+                "claim_type": "experience",
+                "text": str(entry.get("job_title", "Experience entry")),
+                "evidence_ids": [f"experience-{entry['source_id']}"],
+            }
+            for entry in experience_section
+            if entry.get("source_id")
+        )
+        manifest.extend(
+            {
+                "claim_type": "project",
+                "text": str(entry.get("title", "Project entry")),
+                "evidence_ids": [f"project-{entry['source_id']}"],
+            }
+            for entry in projects_section
+            if entry.get("source_id")
+        )
+        manifest.extend(
+            {
+                "claim_type": "education",
+                "text": str(entry.get("degree", "Education entry")),
+                "evidence_ids": [f"education-{entry['source_id']}"],
+            }
+            for entry in education_section
+            if entry.get("source_id")
+        )
+        manifest.extend(
+            {
+                "claim_type": "certification",
+                "text": str(entry.get("name", "Certification entry")),
+                "evidence_ids": [f"certification-{entry['source_id']}"],
+            }
+            for entry in certifications_section
+            if entry.get("source_id")
+        )
+        return manifest
 
     @staticmethod
     def _deduplicate(values: list[str]) -> list[str]:

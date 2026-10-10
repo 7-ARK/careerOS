@@ -2,6 +2,8 @@ import {FormEvent, useState} from 'react';
 import {LoaderCircle, LogIn, UserPlus} from 'lucide-react';
 import {ApiError, User, loginUser, registerUser} from '../lib/api';
 
+const IS_EXTERNAL_PREVIEW = import.meta.env.VITE_PREVIEW_MODE === 'true';
+
 export function AuthScreen({
   message = '',
   onAuthenticated,
@@ -11,8 +13,8 @@ export function AuthScreen({
 }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(IS_EXTERNAL_PREVIEW ? 'demo@careeros.local' : '');
+  const [password, setPassword] = useState(IS_EXTERNAL_PREVIEW ? 'password123' : '');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -52,7 +54,9 @@ export function AuthScreen({
 
         <div className="cozy-panel-soft mt-8 inline-flex rounded-xl p-1">
           <ModeButton active={mode === 'login'} label="Login" onClick={() => switchMode('login')} />
-          <ModeButton active={mode === 'register'} label="Register" onClick={() => switchMode('register')} />
+          {!IS_EXTERNAL_PREVIEW && (
+            <ModeButton active={mode === 'register'} label="Register" onClick={() => switchMode('register')} />
+          )}
         </div>
 
         <form className="mt-7 space-y-5" onSubmit={handleSubmit}>

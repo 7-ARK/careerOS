@@ -55,9 +55,9 @@ npm run test:e2e:ui
 
 The browser suite verifies registration, login, logout, and restored sessions;
 private candidate-profile creation and editing; validation-value retention and
-empty states; manual job entry and PDF resume downloads; private resource
-isolation between two users; URL extraction review and manual fallback; and
-resume history ordering with historical PDF download.
+empty states; manual job analysis, human approval, and PDF resume downloads;
+private resource isolation between two users; URL extraction review and manual
+fallback; and resume history ordering with historical PDF download.
 
 The URL tests use loopback fixture markup and mocked extraction responses. They
 verify the local application flow and fallback behavior, not live job-site

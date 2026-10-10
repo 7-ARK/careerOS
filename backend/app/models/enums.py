@@ -11,8 +11,10 @@ class ApplicationStatus(StrEnum):
     APPLIED = "applied"
     INTERVIEWING = "interviewing"
     OFFER = "offer"
+    ACCEPTED = "accepted"
     REJECTED = "rejected"
     WITHDRAWN = "withdrawn"
+    ARCHIVED = "archived"
 
 
 class RemotePreference(StrEnum):
@@ -98,6 +100,7 @@ class ResumeDraftStatus(StrEnum):
     DRAFT = "draft"
     REVIEWED = "reviewed"
     APPROVED = "approved"
+    REJECTED = "rejected"
     ARCHIVED = "archived"
 
 
@@ -160,3 +163,37 @@ class PipelineStatus(StrEnum):
     """Completion states returned by a successful pipeline run."""
 
     COMPLETED = "completed"
+
+
+class CareerAnalysisStatus(StrEnum):
+    """Persisted states for the human-reviewed golden career flow."""
+
+    RUNNING = "running"
+    AWAITING_REVIEW = "awaiting_review"
+    COMPLETED = "completed"
+    REJECTED = "rejected"
+    FAILED = "failed"
+
+
+class CareerAnalysisStage(StrEnum):
+    """Inspectable bounded stages in the golden career flow."""
+
+    PROFILE_VALIDATION = "profile_validation"
+    JOB_IMPORT = "job_import"
+    REQUIREMENT_EXTRACTION = "requirement_extraction"
+    EVIDENCE_RETRIEVAL = "evidence_retrieval"
+    MATCH_ANALYSIS = "match_analysis"
+    RESUME_DRAFT = "resume_draft"
+    GROUNDING_VALIDATION = "grounding_validation"
+    HUMAN_REVIEW = "human_review"
+    DOCUMENT_EXPORT = "document_export"
+    APPLICATION_TRACKING = "application_tracking"
+
+
+class RequirementMatchStatus(StrEnum):
+    """Evidence status assigned to one structured job requirement."""
+
+    MATCHED = "matched"
+    PARTIALLY_MATCHED = "partially_matched"
+    NOT_EVIDENCED = "not_evidenced"
+    NOT_APPLICABLE = "not_applicable"

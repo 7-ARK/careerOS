@@ -1,5 +1,5 @@
 import {expect, test} from './fixtures';
-import {createPrivateProfile} from './acceptance-helpers';
+import {approveCurrentDraft, createPrivateProfile, downloadApprovedPdf} from './acceptance-helpers';
 
 const fixtureUrl = 'http://127.0.0.1:8011/backend-engineer.html';
 const fixtureMarkup = `<!doctype html>
@@ -81,6 +81,7 @@ test('a local URL import populates editable fields and generates a resume from t
     ],
   });
 
+  await authenticatedPage.getByRole('button', {name: 'Use job URL', exact: true}).click();
   await authenticatedPage.getByLabel('Job posting URL').fill(fixtureUrl);
   await authenticatedPage.getByRole('button', {name: 'Extract job', exact: true}).click();
 
@@ -90,28 +91,16 @@ test('a local URL import populates editable fields and generates a resume from t
   await expect(authenticatedPage.getByLabel('Job description')).toHaveValue(fixtureFields.description);
 
   await authenticatedPage.getByLabel('Job title').fill(editedTitle);
-  await authenticatedPage.getByRole('button', {name: 'Generate resume', exact: true}).click();
+  await authenticatedPage.getByRole('button', {name: 'Analyze evidence', exact: true}).click();
 
-  const resultPanel = authenticatedPage.getByRole('complementary');
-  await expect(resultPanel.getByRole('heading', {name: editedTitle, exact: true})).toBeVisible();
-  await expect(resultPanel.getByRole('heading', {name: fixtureFields.title, exact: true})).not.toBeVisible();
-  await expect(resultPanel.getByText('Python', {exact: true})).toBeVisible();
-  await expect(resultPanel.getByText('Automation Portfolio', {exact: true})).toBeVisible();
+  const results = authenticatedPage.locator('#analysis-results');
+  await expect(results.getByRole('heading', {name: editedTitle, exact: true})).toBeVisible();
+  await expect(results.getByRole('heading', {name: fixtureFields.title, exact: true})).toHaveCount(0);
+  await expect(results.getByText('Python', {exact: true}).first()).toBeVisible();
+  await expect(results.getByText('Automation Portfolio', {exact: true}).first()).toBeVisible();
 
-  const downloadPromise = authenticatedPage.waitForEvent('download');
-  await authenticatedPage.getByRole('button', {name: 'Download resume', exact: true}).click();
-  const download = await downloadPromise;
-  const stream = await download.createReadStream();
-  if (!stream) {
-    throw new Error('The generated resume download did not provide a readable stream.');
-  }
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of stream) {
-    chunks.push(chunk as Uint8Array);
-  }
-  const artifact = Buffer.concat(chunks);
-  expect(artifact.length).toBeGreaterThan(0);
-  expect(artifact.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  await approveCurrentDraft(authenticatedPage);
+  await downloadApprovedPdf(authenticatedPage);
 });
 
 test('a malformed URL shows its extraction problem without persisting an application before manual completion', async ({authenticatedPage}) => {
@@ -152,6 +141,7 @@ test('a malformed URL shows its extraction problem without persisting an applica
   });
   const applicationsBeforeFailure = await applicationRecordCount(authenticatedPage, profileId);
 
+  await authenticatedPage.getByRole('button', {name: 'Use job URL', exact: true}).click();
   await authenticatedPage.getByLabel('Job posting URL').fill(malformedUrl);
   await authenticatedPage.getByRole('button', {name: 'Extract job', exact: true}).click();
 
@@ -162,7 +152,7 @@ test('a malformed URL shows its extraction problem without persisting an applica
   await expect(authenticatedPage.getByLabel('Job title')).toBeEditable();
   await expect(authenticatedPage.getByRole('textbox', {name: 'Company', exact: true})).toBeEditable();
   await expect(authenticatedPage.getByLabel('Job description')).toBeEditable();
-  await expect(authenticatedPage.getByRole('button', {name: 'Generate resume', exact: true})).toBeEnabled();
+  await expect(authenticatedPage.getByRole('button', {name: 'Analyze evidence', exact: true})).toBeEnabled();
   await expect.poll(() => applicationRecordCount(authenticatedPage, profileId)).toBe(applicationsBeforeFailure);
 
   await authenticatedPage.getByLabel('Job title').fill('Manual Recovery Engineer');
@@ -171,27 +161,15 @@ test('a malformed URL shows its extraction problem without persisting an applica
   await authenticatedPage.getByLabel('Job description').fill(
     'Build reliable Python APIs, FastAPI services, PostgreSQL integrations, and automation workflows.',
   );
-  await authenticatedPage.getByRole('button', {name: 'Generate resume', exact: true}).click();
+  await authenticatedPage.getByRole('button', {name: 'Analyze evidence', exact: true}).click();
 
-  const resultPanel = authenticatedPage.getByRole('complementary');
-  await expect(resultPanel.getByRole('heading', {name: 'Manual Recovery Engineer', exact: true})).toBeVisible();
-  await expect(resultPanel.getByText('Fallback Labs', {exact: true})).toBeVisible();
-  await expect(resultPanel.getByText('Match Summary', {exact: true})).toBeVisible();
+  const results = authenticatedPage.locator('#analysis-results');
+  await expect(results.getByRole('heading', {name: 'Manual Recovery Engineer', exact: true})).toBeVisible();
+  await expect(results.getByText('Fallback Labs', {exact: true})).toBeVisible();
+  await expect(results.getByRole('heading', {name: 'Requirement-to-evidence map'})).toBeVisible();
 
-  const downloadPromise = authenticatedPage.waitForEvent('download');
-  await resultPanel.getByRole('button', {name: 'Download resume', exact: true}).click();
-  const download = await downloadPromise;
-  const stream = await download.createReadStream();
-  if (!stream) {
-    throw new Error('The generated resume download did not provide a readable stream.');
-  }
-  const chunks: Uint8Array[] = [];
-  for await (const chunk of stream) {
-    chunks.push(chunk as Uint8Array);
-  }
-  const artifact = Buffer.concat(chunks);
-  expect(artifact.length).toBeGreaterThan(0);
-  expect(artifact.subarray(0, 5).toString('ascii')).toBe('%PDF-');
+  await approveCurrentDraft(authenticatedPage);
+  await downloadApprovedPdf(authenticatedPage);
 });
 
 async function applicationRecordCount(page: import('@playwright/test').Page, profileId: string): Promise<number> {
