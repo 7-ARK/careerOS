@@ -32,7 +32,9 @@ import {
   startGoldenCareerAnalysis,
   setActiveCandidateId,
 } from '../lib/api';
+import {ApplicationHistory} from './ApplicationHistory';
 import {CandidateProfiles} from './CandidateProfiles';
+import {DataState} from './DataState';
 
 type ImportMode = 'manual' | 'url';
 type ManualPlatform = 'linkedin' | 'indeed' | 'glassdoor' | 'company' | 'other' | 'unknown';
@@ -76,6 +78,8 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
   const [isWorking, setIsWorking] = useState(false);
   const [downloadingId, setDownloadingId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [extractionReview, setExtractionReview] = useState(false);
+  const [extractionFailure, setExtractionFailure] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -137,6 +141,8 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
     }
     setIsWorking(true);
     setErrorMessage('');
+    setExtractionReview(false);
+    setExtractionFailure(false);
     try {
       const extracted = await extractJobUrl({
         candidate_profile_id: candidateProfileId,
@@ -145,19 +151,26 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
         headless: true,
         timeout_seconds: 30,
       });
-      if (!extracted.pipeline_ready) {
-        throw new ApiError('Automatic extraction was incomplete. Paste the job description manually.', {
-          code: 'extraction_incomplete',
-        });
-      }
       setRawTitle(extracted.raw_title ?? '');
       setCompanyName(extracted.company_name ?? '');
       setLocation(extracted.location ?? '');
-      setDescriptionText(extracted.description_text);
-      setSourcePlatform(extracted.detected_platform === 'company_site' ? 'company' : extracted.detected_platform);
+      setDescriptionText(extracted.description_text ?? '');
+      setSourcePlatform(manualPlatformFor(extracted.detected_platform));
       setImportMode('manual');
+      if (!extracted.pipeline_ready) {
+        setExtractionFailure(true);
+        setErrorMessage(
+          extracted.message
+            || (extracted.detected_platform === 'unknown'
+              ? 'Unsupported job platform. Please paste the job description manually.'
+              : 'Could not extract this job posting automatically. Please paste the job description manually.'),
+        );
+        return;
+      }
+      setExtractionReview(true);
     } catch (error) {
       setImportMode('manual');
+      setExtractionFailure(true);
       setErrorMessage(getErrorMessage(error, 'Job extraction failed. Paste the description manually.'));
     } finally {
       setIsWorking(false);
@@ -173,6 +186,7 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
     setIsWorking(true);
     setRun(null);
     setErrorMessage('');
+    setExtractionFailure(false);
     try {
       const completedRun = await startGoldenCareerAnalysis({
         candidate_profile_id: candidateProfileId,
@@ -250,6 +264,11 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
           }}
         />
 
+        <ApplicationHistory
+          candidateProfileId={candidateProfileId}
+          refreshToken={run?.generated_documents.map((document) => document.id).join(',') || run?.id || ''}
+        />
+
         <section className="border-b border-border/60 py-5" aria-labelledby="analysis-history-title">
           <div className="flex items-center gap-2">
             <History className="size-4 text-primary" />
@@ -299,11 +318,15 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
               <div>
                 <p className="cozy-label">Job input</p>
-                <h3 className="mt-1 text-lg font-semibold">Manual description is the reliable path</h3>
+                <h3 className="mt-1 text-lg font-semibold">
+                  {importMode === 'manual' && extractionReview
+                    ? 'Review extracted job details'
+                    : 'Manual description is the reliable path'}
+                </h3>
               </div>
               <div className="cozy-panel-soft inline-flex rounded-lg p-1" aria-label="Job input method">
                 <ModeButton active={importMode === 'manual'} label="Paste job manually" icon={<FileText className="size-4" />} onClick={() => setImportMode('manual')} />
-                <ModeButton active={importMode === 'url'} disabled={IS_EXTERNAL_PREVIEW} label="Use job URL" icon={<Link2 className="size-4" />} onClick={() => setImportMode('url')} title="URL extraction is disabled in the shared demo; paste the job description manually." />
+                <ModeButton active={importMode === 'url'} disabled={IS_EXTERNAL_PREVIEW} label="Use job URL" icon={<Link2 className="size-4" />} onClick={() => { setImportMode('url'); setExtractionReview(false); }} title="URL extraction is disabled in the shared demo; paste the job description manually." />
               </div>
             </div>
 
@@ -315,10 +338,10 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
 
             {importMode === 'url' ? (
               <form className="space-y-4" onSubmit={handleUrlExtraction}>
-                <Field label="Job URL">
+                <Field label="Job posting URL">
                   <input className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" type="url" value={jobUrl} onChange={(event) => setJobUrl(event.target.value)} required />
                 </Field>
-                <PrimaryButton disabled={isWorking} label="Extract job details" loading={isWorking} />
+                <PrimaryButton disabled={isWorking} label="Extract job" loading={isWorking} />
               </form>
             ) : (
               <form className="space-y-4" onSubmit={handleAnalysis}>
@@ -327,6 +350,7 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
                   <Field label="Company"><input className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" value={companyName} onChange={(event) => setCompanyName(event.target.value)} maxLength={250} required /></Field>
                   <Field label="Location"><input className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" value={location} onChange={(event) => setLocation(event.target.value)} maxLength={250} /></Field>
                   <Field label="Source"><select className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" value={sourcePlatform} onChange={(event) => setSourcePlatform(event.target.value as ManualPlatform)}>{PLATFORM_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></Field>
+                  <Field label="Job URL"><input className="cozy-field w-full rounded-lg px-3 py-2.5 text-sm outline-none" type="url" value={jobUrl} onChange={(event) => setJobUrl(event.target.value)} /></Field>
                 </div>
                 <Field label="Job description">
                   <textarea className="cozy-field min-h-48 w-full resize-y rounded-lg px-3 py-2.5 text-sm leading-relaxed outline-none" value={descriptionText} onChange={(event) => setDescriptionText(event.target.value)} minLength={80} maxLength={50000} required />
@@ -352,7 +376,11 @@ export function AnalyzeJob({analysisSelection}: AnalyzeJobProps) {
           </aside>
         </div>
 
-        {errorMessage && <div className="mt-5 flex items-start gap-2 rounded-lg border border-destructive/35 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert"><AlertCircle className="mt-0.5 size-4 shrink-0" />{errorMessage}</div>}
+        {extractionFailure && errorMessage ? (
+          <DataState state="error" title="We need the job text." message={errorMessage} />
+        ) : errorMessage ? (
+          <div className="mt-5 flex items-start gap-2 rounded-lg border border-destructive/35 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert"><AlertCircle className="mt-0.5 size-4 shrink-0" />{errorMessage}</div>
+        ) : null}
         {run && <AnalysisResults run={run} reviewNotes={reviewNotes} setReviewNotes={setReviewNotes} isWorking={isWorking} onReview={handleReview} onDownload={handleDownload} downloadingId={downloadingId} />}
       </div>
     </section>
@@ -581,6 +609,12 @@ function historyAccessibleName(analysis: GoldenCareerAnalysis): string {
     `${formatScore(analysis.evidence_coverage_score)}% coverage`,
     accessibleDate,
   ].filter(Boolean).join(', ');
+}
+
+function manualPlatformFor(detected: SourcePlatform): ManualPlatform {
+  if (detected === 'company_site') return 'company';
+  const match = PLATFORM_OPTIONS.find((option) => option.value === (detected as ManualPlatform));
+  return match?.value ?? 'unknown';
 }
 
 function humanize(value: string): string {

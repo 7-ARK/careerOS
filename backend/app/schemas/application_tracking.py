@@ -8,6 +8,7 @@ from uuid import UUID
 from pydantic import EmailStr, Field, StringConstraints, field_validator
 
 from app.models.enums import ApplicationStatus
+from app.schemas.document_generation import GeneratedDocumentRead
 from app.schemas.knowledge_base import EntityRead, SchemaBase
 
 TrackerApplicationStatus = Literal[
@@ -91,6 +92,13 @@ class ApplicationRecordRead(EntityRead):
         if isinstance(value, datetime) and value.tzinfo is None:
             return value.replace(tzinfo=UTC)
         return value
+
+
+class GeneratedDocumentHistoryRead(GeneratedDocumentRead):
+    """A generated resume paired with the job identity shown in history."""
+
+    role_title: str
+    company_name: str | None
 
 
 class ApplicationStatusUpdate(SchemaBase):

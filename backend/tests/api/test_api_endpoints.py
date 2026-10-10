@@ -37,6 +37,7 @@ from app.schemas import (
     JobUrlPipelineResult,
     ManualJobPipelineResult,
 )
+from app.schemas.job_url_extraction import JobUrlExtractionOutcome
 from app.services import GeneratedDocumentNotFoundError, PipelineExecutionError
 
 
@@ -282,6 +283,50 @@ class FastApiEndpointTests(unittest.TestCase):
         self.assertEqual(response.json()["raw_title"], "Backend Engineer")
         self.assertEqual(response.json()["company_name"], "Platform Labs")
         self.assertEqual(response.json()["detected_platform"], "company_site")
+
+    def test_job_url_extraction_endpoint_returns_safe_failure_outcomes(self) -> None:
+        failures = (
+            (
+                JobUrlExtractionOutcome.UNSUPPORTED_SOURCE,
+                SourcePlatform.UNKNOWN,
+                "This job source is not supported. Paste the job description manually.",
+            ),
+            (
+                JobUrlExtractionOutcome.EXTRACTION_FAILURE,
+                SourcePlatform.LINKEDIN,
+                "We could not read a complete job posting. Paste the job description manually.",
+            ),
+        )
+        for outcome, platform, message in failures:
+            with self.subTest(outcome=outcome):
+                extracted = JobUrlExtractionResult(
+                    job_url="https://www.linkedin.com/jobs/view/123",
+                    detected_platform=platform,
+                    description_text="",
+                    extraction_confidence=Decimal("0"),
+                    extraction_warnings=["Use manual import fallback."],
+                    outcome=outcome,
+                    message=message,
+                    pipeline_ready=False,
+                )
+                app.dependency_overrides[get_job_url_pipeline_service] = (
+                    lambda extracted=extracted: StubUrlPipelineService(extracted)
+                )
+
+                response = self.client.post(
+                    "/api/v1/pipeline/extract",
+                    json={
+                        "candidate_profile_id": str(self.profile.id),
+                        "job_url": "https://www.linkedin.com/jobs/view/123",
+                    },
+                )
+
+                self.assertEqual(response.status_code, 200)
+                body = response.json()
+                self.assertEqual(body["outcome"], outcome.value)
+                self.assertEqual(body["message"], message)
+                self.assertNotIn("Traceback", response.text)
+                self.assertNotIn("C:\\", response.text)
 
     def test_job_url_extraction_endpoint_rejects_empty_url(self) -> None:
         app.dependency_overrides[get_job_url_pipeline_service] = lambda: object()

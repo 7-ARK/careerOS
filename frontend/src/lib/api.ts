@@ -181,6 +181,8 @@ export interface JobUrlExtractionResult {
   description_text: string;
   extraction_confidence: string;
   extraction_warnings: string[];
+  outcome: 'success' | 'unsupported_source' | 'extraction_failure';
+  message: string;
   pipeline_ready: boolean;
 }
 
@@ -207,6 +209,25 @@ export interface ProjectSelectionReview {
   title: string;
   score: number;
   reason: string;
+}
+
+export interface ResumeHistoryEntry {
+  id: string;
+  candidate_profile_id: string;
+  resume_draft_id: string;
+  job_analysis_id: string;
+  template_name: ResumeTemplateName;
+  output_format: DocumentFormat;
+  file_name: string;
+  file_path: string;
+  file_size_bytes: number | null;
+  checksum: string | null;
+  generation_status: string;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+  role_title: string;
+  company_name: string | null;
 }
 
 export interface JobUrlPipelineResult {
@@ -522,6 +543,12 @@ export async function runManualPipeline(request: ManualJobPipelineRequest): Prom
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(removeEmptyValues(request)),
   });
+}
+
+export async function listResumeHistory(candidateId: string): Promise<ResumeHistoryEntry[]> {
+  return requestJson<ResumeHistoryEntry[]>(
+    `/api/v1/applications/${encodeURIComponent(candidateId)}/history`,
+  );
 }
 
 export async function startGoldenCareerAnalysis(

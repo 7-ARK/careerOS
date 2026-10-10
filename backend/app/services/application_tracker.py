@@ -13,8 +13,14 @@ from app.models import (
     JobDescription,
 )
 from app.models.enums import ApplicationStatus
-from app.repositories import ApplicationRecordRepository
-from app.schemas import ApplicationRecordCreate, ApplicationRecordRead, ApplicationRecordUpdate
+from app.repositories import ApplicationRecordRepository, GeneratedDocumentRepository
+from app.schemas import (
+    ApplicationRecordCreate,
+    ApplicationRecordRead,
+    ApplicationRecordUpdate,
+    GeneratedDocumentRead,
+)
+from app.schemas.application_tracking import GeneratedDocumentHistoryRead
 from app.services.exceptions import (
     ApplicationRecordNotFoundError,
     InvalidApplicationReferenceError,
@@ -29,6 +35,7 @@ class ApplicationTrackerService:
         """Build the lightweight tracker service."""
         self.session = session
         self.applications = ApplicationRecordRepository(session)
+        self.documents = GeneratedDocumentRepository(session)
 
     def create_application_record(self, data: ApplicationRecordCreate) -> ApplicationRecordRead:
         """Create one lightweight tracker record with validated optional links."""
@@ -130,6 +137,22 @@ class ApplicationTrackerService:
     def get_application_record(self, application_record_id: UUID) -> ApplicationRecordRead:
         """Return one application record for route-level ownership checks."""
         return ApplicationRecordRead.model_validate(self._require_record(application_record_id))
+
+    def list_candidate_document_history(
+        self, candidate_profile_id: UUID
+    ) -> list[GeneratedDocumentHistoryRead]:
+        """List generated resumes with their analyzed job identity, newest first."""
+        history: list[GeneratedDocumentHistoryRead] = []
+        for document in self.documents.list_history_by_candidate(candidate_profile_id):
+            job_description = document.job_analysis.job_description
+            history.append(
+                GeneratedDocumentHistoryRead(
+                    **GeneratedDocumentRead.model_validate(document).model_dump(),
+                    role_title=job_description.raw_title,
+                    company_name=job_description.company_name,
+                )
+            )
+        return history
 
     def candidate_has_job_record(
         self,

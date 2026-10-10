@@ -1,5 +1,7 @@
 import {test, expect} from '@playwright/test';
 
+import {expectAuthenticationScreen} from './acceptance-helpers';
+
 /**
  * Minimal smoke test: the frontend builds, serves, and reaches the auth screen.
  *
@@ -12,7 +14,7 @@ test('landing page shows the authentication screen', async ({page}) => {
   await page.goto('/');
 
   await expect(page.getByText('careerOS')).toBeVisible();
-  await expect(page.getByText(/Sign in to manage candidate profiles/)).toBeVisible();
+  await expectAuthenticationScreen(page);
   // AuthScreen renders two "Login" buttons in login mode: the mode toggle and
   // the form submit button. Assert both, scoping the submit lookup to the form.
   await expect(page.getByRole('button', {name: 'Login'}).first()).toBeVisible();

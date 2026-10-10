@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import GeneratedDocument
@@ -28,6 +29,15 @@ class GeneratedDocumentRepository(Repository[GeneratedDocument]):
             offset=offset,
             limit=limit,
         )
+
+    def list_history_by_candidate(self, candidate_profile_id: UUID) -> list[GeneratedDocument]:
+        """List one candidate's documents newest first with a stable UUID tie-breaker."""
+        statement = (
+            select(GeneratedDocument)
+            .where(GeneratedDocument.candidate_profile_id == candidate_profile_id)
+            .order_by(GeneratedDocument.created_at.desc(), GeneratedDocument.id.desc())
+        )
+        return list(self.session.scalars(statement))
 
     def list_by_draft(
         self, resume_draft_id: UUID, *, offset: int = 0, limit: int = 100

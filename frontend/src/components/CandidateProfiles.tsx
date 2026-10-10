@@ -12,6 +12,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
+import {DataState} from './DataState';
 import {
   ApiError,
   CandidateProfile,
@@ -288,7 +289,7 @@ export function CandidateProfiles({
         )}
       </div>
 
-      {errorMessage && <p className="mt-3 text-xs leading-relaxed text-destructive">{errorMessage}</p>}
+      {errorMessage && <DataState state="error" message={errorMessage} />}
       {successMessage && <p className="mt-3 text-xs leading-relaxed text-primary">{successMessage}</p>}
       {IS_EXTERNAL_PREVIEW && (
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
@@ -338,10 +339,10 @@ function ProfileView({
   onDelete: () => void;
 }) {
   if (isLoading) {
-    return <p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground"><LoaderCircle className="size-4 animate-spin" />Loading profile...</p>;
+    return <DataState state="loading" message="Loading profile..." className="mt-5" />;
   }
   if (!profile) {
-    return <p className="mt-5 text-sm text-muted-foreground">Create a candidate profile to start tailoring resumes.</p>;
+    return <DataState state="empty" message="No candidate profiles yet. Create one to start tailoring resumes." className="mt-5" />;
   }
 
   const links = [

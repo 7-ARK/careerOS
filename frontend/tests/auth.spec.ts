@@ -1,4 +1,14 @@
 import {test, expect} from './fixtures';
+import {
+  approveCurrentDraft,
+  authenticatedRequestContext,
+  createPrivateProfile,
+  downloadApprovedPdf,
+  expectAuthenticationScreen,
+  login,
+  register,
+  submitManualJob,
+} from './acceptance-helpers';
 
 /**
  * Authenticated browser journeys.
@@ -18,28 +28,24 @@ test('isolated user can register and land on the workspace', async ({authenticat
 });
 
 test('login restores session for an existing isolated user', async ({page, isolatedUser}) => {
-  // Register the isolated user first.
   await page.goto('/');
-  await page.getByRole('button', {name: 'Register'}).click();
-  await page.getByLabel('Full name').fill(isolatedUser.fullName);
-  await page.getByLabel('Email').fill(isolatedUser.email);
-  await page.getByLabel('Password').fill(isolatedUser.password);
-  await page.getByRole('button', {name: 'Create account'}).click();
-  await expect(page.getByRole('heading', {name: 'Tailor a resume for one job posting.'})).toBeVisible();
+  await register(page, isolatedUser);
 
-  // Log out and log back in.
   await page.getByRole('button', {name: 'Logout'}).click();
-  // AuthScreen renders this copy in a paragraph, not a heading; match the rendered element.
-  await expect(page.getByText(/Sign in to manage candidate profiles/)).toBeVisible();
+  await expectAuthenticationScreen(page);
+  await login(page, isolatedUser);
 
-  await page.getByLabel('Email').fill(isolatedUser.email);
-  await page.getByLabel('Password').fill(isolatedUser.password);
-  // In login mode AuthScreen renders both a "Login" mode toggle and the form
-  // submit button; target the submit button inside the form.
-  await page.locator('form').getByRole('button', {name: 'Login'}).click();
-
-  await expect(page.getByRole('banner')).toContainText(isolatedUser.fullName);
-  await expect(page.getByRole('heading', {name: 'Tailor a resume for one job posting.'})).toBeVisible();
+  const api = await authenticatedRequestContext(page);
+  try {
+    const response = await api.get('/api/v1/auth/me');
+    expect(response.ok()).toBeTruthy();
+    expect(await response.json()).toMatchObject({
+      email: isolatedUser.email,
+      full_name: isolatedUser.fullName,
+    });
+  } finally {
+    await api.dispose();
+  }
 });
 
 test('login state survives a page reload', async ({authenticatedPage, isolatedUser}) => {
@@ -47,3 +53,42 @@ test('login state survives a page reload', async ({authenticatedPage, isolatedUs
   await expect(authenticatedPage.getByRole('banner')).toContainText(isolatedUser.fullName);
   await expect(authenticatedPage.getByRole('heading', {name: 'Tailor a resume for one job posting.'})).toBeVisible();
 });
+
+test('isolated user creates a private profile and downloads a tailored PDF resume', async ({page, isolatedUser}) => {
+  await page.goto('/');
+  await register(page, isolatedUser);
+
+  await page.getByRole('button', {name: 'Logout'}).click();
+  await login(page, isolatedUser);
+
+  const profileId = await createPrivateProfile(page, {
+    fullName: 'Flow A Candidate',
+    skills: ['TypeScript'],
+    projects: [
+      {
+        name: 'Resume Builder',
+        description: 'Built a truthful resume generation workflow.',
+        technologies: 'TypeScript, React',
+      },
+    ],
+  });
+  expect(profileId).not.toBe('');
+
+  await submitManualJob(page, {
+    title: 'Senior TypeScript Engineer',
+    company: 'Acme Career Tools',
+    location: 'Remote',
+    description: 'Acme Career Tools needs a Senior TypeScript Engineer to build React resume workflows. Required skills include TypeScript, React, and clear communication.',
+  });
+
+  const results = page.locator('#analysis-results');
+  await expect(results.getByRole('heading', {name: 'Senior TypeScript Engineer', exact: true})).toBeVisible();
+  await expect(results.getByText('Acme Career Tools', {exact: true})).toBeVisible();
+  await expect(results.getByRole('heading', {name: 'Requirement-to-evidence map'})).toBeVisible();
+  await expect(results.getByText('TypeScript', {exact: true}).first()).toBeVisible();
+  await expect(results.getByText('Resume Builder', {exact: true}).first()).toBeVisible();
+
+  await approveCurrentDraft(page);
+  await downloadApprovedPdf(page);
+});
+

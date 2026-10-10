@@ -25,6 +25,8 @@ Use `python -m alembic revision --autogenerate -m "description"` for future sche
 .\.venv\Scripts\python.exe -m compileall -q .
 ```
 
+From `frontend`, `npm run acceptance` runs those backend checks, then frontend type checking, the production build, and the Playwright suite. It stops at the first failure. See [local testing](docs/local_testing.md).
+
 OpenAPI is served at `http://127.0.0.1:8000/docs` and health at `/health`.
 
 Retrieval defaults are `RAG_EMBEDDING_PROVIDER=deterministic` and `RAG_VECTOR_STORE=local`. Optional semantic mode is `RAG_EMBEDDING_PROVIDER=openai` with `OPENAI_API_KEY` set only in an ignored env file or the shell. The benchmark command is `python -m scripts.retrieval_eval`. Measured results and setup notes are in the root [Evidence RAG / retrieval](../README.md#evidence-rag--retrieval) section. See [scripts/README.md](scripts/README.md).

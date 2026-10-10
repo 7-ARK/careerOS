@@ -12,6 +12,7 @@ from app.api.dependencies import (
 )
 from app.core.config import Settings
 from app.schemas import ApplicationRecordRead, ApplicationStatusUpdate
+from app.schemas.application_tracking import GeneratedDocumentHistoryRead
 from app.services import ApplicationTrackerService, KnowledgeBaseService
 
 router = APIRouter(prefix="/api/v1/applications", tags=["applications"])
@@ -20,6 +21,21 @@ TrackerService = Annotated[
     Depends(get_application_tracker_service),
 ]
 CandidateService = Annotated[KnowledgeBaseService, Depends(get_knowledge_base_service)]
+
+
+@router.get(
+    "/{candidate_profile_id}/history",
+    response_model=list[GeneratedDocumentHistoryRead],
+)
+def list_candidate_document_history(
+    candidate_profile_id: UUID,
+    service: TrackerService,
+    candidates: CandidateService,
+    current_user: CurrentUser,
+) -> list[GeneratedDocumentHistoryRead]:
+    """List one owner's generated resumes in deterministic reverse chronology."""
+    candidates.get_profile(candidate_profile_id, user_id=current_user.id)
+    return service.list_candidate_document_history(candidate_profile_id)
 
 
 @router.get("/{candidate_profile_id}", response_model=list[ApplicationRecordRead])

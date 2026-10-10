@@ -100,8 +100,8 @@ async def career_analysis_error_handler(
 
 
 async def not_found_error_handler(_: Request, exc: Exception) -> JSONResponse:
-    """Return service-level missing-record failures."""
-    return _error_response(404, code="not_found", message=str(exc))
+    """Return a generic missing-resource response without record disclosure."""
+    return _error_response(404, code="not_found", message="Resource was not found.")
 
 
 async def duplicate_user_error_handler(_: Request, exc: Exception) -> JSONResponse:

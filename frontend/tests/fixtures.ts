@@ -1,6 +1,8 @@
 import {test as base, expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
 
+import {register} from './acceptance-helpers';
+
 export interface IsolatedUser {
   email: string;
   password: string;
@@ -40,18 +42,7 @@ export const test = base.extend<TestFixtures>({
 
   authenticatedPage: async ({page, isolatedUser}, use) => {
     await page.goto('/');
-    await expect(page.getByText(/Sign in to manage candidate profiles/)).toBeVisible();
-
-    await page.getByRole('button', {name: 'Register'}).click();
-    await page.getByLabel('Full name').fill(isolatedUser.fullName);
-    await page.getByLabel('Email').fill(isolatedUser.email);
-    await page.getByLabel('Password').fill(isolatedUser.password);
-    await page.getByRole('button', {name: 'Create account'}).click();
-
-    // Registration logs the user in and lands them on the authenticated workspace.
-    await expect(page.getByRole('banner')).toContainText(isolatedUser.fullName);
-    await expect(page.getByRole('heading', {name: 'Tailor a resume for one job posting.'})).toBeVisible();
-
+    await register(page, isolatedUser);
     await use(page);
   },
 });
